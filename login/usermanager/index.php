@@ -25,7 +25,7 @@ if ($_SESSION[loggedin] == 1) {
 			if (! empty($GLOBALS[module][sites][wordpress][$_POST[user]])) {
 				$GLOBALS[html] .= "- mofifying wordpress user ".$GLOBALS[module][sites][wordpress][$_POST[user]]." :)<br />";
 				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][module][profile][$_POST[profile]][wordpress].
-						"' WHERE user_id='".$GLOBALS[module][sites][wordpress][$_POST[user]]."' AND meta_key='wp_user_level';");
+						"'WHERE user_id='".$GLOBALS[module][sites][wordpress][$_POST[user]]."' AND meta_key='wp_user_level';");
 			}
 
 			#smf
@@ -84,6 +84,9 @@ if ($_SESSION[loggedin] == 1) {
 								$GLOBALS[module][sites][eqdkp][$_POST[user]]."' AND auth_id='".$myname."';");
 #						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[module][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (update)<br />";
 					}
+
+
+					$sqlz = mysql_query("UPDATE eqdkp_users SET user_active='1', user_lang='german' WHERE user_id='".$GLOBALS[module][sites][eqdkp][$_POST[user]]."';");
 				}
 				
 
