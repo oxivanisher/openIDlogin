@@ -1,0 +1,32 @@
+<?php
+
+
+$GLOBALS[cfg][module][tablename] = "oom_openid_usermanager";
+
+$GLOBALS[cfg][module][profile][banned][name]		= "Verbannt";
+$GLOBALS[cfg][module][profile][banned][smf]			= "";
+$GLOBALS[cfg][module][profile][banned][eqdkp]		= "Z_banned";
+$GLOBALS[cfg][module][profile][banned][wordpress]	= "";
+
+$GLOBALS[cfg][module][profile][guest][name]			= "Gast / Bewerber";
+$GLOBALS[cfg][module][profile][guest][smf]			= "";
+$GLOBALS[cfg][module][profile][guest][eqdkp]		= "Z_guest";
+$GLOBALS[cfg][module][profile][guest][wordpress]	= "";
+
+$GLOBALS[cfg][module][profile][member][name]		= "Member";
+$GLOBALS[cfg][module][profile][member][smf]			= "";
+$GLOBALS[cfg][module][profile][member][eqdkp]		= "Z_member";
+$GLOBALS[cfg][module][profile][member][wordpress]	= "";
+
+$GLOBALS[cfg][module][profile][officer][name]		= "Offizier";
+$GLOBALS[cfg][module][profile][officer][smf]		= "";
+$GLOBALS[cfg][module][profile][officer][eqdkp]		= "Z_officer";
+$GLOBALS[cfg][module][profile][officer][wordpress]	= "";
+
+$GLOBALS[cfg][module][profile][leader][name]		= "Gildenleiter";
+$GLOBALS[cfg][module][profile][leader][smf]			= "";
+$GLOBALS[cfg][module][profile][leader][eqdkp]		= "Z_leader";
+$GLOBALS[cfg][module][profile][leader][wordpress]	= "";
+
+
+?>

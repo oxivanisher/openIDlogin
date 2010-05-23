@@ -1,0 +1,8 @@
+<?php
+
+
+$GLOBALS[cfg][module][tablename] = "oom_openid_messages";
+$GLOBALS[cfg][module][xmpptable] = "oom_openid_xmpp";
+
+
+?>

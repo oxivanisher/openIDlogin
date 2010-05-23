@@ -1,0 +1,44 @@
+<?php
+
+## IMBA Multi super OpenID login BAEM Teil
+
+# setting up mysql connection
+$GLOBALS[cfg][mysqlUser]				= "";
+$GLOBALS[cfg][mysqlPW]					= "";
+$GLOBALS[cfg][mysqlHost]				= "";
+$GLOBALS[cfg][mysqlDB]					= "";
+
+$GLOBALS[cfg][lastonlinedb]				= "oom_openid_lastonline";
+$GLOBALS[cfg][lastonlinetimeout]		= 900;
+$GLOBALS[cfg][lastidletimeout]			= 3600;
+$GLOBALS[cfg][strftime]					= "%a %d %b %H:%M:%S %Y";
+
+$GLOBALS[cfg][sessiontable]					= "oom_openid_session";
+
+$GLOBALS[cfg][openid_identifier_base]	= "";
+$GLOBALS[cfg][openid_register]			= "";
+$GLOBALS[cfg][trustroot]				= "http://".$_SERVER[SERVER_NAME]."/";
+$GLOBALS[cfg][returnto]					= $GLOBALS[cfg][trustroot]."login.inc.php?job=verify";
+$GLOBALS[cfg][targetsite]				= $GLOBALS[cfg][trustroot]."";
+$GLOBALS[cfg][cookiedomain]				= $_SERVER[SERVER_NAME];
+$GLOBALS[cfg][cookiepath]				= '/';
+$GLOBALS[cfg][css1]						=  "/login.css";
+$GLOBALS[cfg][css2]						=  "";
+
+$GLOBALS[cfg][sites][0][name]				= "mediawiki";
+$GLOBALS[cfg][sites][0][utable]				= "WIKI_user";
+$GLOBALS[cfg][sites][0][uqfield]			= "user_id";
+$GLOBALS[cfg][sites][0][uafield]			= "user_name";
+$GLOBALS[cfg][sites][0][ltable]				= "WIKI_user_openid";
+$GLOBALS[cfg][sites][0][lqfield]			= "uoi_openid";
+$GLOBALS[cfg][sites][0][lafield]			= "uoi_user";
+
+$GLOBALS[cfg][sites][1][name]				= "wordpress";
+$GLOBALS[cfg][sites][1][utable]				= "wp_users";
+$GLOBALS[cfg][sites][1][uqfield]			= "ID";
+$GLOBALS[cfg][sites][1][uafield]			= "user_nicename";
+$GLOBALS[cfg][sites][1][ltable]				= "wp_openid_identities";
+$GLOBALS[cfg][sites][1][lqfield]			= "url";
+$GLOBALS[cfg][sites][1][lafield]			= "user_id";
+
+?>
