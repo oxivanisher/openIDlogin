@@ -59,7 +59,7 @@
 					for ($i = 1; $i <= count($tmpi); $i++) 
 						$mycontent .= $tmpi[$i];
 					$tmprec = $GLOBALS[tempnames][trim(strtolower($tmpi[0]))];
-					$tmpcont = str_replace($tmpi[0].':', '', $content);
+					$tmpcont = trim(str_replace($tmpi[0].':', '', $content));
 
 					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[xmpp][strtolower($jid[0])]);
 					if (trim(strtolower($tmpi[0])) == "cmd") {
@@ -123,7 +123,7 @@
     
     function eventPresence($fromJid, $status, $photo) {
       // Change your status message to your friend's status
-      $this->sendStatus($status);
+//      $this->sendStatus($status);
       
       if($this->logDB) {
         // Save the presence in the database
@@ -135,7 +135,7 @@
     
     function setStatus() {
       // Set a custom status or use $this->status
-      $this->sendStatus($this->status);
+      $this->sendStatus("Ready for Communication.");
       msg ("Setting Status");
 
       if(!$this->bot_status) {  

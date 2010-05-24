@@ -75,7 +75,7 @@
       $this->pass = $pass;
       $this->domain = $domain;
       $this->resource = "OOM SSO Login";
-      $this->status = "Online using JAXL - Just Another XMPP Library";
+      $this->status = "Ready for Communication";
       
       // This variable is set to TRUE when authentication, service discovery, roster request has taken place
       $this->done = FALSE;

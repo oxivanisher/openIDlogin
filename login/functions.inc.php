@@ -290,7 +290,10 @@ function updateLastOnline () {
 		if (! $_POST[ajax]) {
 			$GLOBALS[myreturn][onlineusers] = $ocnt;
 			$GLOBALS[myreturn][idleusers] = $icnt;
-			$GLOBALS[myreturn][maxusers] = $cnt;
+			if ($GLOBALS[debug])
+				$GLOBALS[myreturn][maxusers] = rand(1, 100);
+			else
+				$GLOBALS[myreturn][maxusers] = $cnt;
 		}
 
 		$m_time = explode(" ",microtime());

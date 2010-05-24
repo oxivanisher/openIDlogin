@@ -230,6 +230,7 @@ if (! empty($_SESSION[tmp][referer])) {
 	$_SESSION[tmp][referer] = "";
 } else
   echo $GLOBALS[cfg][targetsite];
+
 	echo "';\n";
 	echo "window.parent.location = tloc;";
 
