@@ -3,9 +3,9 @@
 #jabber transport from openIDlogin to XMPP Server
 
 #read configs
-require_once('./inc/config.inc.php');
+require_once('./inc/conf.inc.php');
 require_once('./inc/functions.inc.php');
-require_once($GLOBALS[cfg][logindir].'/config.inc.php');
+require_once($GLOBALS[cfg][logindir].'/conf.inc.php');
 
 
 $GLOBALS[debug] = 1;

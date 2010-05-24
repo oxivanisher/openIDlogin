@@ -61,12 +61,12 @@ $tmpname = $crow[xmpp];
 }
 
 if ($cbool) {
-$sql = mysql_query("UPDATE ".$GLOBALS[cfg][module][xmpptable]." SET xmpp='".$_POST[user].
+$sql = mysql_query("UPDATE ".$GLOBALS[cfg][module][xmpptable]." SET xmpp='".strtolower($_POST[user]).
 "' WHERE openid='".$_SESSION[openid_identifier]."';");
 
 } else {
 $sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][module][xmpptable]." (openid,xmpp) VALUES ('".
-$_SESSION[openid_identifier]."', '".$_POST[user]."');");
+$_SESSION[openid_identifier]."', '".strtolower($_POST[user])."');");
 }
 $GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
 

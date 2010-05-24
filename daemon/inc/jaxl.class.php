@@ -53,32 +53,66 @@
     function eventMessage($fromJid, $content, $offline = FALSE) {
 			$jid = explode("/", $fromJid);
 			if (isset($jid[0])) {
-				msg ("Recieved MSG from authorized user: ".$jid[0].$GLOBALS[tempnames][$jid[0]]);
+				
 				$tmpi = explode(":", $content);
 				if (count($tmpi) > 1) {
-					msg ("format ok");
-
-					for ($i = 1; $i <= count($tmpi); $i++) {
+					for ($i = 1; $i <= count($tmpi); $i++) 
 						$mycontent .= $tmpi[$i];
-					}
 					$tmprec = $GLOBALS[tempnames][trim(strtolower($tmpi[0]))];
-					$tmpcont = str_replace($tmpi[0].': ', '', $content);
-					$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-								$GLOBALS[xmpp][$jid[0]]."', '".$tmprec."', '".time()."', '".$jid[1]."', '".utf8_decode($tmpcont)."    ', '1', '1');");
-					if ($sql)
-						$this->sendMessage($fromJid, "Message to ".$tmprec." sent!");
-					else
-						$this->sendMessage($fromJid, "System Error! Please inform the Admin!");
+					$tmpcont = str_replace($tmpi[0].':', '', $content);
+
+					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[xmpp][strtolower($jid[0])]);
+					if (trim(strtolower($tmpi[0])) == "cmd") {
+						$isadmin = 0;
+						$sqlt = mysql_query("SELECT openid FROM oom_openid_usermanager WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+						while ($myrow = mysql_fetch_array($sqlt))
+							$isadmin = 1;
+						if ($isadmin) {
+							if ($tmpcont) {
+								msg ("->\tAdmin Message received: ".$tmpcont);
+								$this->sendMessage($fromJid, "Admin Message received: ".$tmpcont);
+
+								if ($tmpcont == "exit") {
+										msg ("->\t\tExiting");
+										$this->sendMessage($fromJid, "Exiting Daemon");
+										exit;
+								}
+
+
+
+							} else {
+								msg ("->\tNo Admin command received!");
+								$this->sendMessage($fromJid, "No Admin command received!");
+							}
+						} else {
+							msg ("->\tUser is not admin!");
+							$this->sendMessage($fromJid, "You are no Admin!");
+						}
+					} elseif (empty($tmprec)) {
+						msg ("->\tNo target User found: ".$tmpi[0]);
+						$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
+					} else {
+						if ($tmpcont) {
+							msg ("->\tMessage to ".$tmprec." delivered: ".$tmpcont);
+							$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+										$GLOBALS[xmpp][strtolower($jid[0])]."', '".$tmprec."', '".time()."', '".$jid[1]."', '".utf8_decode(trim($tmpcont))."', '1', '1');");
+							if ($sql)
+								$this->sendMessage($fromJid, "Message to ".$tmprec." sent (".$jid[0].", ".$jid[1].")!");
+							else
+								$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
+						} else {
+							msg ("->\tMessage to ".$tmprec." dropped. No content found.");
+							$this->sendMessage($fromJid, "No content submitted!");
+						}
+					}
+					} else {
+						msg ("Malformated message received from: ".$fromJid."; content: ".$content);
+						$this->sendMessage($fromJid, "Please use the following convention to send a message:\nReceiver: Message\n\nExample:\nwillhelm: hogger raid?");
+					}
 				} else {
-					msg ("Malformated!");
-					$this->sendMessage($fromJid, "Please use the following convention to send a message:\nReceiver: Message\n\nExample:\nwillhelm: hogger raid?");
-				}
-			} else {
-				msg ("Received MSG from unauthorized user (".$fromJid."). dropping it.");
-				$this->sendMessage($fromJid, "You are not authorized to use this bot!");
-			}
-
-
+					msg ("Received MSG from unauthorized user (".$fromJid."). dropping it.");
+					$this->sendMessage($fromJid, "Yout jid strin is strange: !".$fromJid);
+				} 
 			if($this->logDB) {
   	      // Save the message in the database
     	    $timestamp = date('Y-m-d H:i:s');
