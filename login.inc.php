@@ -7,10 +7,6 @@ $starttime = $m_time;
 $GLOBALS[cfg][moduledir] = 'login';
 require_once($GLOBALS[cfg][moduledir].'/conf.inc.php');
 
-
-#debug
-$GLOBALS[debug] = 0;
-
 #do the mysql connection
 $con = @mysql_connect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOBALS[cfg][mysqlPW])
     or exit("Connection failed.");
@@ -119,7 +115,7 @@ switch ($_POST[job]) {
 			$_SESSION[error] = "auth_error";
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>Authentification Error:</center></h2><br /><h3><center>".$GLOBALS[html]."</center></h3><br /><br />";
 		}
-
+		$GLOBALS[freshlogin] = 1;
 		break;
 	
 	case "refresh":
@@ -277,7 +273,7 @@ if ($GLOBALS[redirect]) {
 
 if (! empty($GLOBALS[html])) {
 	echo "<div style='background-color:transparent; background-image:url(/img/transparent.png); padding:10px; height:100%;'><h1><center> "
-				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='60' height='60'> OpenID </center></h1>";
+				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='40' height='40'> OpenID </center></h1>";
 	if (! empty($_SESSION[openid_identifier]))
 		echo "<center>[ you are logged in as: ".$_SESSION[openid_identifier]." ]</center>";
 	echo "<hr /><br />";

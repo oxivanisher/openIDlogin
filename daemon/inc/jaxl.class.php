@@ -51,6 +51,18 @@
     var $bot_status = FALSE;
 
     function eventMessage($fromJid, $content, $offline = FALSE) {
+
+
+
+
+
+
+
+
+
+
+
+
 			$jid = explode("/", $fromJid);
 			if (isset($jid[0])) {
 				

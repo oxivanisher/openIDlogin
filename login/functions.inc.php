@@ -299,22 +299,24 @@ function jasonOut () {
 
 
 		$GLOBALS[myreturn][felloffline] = 0;
+		$GLOBALS[myreturn][newmsgs] = 0;
 		if ($_SESSION[loggedin] AND (! $_POST[ajax])) {
 			$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
 			$GLOBALS[myreturn][idlenames] = $GLOBALS[idlenames];
 			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
 			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
 
-			$GLOBALS[myreturn][newmsgs] = 0;
 			$sql = mysql_query("SELECT id FROM oom_openid_messages WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1';");
 			while ($row = mysql_fetch_array($sql))
 				$GLOBALS[myreturn][newmsgs]++;
 
-			$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
-			while ($row = mysql_fetch_array($sql))
-				$tmpts = $row[timestamp];
-			if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
-				$GLOBALS[myreturn][felloffline] = 1;
+			if ($_POST[job] == "update") {
+				$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
+				while ($row = mysql_fetch_array($sql))
+					$tmpts = $row[timestamp];
+				if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
+					$GLOBALS[myreturn][felloffline] = 0;
+			}
 		}
 
 		if (! $_POST[ajax]) {
@@ -325,6 +327,12 @@ function jasonOut () {
 			} else
 				$GLOBALS[myreturn][maxusers] = $GLOBALS[maxusers];
 		}
+
+
+		if ($GLOBALS[freshlogin]) {
+			$GLOBALS[myreturn][freshlogin] = 1;
+			$GLOBALS[freshlogin] = 0;
+		}	else $GLOBALS[myreturn][freshlogin] = 0;
 
 		$m_time = explode(" ",microtime());
 		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
