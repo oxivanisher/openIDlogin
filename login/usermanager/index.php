@@ -100,6 +100,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "- ".$_POST[newurl]." is a valid URL<br />";
 
 				$sql = mysql_query("UPDATE smf_members SET openid_uri='".$_POST[newurl]."' WHERE id_member='".$_POST[newuser]."';");
+#				$sql = mysql_query("INSERT INTO oom_openid_lastonline (openid,timestamp,name) VALUES (".$_POST[newurl]."', '0', '".."') ;");
 
 				$GLOBALS[html] .= "<h3>=&gt; User registred!</h3>";
 			} else {

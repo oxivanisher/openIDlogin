@@ -12,6 +12,7 @@ function setCookies () {
 		$GLOBALS[html] .= "- ".$row[member_name]." found!<br /><b>= setting cookie</b><br />";
 		$_SESSION[sites][smf][$row[member_name]] = "cookie";
 		$_SESSION[myname] = $row[member_name];
+		if ($row[member_name] == "") return 0;
 	}
 	if (empty($_SESSION[sites][smf]))
 		$_SESSION[sites][smf] = -1;
@@ -247,7 +248,7 @@ function createSession () {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][sessiontable]." (openid,hash) VALUES ('".$_SESSION[openid_identifier]."', '".$_SESSION[hash]."');");
 }
 
-function updateLastOnline () {
+function getOnlineUsers () {
 	#last online implementation
 	$bool = false; $cnt = 0;
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = ""; $onlineusersarray = array();
@@ -263,14 +264,30 @@ function updateLastOnline () {
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
 			else $itmp = ", "; $iusers .= $itmp.$orow[name]; array_push($idleusersarray, $orow[name]); continue; }
 	}
+
+	$GLOBALS[onlineusers] = $ocnt;
+	$GLOBALS[idleusers] = $icnt;
+	$GLOBALS[maxusers] = $cnt;
+
+	$GLOBALS[onlinenames] = $ousers;
+	$GLOBALS[idlenames] = $iusers;
+	$GLOBALS[onlinearray] = $onlineusersarray;
+	$GLOBALS[idlearray] = $idleusersarray;
+
+	$GLOBALS[online][isintable] = $bool;
+
+
+}
+
+function updateLastOnline () {
 	#magic
-	if ($_POST[job] != "update") {
-		if ($bool) mysql_query("UPDATE oom_openid_lastonline SET timestamp='".time()."', name='".$_SESSION[myname]."' WHERE openid='".$_SESSION[openid_identifier]."';");
-	else if (! empty($_SESSION[openid_identifier]))
+	if ($GLOBALS[online][isintable])
+		mysql_query("UPDATE oom_openid_lastonline SET timestamp='".time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
+	else if ((! empty($_SESSION[openid_identifier]) AND (! empty($_SESSION[myname]))))
 		mysql_query("INSERT INTO oom_openid_lastonline (openid,timestamp,name) VALUES ('".$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
-	}
+}
 
-
+function jasonOut () {
 	#return json as header and exit on ajax requests
 	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR ($_POST[ajax] == 1)) {
 		$GLOBALS[myreturn][openid_identifier] = $_SESSION[openid_identifier];
@@ -280,26 +297,39 @@ function updateLastOnline () {
 			$GLOBALS[myreturn][sites] = $_SESSION[sites];
 		}
 
+
+		$GLOBALS[myreturn][felloffline] = 0;
 		if ($_SESSION[loggedin] AND (! $_POST[ajax])) {
-			$GLOBALS[myreturn][onlinenames] = $ousers;
-			$GLOBALS[myreturn][idlenames] = $iusers;
-			$GLOBALS[myreturn][onlinearray] = $onlineusersarray;
-			$GLOBALS[myreturn][idlearray] = $idleusersarray;
+			$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
+			$GLOBALS[myreturn][idlenames] = $GLOBALS[idlenames];
+			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
+			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
+
+			$GLOBALS[myreturn][newmsgs] = 0;
+			$sql = mysql_query("SELECT id FROM oom_openid_messages WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1';");
+			while ($row = mysql_fetch_array($sql))
+				$GLOBALS[myreturn][newmsgs]++;
+
+			$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
+			while ($row = mysql_fetch_array($sql))
+				$tmpts = $row[timestamp];
+			if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
+				$GLOBALS[myreturn][felloffline] = 1;
 		}
 
 		if (! $_POST[ajax]) {
-			$GLOBALS[myreturn][onlineusers] = $ocnt;
-			$GLOBALS[myreturn][idleusers] = $icnt;
-			if ($GLOBALS[debug])
-				$GLOBALS[myreturn][maxusers] = rand(1, 100);
-			else
-				$GLOBALS[myreturn][maxusers] = $cnt;
+			$GLOBALS[myreturn][onlineusers] = $GLOBALS[onlineusers];
+			$GLOBALS[myreturn][idleusers] = $GLOBALS[idleusers];
+			if ($GLOBALS[debug]) {
+				$GLOBALS[myreturn][maxusers] = "X".rand(0, 9);
+			} else
+				$GLOBALS[myreturn][maxusers] = $GLOBALS[maxusers];
 		}
 
 		$m_time = explode(" ",microtime());
 		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
-
 		$GLOBALS[myreturn][rutime][round($totaltime,3)];
+
 		header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
 		#javascript exit :D
 		exit;

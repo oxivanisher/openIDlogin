@@ -12,7 +12,7 @@ require_once($GLOBALS[cfg][moduledir].'/conf.inc.php');
 $GLOBALS[debug] = 0;
 
 #do the mysql connection
-$con = @mysql_pconnect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOBALS[cfg][mysqlPW])
+$con = @mysql_connect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOBALS[cfg][mysqlPW])
     or exit("Connection failed.");
 @mysql_select_db ($GLOBALS[cfg][mysqlDB], $con)
     or exit("Database not found.");
@@ -69,6 +69,8 @@ if ($_POST[ssoInpLogout] == 1) {
 } elseif ($_POST[job] == "verify") {
 	$_SESSION[tmp][referer] = $_POST[ssoInpReferer];
 } elseif ($_POST[job] == "status") {
+	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
+} elseif ($_POST[job] == "update") {
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } elseif ($_SESSION[loggedin] == 1) {
 	$_POST[job] = "refresh";
@@ -167,6 +169,7 @@ switch ($_POST[job]) {
 		break;
 	
 	case "logout":
+		$myoldid = $_SESSION[openid_identifier];
 		killCookies();
 		setcookie (session_id(), "", time() - 3600);
 		session_destroy();
@@ -179,6 +182,7 @@ switch ($_POST[job]) {
 
 	case "status":
 		fetchUsers();
+		getOnlineUsers();
 		if ($_SESSION[loggedin]) {
 			setCookies();
 
@@ -186,19 +190,26 @@ switch ($_POST[job]) {
 			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 7 * 24 * 3600 )));
 
 			$GLOBALS[myreturn][loggedin] = 1;
+			updateLastOnline();
 		}
 		$GLOBALS[myreturn][msg] = "status";
+		jasonOut();
 
 		break;
 
 	case "update":
 		fetchUsers();
+		getOnlineUsers();
 		if ($_SESSION[loggedin]) {
+			setCookies();
+
+			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
+			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 7 * 24 * 3600 )));
+
 			$GLOBALS[myreturn][loggedin] = 1;
-		} else {
-			$GLOBALS[myreturn][loggedin] = 0;
-		}
-		$GLOBALS[myreturn][msg] = "update";
+		} 
+		$GLOBALS[myreturn][msg] = "status";
+		jasonOut();
 
 		break;
 
@@ -212,7 +223,10 @@ switch ($_POST[job]) {
 
 #last online implementation
 # manages also ajax requests, json output and exit on ajax!!
-updateLastOnline();
+if ($_POST[job] == "logout")
+	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout] - 1)."' WHERE openid='".$myoldid."';");
+#else
+#	updateLastOnline();
 
 #generate final html output
 echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Administration</title>";
