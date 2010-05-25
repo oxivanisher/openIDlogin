@@ -224,8 +224,10 @@ function checkSession () {
 		if ($_SESSION[hash] == $row[hash])
 			$bool = 0;
 
-	if ($bool)
-		$_POST[ssoInpLogout] = 1;	
+	if ($bool) {
+		$_POST[ssoInpLogout] = 1;
+		$GLOBALS[forcelogout] = 1;
+	} else $GLOBALS[forcelogout] = 0;
 }
 
 function generateHash () {
@@ -298,7 +300,8 @@ function jasonOut () {
 		}
 
 
-		$GLOBALS[myreturn][felloffline] = 0;
+		$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
+
 		$GLOBALS[myreturn][newmsgs] = 0;
 		if ($_SESSION[loggedin] AND (! $_POST[ajax])) {
 			$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
@@ -306,17 +309,19 @@ function jasonOut () {
 			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
 			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
 
-			$sql = mysql_query("SELECT id FROM oom_openid_messages WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1';");
-			while ($row = mysql_fetch_array($sql))
+			$sql = mysql_query("SELECT id FROM oom_openid_messages WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
+			while ($row = mysql_fetch_array($sql)) {
 				$GLOBALS[myreturn][newmsgs]++;
-
-			if ($_POST[job] == "update") {
-				$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
-				while ($row = mysql_fetch_array($sql))
-					$tmpts = $row[timestamp];
-				if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
-					$GLOBALS[myreturn][felloffline] = 0;
+				$GLOBALS[myreturn][newmsgid] = $row[id];
 			}
+
+#			if ($_POST[job] == "update") {
+#				$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
+#				while ($row = mysql_fetch_array($sql))
+#					$tmpts = $row[timestamp];
+#				if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
+#					$GLOBALS[myreturn][felloffline] = 0;
+#			}
 		}
 
 		if (! $_POST[ajax]) {

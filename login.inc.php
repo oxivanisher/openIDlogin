@@ -55,7 +55,7 @@ if ($_POST[ajax] == "")
 	$_POST[ajax] = $_GET[ajax];
 
 #one session only magic!
-if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND  ($_SESSION[hash]))
+if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
 	checkSession();
 
 #find out what we have to do (like magic)
@@ -165,12 +165,13 @@ switch ($_POST[job]) {
 		break;
 	
 	case "logout":
+#		$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
+#		header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
 		$myoldid = $_SESSION[openid_identifier];
 		killCookies();
 		setcookie (session_id(), "", time() - 3600);
 		session_destroy();
 		session_write_close();
-
 		$_SESSION[error] = "";
 		$GLOBALS[html] = "<br /><br /><br /><h2><center>Logging out...</center></h2><br /><br /><br />";
 		$GLOBALS[redirect] = 1;
