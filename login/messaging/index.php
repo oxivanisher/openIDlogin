@@ -83,10 +83,10 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= "<h2>New Message</h2>";
 	$GLOBALS[html] .= "<form action='?' method='POST'>";
 	$GLOBALS[html] .= "<input type='hidden' name='myjob' value='sendmessage' />";
+	$GLOBALS[html] .= "<input type='hidden' name='subject' value='HTML GUI' />";
 	$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 	$GLOBALS[html] .= "TO: ".drawUsersDropdown($GLOBALS[module][all][$_POST[user]])."<br />";;
-	$GLOBALS[html] .= "Subject: <input type='text' size='50' name='subject' /><br />";
-	$GLOBALS[html] .= "Message:<br /><textarea name='message' cols='50' rows='5' >Message</textarea><br />";
+	$GLOBALS[html] .= "Message:<br /><textarea name='message' cols='50' rows='5'></textarea><br />";
 	$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
 	$GLOBALS[html] .= "</form>";
 
@@ -154,7 +154,7 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= "To: ".genMsgUrl($receiver)."<br />";
 	$GLOBALS[html] .= "Date: ".$GLOBALS[myreturn][message][date]."<br />";
 	$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br /><br />";
-	$GLOBALS[html] .= "<b>Subject: ".$GLOBALS[myreturn][message][subject]."</b>";
+	$GLOBALS[html] .= "<b>Source: ".$GLOBALS[myreturn][message][subject]."</b>";
 	$GLOBALS[html] .= "<pre>".$GLOBALS[myreturn][message][message]."</pre><br />";
 
 } elseif ($_POST[myjob] == "getusers") {
@@ -169,9 +169,9 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= " | <a href='?module=".$_POST[module]."&myjob=setupxmppform'>Setup Jabber Traversal (XMPP)</a></h3>";
 	$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 	$cnt = 0; $ncnt = 0;
-	$GLOBALS[html] .= "<tr><th>From</th><th>To</th><th>Subject</th><th>Message</th><th>Time</th><th>Delete</th></tr>";
+	$GLOBALS[html] .= "<tr><th>From</th><th>Age</th><th>Message</th><th>Time</th><th>Delete</th></tr>";
 	$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][module][tablename].
-				" WHERE receiver='".$_SESSION[openid_identifier]."' OR sender='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
+				" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 	while ($row = mysql_fetch_array($sql)) {
 
 		if (empty($GLOBALS[module][$row[sender]][smf]))
@@ -202,9 +202,8 @@ if ($_POST[myjob] == "composemessage") {
 		else $tmp = "";
 
 		$GLOBALS[html] .= "<tr style='".$tmp."'>";
-		$GLOBALS[html] .= "<td>".genMsgUrl($sender)." | ".$GLOBALS[myreturn][messages][$cnt][age]."</td>";
-		$GLOBALS[html] .= "<td>".$receiver."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][messages][$cnt][subject]."</td>";
+		$GLOBALS[html] .= "<td>".genMsgUrl($sender)."</td>";
+		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][messages][$cnt][age]."</td>";
 
 		$GLOBALS[html] .= "<td>";
 		if ($GLOBALS[myreturn][messages][$cnt][mine])

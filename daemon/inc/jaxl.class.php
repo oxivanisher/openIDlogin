@@ -107,7 +107,7 @@
 						if ($tmpcont) {
 							msg ("->\tMessage to ".$tmprec." delivered: ".$tmpcont);
 							$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-										$GLOBALS[xmpp][strtolower($jid[0])]."', '".$tmprec."', '".time()."', '".$jid[1]."', '".utf8_decode(trim($tmpcont))."', '1', '1');");
+										$GLOBALS[xmpp][strtolower($jid[0])]."', '".$tmprec."', '".time()."', 'XMPP/".$jid[1]."', '".utf8_decode(trim($tmpcont))."', '1', '1');");
 							if ($sql)
 								$this->sendMessage($fromJid, "Message to ".$tmprec." sent (".$jid[0].", ".$jid[1].")!");
 							else
