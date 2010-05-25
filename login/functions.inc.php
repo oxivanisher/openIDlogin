@@ -152,7 +152,7 @@ function drawUsersDropdown($selected = FALSE) {
 	foreach ($GLOBALS[module][all] as $myurl => $myname) {
 		if ($selected == $myname) $stmp = " selected";
 		else $stmp = "";
-		$tmphtml .= "<option value='".$myurl."'".$stmp.">".$myname." (".$myurl.")</option>";
+		$tmphtml .= "<option value='".$myurl."'".$stmp.">".$myname."</option>";
 	}
 	$tmphtml .= "</select>";
 
