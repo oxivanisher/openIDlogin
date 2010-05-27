@@ -133,7 +133,7 @@
 						if ($isadmin) {
 							if ($content == "!exit") {
 								msg ("\tExiting...");
-								$this->sendMessage($fromJid, "Deadon exiting!");
+								$this->sendMessage($fromJid, "Deamon exiting!");
 								exit;
 							}
 						}
@@ -168,7 +168,7 @@
 								}
 
 								#check for xmpp
-								if (isset($GLOBALS[xmpp][strtolower($rowa[openid_uri])])) {
+								if (isset($GLOBALS[xmpp][$rowa[openid_uri]])) {
 									if ($boolj) $boolj = 0;
 									else $tmpj = ", ";
 									$retj .= $tmpj.utf8_encode($rowa[member_name]);
