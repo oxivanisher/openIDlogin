@@ -8,7 +8,7 @@ $GLOBALS[cfg][moduledir] = 'login';
 require_once($GLOBALS[cfg][moduledir].'/conf.inc.php');
 
 #do the mysql connection
-$con = @mysql_connect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOBALS[cfg][mysqlPW])
+$con = @mysql_pconnect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOBALS[cfg][mysqlPW])
     or exit("Connection failed.");
 @mysql_select_db ($GLOBALS[cfg][mysqlDB], $con)
     or exit("Database not found.");

@@ -53,78 +53,146 @@
     function eventMessage($fromJid, $content, $offline = FALSE) {
 
 
-
-
-
-
-
-
-
-
-
-
+			#do we have an ok sender?
 			$jid = explode("/", $fromJid);
 			if (isset($jid[0])) {
-				
-				$tmpi = explode(":", $content);
-				if (count($tmpi) > 1) {
-					for ($i = 1; $i <= count($tmpi); $i++) 
-						$mycontent .= $tmpi[$i];
-					$tmprec = $GLOBALS[tempnames][trim(strtolower($tmpi[0]))];
-					$tmpcont = trim(str_replace($tmpi[0].':', '', $content));
 
+				#does the sender have a entry in the xmpp database?
+				if (empty($GLOBALS[xmpp][strtolower($jid[0])])) {
+					msg ("Recieved MSG from unauthorized user: ".$jid[0]);
+					$this->sendMessage($fromJid, "You are not allowed to use this bot! Please setup your XMPP Traversal on the homepage.");
+				} else {
 					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[xmpp][strtolower($jid[0])]);
-					if (trim(strtolower($tmpi[0])) == "cmd") {
-						$isadmin = 0;
-						$sqlt = mysql_query("SELECT openid FROM oom_openid_usermanager WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
-						while ($myrow = mysql_fetch_array($sqlt))
-							$isadmin = 1;
-						if ($isadmin) {
-							if ($tmpcont) {
-								msg ("->\tAdmin Message received: ".$tmpcont);
-								$this->sendMessage($fromJid, "Admin Message received: ".$tmpcont);
 
-								if ($tmpcont == "exit") {
-										msg ("->\t\tExiting");
-										$this->sendMessage($fromJid, "Exiting Daemon");
-										exit;
+					#lastonline update in db
+					$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+
+					#check for admin rights
+					$isadmin = 0;
+					$sqlt = mysql_query("SELECT openid FROM oom_openid_usermanager WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+					while ($myrow = mysql_fetch_array($sqlt))
+						$isadmin = 1;
+					if ($isadmin)
+						msg ("\tUser has admin rights");
+					else
+						msg ("\tUser has no admin rights");
+
+					#generate help message
+					$help  = "How to communicate with me:\n";
+					$help .= "\t!command | run a command\n";
+					$help .= "\tuser:message | send a message to a user\n";
+
+					$help .= "\nAvailable Commands:\n";
+					$help .= "\thelp | show this help\n";
+					$help .= "\tlist | show a list of all users\n";
+					if ($isadmin) {
+						$help .= "\nAdmin Commands:\n";
+						$help .= "\texit | exit daemon (will restart)\n";
+					}
+
+					## what do we have to do? ##
+
+					#check and split for message
+					$tmpi = explode(":", $content);
+					if (count($tmpi) > 1) {
+						$ismessage = 1;
+						for ($i = 1; $i <= count($tmpi); $i++) 
+							$message .= $tmpi[$i];
+						$rec = $GLOBALS[tempnames][utf8_decode(trim(strtolower($tmpi[0])))];
+						$cont = trim(str_replace($tmpi[0].':', '', $content));
+
+						#is there a target user?
+						if (empty($rec)) {
+							msg ("->\tNo target User found: ".$tmpi[0]);
+							$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
+
+						#is there content?
+						} else {
+							if ($cont) {
+								msg ("->\tMessage to ".$rec." delivered: ".$cont);
+								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+												$GLOBALS[xmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
+												utf8_decode(str_replace("'","\'",trim($cont)))."', '1', '1');");
+
+								#sql ok?
+								if ($sql)
+									$this->sendMessage($fromJid, "Message to ".utf8_decode($rec)." sent (".$jid[0].", ".$jid[1].")!");
+								else
+									$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
+							} else {
+								msg ("->\tMessage to ".$rec." dropped. No content found.");
+								$this->sendMessage($fromJid, "No content submitted!");
+							}
+						}
+
+					#is the message a comand message?
+					} elseif (substr($content, 0, 1) == "!") {
+						msg ("\tCommand mode enabled.");
+
+						#admin commands
+						if ($isadmin) {
+							if ($content == "!exit") {
+								msg ("\tExiting...");
+								$this->sendMessage($fromJid, "Deadon exiting!");
+								exit;
+							}
+						}
+						if ($content == "!list") {
+							msg ("\tShowing all users");
+
+							#get last online timestamps
+							$sql = mysql_query("SELECT timestamp,openid FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+							while ($row = mysql_fetch_array($sql))
+								$GLOBALS[tmp][online][$row[openid]] = $row[timestamp];
+							
+							#create output
+							$boolon = 1; $booli = 1; $booloff = 1; $tmpon = ""; $tmpi = ""; $tmpoff = "";
+							$reton = ""; $reti = ""; $retoff = ""; $cnton = 0; $cnti = 0; $cntoff = 0; $boolj = 1; $tmpj = ""; $cntj = 0;
+							$sqla = mysql_query("SELECT member_name,openid_uri FROM smf_members WHERE openid_uri<>'';");
+							while ($rowa = mysql_fetch_array($sqla)) {
+								if ($GLOBALS[tmp][online][$rowa[openid_uri]] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
+									if ($boolon) $boolon = 0;
+									else $tmpon = ", ";
+									$reton .= $tmpon.utf8_encode($rowa[member_name]);
+									$cnton++;
+								} elseif ($GLOBALS[tmp][online][$rowa[openid_uri]] > (time() - $GLOBALS[cfg][lastidletimeout])) {
+									if ($booli) $booli = 0;
+									else $tmpi = ", ";
+									$reti .= $tmpi.utf8_encode($rowa[member_name]);
+									$cnti++;
+								} else {
+									if ($booloff) $booloff = 0;
+									else $tmpoff = ", ";
+									$retoff .= $tmpoff.utf8_encode($rowa[member_name]);
+									$cntoff++;
 								}
 
-
-
-							} else {
-								msg ("->\tNo Admin command received!");
-								$this->sendMessage($fromJid, "No Admin command received!");
+								#check for xmpp
+								if (isset($GLOBALS[xmpp][strtolower($rowa[openid_uri])])) {
+									if ($boolj) $boolj = 0;
+									else $tmpj = ", ";
+									$retj .= $tmpj.utf8_encode($rowa[member_name]);
+									$cntj++;
+								} 
 							}
-						} else {
-							msg ("->\tUser is not admin!");
-							$this->sendMessage($fromJid, "You are no Admin!");
+							$mymessage = $cnton." Users online:\n".$reton."\n\n".$cnti." Users idle:\n".$reti."\n\n".
+														$cntoff." Users offline:\n".$retoff."\n\n".$cntj." Users with Jabber Traversal:\n".$retj."\n\nTotal ".($cnton + $cnti + $cntoff);
+							$this->sendMessage($fromJid, $mymessage);
+						} elseif ($content == "!help") {
+							msg ("\tShowing help");
+							$this->sendMessage($fromJid, "Showing help:\n".$help);
 						}
-					} elseif (empty($tmprec)) {
-						msg ("->\tNo target User found: ".$tmpi[0]);
-						$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
+
+					#malformated message
 					} else {
-						if ($tmpcont) {
-							msg ("->\tMessage to ".$tmprec." delivered: ".$tmpcont);
-							$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-										$GLOBALS[xmpp][strtolower($jid[0])]."', '".$tmprec."', '".time()."', 'XMPP/".$jid[1]."', '".utf8_decode(trim($tmpcont))."', '1', '1');");
-							if ($sql)
-								$this->sendMessage($fromJid, "Message to ".$tmprec." sent (".$jid[0].", ".$jid[1].")!");
-							else
-								$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
-						} else {
-							msg ("->\tMessage to ".$tmprec." dropped. No content found.");
-							$this->sendMessage($fromJid, "No content submitted!");
-						}
+						msg ("\tMalformated message");
+						$this->sendMessage($fromJid, "Malformated message!\n".$help);
 					}
-					} else {
-						msg ("Malformated message received from: ".$fromJid."; content: ".$content);
-						$this->sendMessage($fromJid, "Please use the following convention to send a message:\nReceiver: Message\n\nExample:\nwillhelm: hogger raid?");
-					}
-				} else {
-					msg ("Received MSG from unauthorized user (".$fromJid."). dropping it.");
-					$this->sendMessage($fromJid, "Yout jid strin is strange: !".$fromJid);
-				} 
+				}
+			} else {
+				msg ("Message received, but something is not ok! jid: ".$fromJid."; content: ".$content);
+			}
+
 			if($this->logDB) {
   	      // Save the message in the database
     	    $timestamp = date('Y-m-d H:i:s');

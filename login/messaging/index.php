@@ -151,11 +151,11 @@ if ($_POST[myjob] == "composemessage") {
 
 	$GLOBALS[html] .= "<h2>Read Message</h2>";
 	$GLOBALS[html] .= "From: ".genMsgUrl($sender)."<br />";
-	$GLOBALS[html] .= "To: ".genMsgUrl($receiver)."<br />";
+	$GLOBALS[html] .= "To: ".$receiver."<br />";
 	$GLOBALS[html] .= "Date: ".$GLOBALS[myreturn][message][date]."<br />";
-	$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br /><br />";
-	$GLOBALS[html] .= "<b>Source: ".$GLOBALS[myreturn][message][subject]."</b>";
-	$GLOBALS[html] .= "<pre>".$GLOBALS[myreturn][message][message]."</pre><br />";
+	$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br />";
+	$GLOBALS[html] .= "Source: ".$GLOBALS[myreturn][message][subject]."<br />";
+	$GLOBALS[html] .= "<big><pre>".$GLOBALS[myreturn][message][message]."</pre></big>";
 
 } elseif ($_POST[myjob] == "getusers") {
 	$cnt = 0;
