@@ -6,6 +6,7 @@
 require_once('./inc/conf.inc.php');
 require_once('./inc/functions.inc.php');
 require_once($GLOBALS[cfg][logindir].'/conf.inc.php');
+require_once($GLOBALS[cfg][logindir].'/functions.inc.php');
 
 
 $GLOBALS[debug] = 1;

@@ -156,6 +156,8 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br />";
 	$GLOBALS[html] .= "Source: ".$GLOBALS[myreturn][message][subject]."<br />";
 	$GLOBALS[html] .= "<big><pre>".$GLOBALS[myreturn][message][message]."</pre></big>";
+	$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&myjob=deletemessage&id=".
+										$GLOBALS[myreturn][message][id]."'>Delete this message</a>";
 
 } elseif ($_POST[myjob] == "getusers") {
 	$cnt = 0;

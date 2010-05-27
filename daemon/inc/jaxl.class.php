@@ -79,15 +79,16 @@
 
 					#generate help message
 					$help  = "How to communicate with me:\n";
-					$help .= "\t!command | run a command\n";
-					$help .= "\tuser:message | send a message to a user\n";
+					$help .= "!command | run a command\n";
+					$help .= "user:message | send a message to a user\n";
 
 					$help .= "\nAvailable Commands:\n";
-					$help .= "\thelp | show this help\n";
-					$help .= "\tlist | show a list of all users\n";
+					$help .= "!help | show this help\n";
+					$help .= "!users | show a list of all users\n";
+					$help .= "!recent | show recent messages (max 10)\n";
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
-						$help .= "\texit | exit daemon (will restart)\n";
+						$help .= "exit | exit daemon (will restart)\n";
 					}
 
 					## what do we have to do? ##
@@ -137,7 +138,7 @@
 								exit;
 							}
 						}
-						if ($content == "!list") {
+						if ($content == "!users") {
 							msg ("\tShowing all users");
 
 							#get last online timestamps
@@ -178,9 +179,29 @@
 							$mymessage = $cnton." Users online:\n".$reton."\n\n".$cnti." Users idle:\n".$reti."\n\n".
 														$cntoff." Users offline:\n".$retoff."\n\n".$cntj." Users with Jabber Traversal:\n".$retj."\n\nTotal ".($cnton + $cnti + $cntoff);
 							$this->sendMessage($fromJid, $mymessage);
+
+						#recent messages
+						} elseif ($content == "!recent") {
+							$cnt = 0; $out = "";
+							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][messagetable].
+											" WHERE receiver='".$GLOBALS[xmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
+							while ($row = mysql_fetch_array($sql)) {
+								$out .= $GLOBALS[tempnames][$row[sender]]." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
+								$cnt++;
+							}
+
+							msg ("\tShowing recent messages");
+							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".$out);
+
+						#show the help
 						} elseif ($content == "!help") {
 							msg ("\tShowing help");
 							$this->sendMessage($fromJid, "Showing help:\n".$help);
+
+						#no such command
+						} else {
+							msg ("\tNo command found: ".$content);
+							$this->sendMessage($fromJid, "No such command.\n".$help);
 						}
 
 					#malformated message
