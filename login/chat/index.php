@@ -27,6 +27,8 @@ if ($_SESSION[loggedin] == 1) {
 														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
 				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
 							$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
+
+				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[channel]."';");
 				$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
 				$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
 			} else {
@@ -151,7 +153,7 @@ if ($_SESSION[loggedin] == 1) {
 
 		case "viewchannellist":
 			#list channels
-			$GLOBALS[html] .= "<h3>View Messages | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>View Messages</a> | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
 			$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 			$cnt = 0; $ncnt = 0;
 			$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th><th>Join / Leave</th></tr>";
@@ -193,11 +195,11 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<td valign='bottom'>";
 				$GLOBALS[html] .= "<b>".$mychan[name]."</b><br />";
 				foreach ($mymsgs[msg][$mychan[id]] as $mymsg) {
-					$GLOBALS[html] .= $mymsg[name].": ".$mymsg[msg]."<br />";
+					$GLOBALS[html] .= $mymsg[sender].": ".$mymsg[msg]."<br />";
 				}
 
 				$GLOBALS[html] .= "<input type='text' name='chat' value='' size='20'/>";
-				$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
+				$GLOBALS[html] .= "<input type='submit' name='submit' value='ok' />";
 
 				$GLOBALS[html] .= "</td>";
 				$GLOBALS[html] .= "</form>";

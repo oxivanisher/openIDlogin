@@ -508,10 +508,11 @@ function getMyChatMessages ($since = NULL) {
 	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
 					" WHERE".$wsearch." ORDER BY timestamp ASC LIMIT 10;");
 	while ($row = mysql_fetch_array($sql)) {
-		$tret[msg][$row[channel]][id] = $row[id];
-		$tret[msg][$row[channel]][sender] = $GLOBALS[users][byuri][$row[sender]][utf8name];
-		$tret[msg][$row[channel]][ts] = getAge($row[timestamp]);
-		$tret[msg][$row[channel]][msg] = $row[message];
+		$tret[msg][$row[channel]][$count][id] = $row[id];
+		$tret[msg][$row[channel]][$count][sender] = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[sender]]][utf8name];
+		$tret[msg][$row[channel]][$count][ts] = getAge($row[timestamp]);
+		$tret[msg][$row[channel]][$count][msg] = $row[message];
+		$count++;
 	}
 	$tret[chan] = $data;
 	return $tret;
