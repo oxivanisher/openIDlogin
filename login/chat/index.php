@@ -22,7 +22,8 @@ if ($_SESSION[loggedin] == 1) {
 	#send chat -> functions
 	switch($_POST[myjob]) {
 		case "chat":
-			$data = getChatChannel($_POST[id]);
+
+			$data = getChatChannel($_POST[channel]);
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
 														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
 				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
@@ -30,7 +31,7 @@ if ($_SESSION[loggedin] == 1) {
 
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[channel]."';");
 				$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
-				$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+				$GLOBALS[myreturn][msg] = "sent";
 			} else {
 				$GLOBALS[html] .= "<h3>Message NOT sent!</h3>";
 				$GLOBALS[myreturn][msg] = "notsent";
@@ -41,9 +42,9 @@ if ($_SESSION[loggedin] == 1) {
 		case "editchannel":
 			$data = getChatChannel($_POST[id]);
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin])) {
-				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET name='".$_POST[name]."', allowed='".serialize($_POST[allowed])."' WHERE id='".$_POST[id]."';");
+				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET name='".encodeme($_POST[name])."', allowed='".serialize($_POST[allowed])."' WHERE id='".$_POST[id]."';");
 				$GLOBALS[html] .= "<h3>Channel ".$_POST[channel]." edited!</h3>";
-				$GLOBALS[myreturn][msg] = "edited"; #FIXME ok check (error/sent)
+				$GLOBALS[myreturn][msg] = "edited";
 			} else {
 				$GLOBALS[html] .= "<h3>Channel NOT edited!</h3>";
 				$GLOBALS[myreturn][msg] = "notedited";
@@ -52,8 +53,8 @@ if ($_SESSION[loggedin] == 1) {
 
 		#create channel -> functions
 		case "createchannel":
-			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][channeltable]." SET owner='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', name='".$_POST[name]."', allowed='".
-							serialize($_POST[allowed])."', created='".time()."';");
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][channeltable]." SET owner='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat].
+							"', name='".encodeme($_POST[name])."', allowed='".serialize($_POST[allowed])."', created='".time()."';");
 			$GLOBALS[html] .= "<h3>Channel ".$_POST[name]." created!</h3>";
 			$GLOBALS[myreturn][msg] = "created"; #FIXME ok check (error/sent)
 		break;
@@ -193,9 +194,10 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='chat' />";
 				$GLOBALS[html] .= "<input type='hidden' name='channel' value='".$mychan[id]."' />";
 				$GLOBALS[html] .= "<td valign='bottom'>";
-				$GLOBALS[html] .= "<b>".$mychan[name]."</b><br />";
-				foreach ($mymsgs[msg][$mychan[id]] as $mymsg) {
-					$GLOBALS[html] .= $mymsg[sender].": ".$mymsg[msg]."<br />";
+				$GLOBALS[html] .= "<b>".utf8_decode($mychan[name])."</b><br />";
+				foreach ($mymsgs[msg] as $mymsg) {
+					if ($mymsg[channel] == $mychan[id])
+						$GLOBALS[html] .= $mymsg[sender].": ".$mymsg[msg]."<br />";
 				}
 
 				$GLOBALS[html] .= "<input type='text' name='chat' value='' size='20'/>";

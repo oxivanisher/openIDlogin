@@ -444,6 +444,7 @@ function getMyChatChannels () {
 		$wsearch .= $wtmp." id='".$chanid."'";
 	}
 
+	if (! $bool) {
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search." WHERE ".$wsearch.";");
 	while ($row = mysql_fetch_array($sql)) {
 		if ($row[owner] == 0) {
@@ -461,6 +462,7 @@ function getMyChatChannels () {
 		$tret[$count][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
 		$tret[$count][lastmessage] = getAge($row[lastmessage]);
 		$count++;
+	}
 	}
 	return $tret;
 }
@@ -505,14 +507,17 @@ function getMyChatMessages ($since = NULL) {
 		$tret[msg][$chanid] = array();
 	}
 
+	if (! $bool) {
 	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
-					" WHERE".$wsearch." ORDER BY timestamp ASC LIMIT 10;");
+					" WHERE".$wsearch." ORDER BY timestamp DESC LIMIT 20;");
 	while ($row = mysql_fetch_array($sql)) {
-		$tret[msg][$row[channel]][$count][id] = $row[id];
-		$tret[msg][$row[channel]][$count][sender] = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[sender]]][utf8name];
-		$tret[msg][$row[channel]][$count][ts] = getAge($row[timestamp]);
-		$tret[msg][$row[channel]][$count][msg] = $row[message];
+		$tret[msg][$count][id] = $row[id];
+		$tret[msg][$count][channel] = $row[channel];
+		$tret[msg][$count][sender] = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[sender]]][utf8name];
+		$tret[msg][$count][ts] = getAge($row[timestamp]);
+		$tret[msg][$count][msg] = utf8_decode($row[message]);
 		$count++;
+	}
 	}
 	$tret[chan] = $data;
 	return $tret;
