@@ -15,73 +15,77 @@ if ($_SESSION[loggedin] == 1) {
 
 
 
-
 /* marker */
 	
 	#send chat -> functions
-	if ($_POST[myjob] == "chat") {
-		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
-					$_SESSION[openid_identifier]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
-		$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
-		$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+	switch($_POST[myjob]) {
+		case "chat":
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
+						$_SESSION[openid_identifier]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
+			$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
+			$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+		break;
 
-	}
+	#edit channel -> functions
+		case "chat":
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
+						$_SESSION[openid_identifier]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
+			$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
+			$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+		break;
 
 	#get chat status -> functions (site refresh ajax request)
-	elseif ($_POST[myjob] == "status") {
+		case "status":
 		
-		$GLOBALS[myreturn][msg] = "status";
-	}
+			$GLOBALS[myreturn][msg] = "status";
+		break;
 
 	#get chat update -> functions (update poll ajax request)
-	elseif ($_POST[myjob] == "update") {
+		case "update":
 		
-		$GLOBALS[myreturn][msg] = "update";
-	}
+			$GLOBALS[myreturn][msg] = "update";
+		break;
 
 	#get users -> functions
-	elseif ($_POST[myjob] == "getusers") {
-		$cnt = 0;
-		foreach ($GLOBALS[users][byuri] as $myuri) {
-			$GLOBALS[myreturn][users][$cnt][name] = $myuri[name];
-			$GLOBALS[myreturn][users][$cnt][openid] = $myuri[uri];
-			$cnt++;
-		}
+		case "getusers":
+			$cnt = 0;
+			foreach ($GLOBALS[users][byuri] as $myuri) {
+				$GLOBALS[myreturn][users][$cnt][name] = $myuri[name];
+				$GLOBALS[myreturn][users][$cnt][openid] = $myuri[uri];
+				$cnt++;
+			}
+		break;
 	}
 
-	$GLOBALS[html] .= "<h3>List Channels</h3>";
-	$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
-	$cnt = 0; $ncnt = 0;
-	$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th></tr>";
+	switch($_POST[myjob]) {
+		case "vieweditchannel":
+			$data = getChatChannel($_POST[id]);
 
-	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].
-											" WHERE 1 ORDER BY name ASC;");
-	while ($row = mysql_fetch_array($sql)) {
-		if ($row[owner] == 0) {
-			$owner = "Willhelm";
-		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
-			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
-		else
-			$owner = $row[owner];
+			$GLOBALS[html] .= "<h3>Edit Channel</h3>";
+			$GLOBALS[html] .= "<form action='?' method='POST'>";
+			$GLOBALS[html] .= "<input type='hidden' name='myjob' value='editchannel' />";
+			$GLOBALS[html] .= "<input type='hidden' name='id' value='".$data[id]."' />";
+			$GLOBALS[html] .= "Name: <input type='text' name='name' value='".$data[name]."' /><br />";
+			$GLOBALS[html] .= "Allowed:<br />";
+			$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
+			$GLOBALS[html] .= "</form>";
+		break;
 
-		$GLOBALS[myreturn][channels][$cnt][id] = $row[id];
-		$GLOBALS[myreturn][channels][$cnt][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
-		$GLOBALS[myreturn][channels][$cnt][lastmessage] = getAge($row[lastmessage]);
-		$GLOBALS[myreturn][channels][$cnt][name] = $row[name];
-		$GLOBALS[myreturn][channels][$cnt][owner] = $owner;
-		$GLOBALS[myreturn][channels][$cnt][ownername] = $owner;
-
-
-		$GLOBALS[html] .= "<tr>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][name]."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][owner]."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][created]."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][lastmessage]."</td>";
-		$GLOBALS[html] .= "</tr>";
-
-		$cnt++;
+		default:
+			$GLOBALS[html] .= "<h3>List Channels | <a href='?module=".$_POST[module]."&myjob=createchannel'>Create Channel</a></h3>";
+			$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
+			$cnt = 0; $ncnt = 0;
+			$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th></tr>";
+			foreach (getChatChannels() as $data) {
+				$GLOBALS[html] .= "<tr>";
+				$GLOBALS[html] .= "<td><a href='?module=".$_POST[module]."&myjob=vieweditchannel&id=".$data[id]."'>".$data[name]."</a></td>";
+				$GLOBALS[html] .= "<td>".$data[ownername]."</td>";
+				$GLOBALS[html] .= "<td>".$data[created]."</td>";
+				$GLOBALS[html] .= "<td>".$data[lastmessage]."</td>";
+				$GLOBALS[html] .= "</tr>";
+			}
+			$GLOBALS[html] .= "</table>";
 	}
-	$GLOBALS[html] .= "</table>";
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
 }

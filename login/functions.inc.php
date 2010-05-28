@@ -265,7 +265,8 @@ function getAge($timestamp) {
 }
 
 function genMsgUrl($user) {
-	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byname][$user]."'>".$user."</a>";
+	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
+					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
 }
 
 function checkSession () {
@@ -419,14 +420,53 @@ function getChatChannels ($owner = NULL) {
 	if ($owner) $search = " WHERE owner='".$owner."'";
 	else $search = " WHERE 1";
 
-	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][usertable].$search.";");
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search.";");
 	while ($row = mysql_fetch_array($sql)) {
-		$tret[$count++][id] = $row[id];
-		$tret[$count++][owner] = $row[owner];
-		$tret[$count++][name] = getAge($row[name]);
-		$tret[$count++][allowed] = $row[allowed];
-		$tret[$count++][created] = getAge($row[created]);
-		$tret[$count++][lastmessage] = $row[lastmessage];
+
+		#FIXME i need a securtiycheck with allowed!
+
+		if ($row[owner] == 0) {
+			$owner = "Willhelm";
+		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
+		else
+			$owner = $row[owner];
+
+		$tret[$count][id] = $row[id];
+		$tret[$count][owner] = $row[owner];
+		$tret[$count][ownername] = $owner;
+		$tret[$count][name] = $row[name];
+		$tret[$count][allowed] = $row[allowed];
+		$tret[$count][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
+		$tret[$count][lastmessage] = getAge($row[lastmessage]);
+		$count++;
+	}
+	return $tret;
+}
+
+function getChatChannel ($myid) {
+	$tret = array();
+	$count = 0;
+
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable]." WHERE id='".$myid."';");
+	while ($row = mysql_fetch_array($sql)) {
+
+		#FIXME i need a securtiycheck with allowed!
+
+		if ($row[owner] == 0) {
+			$owner = "Willhelm";
+		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
+		else
+			$owner = $row[owner];
+
+		$tret[id] = $row[id];
+		$tret[owner] = $row[owner];
+		$tret[ownername] = $owner;
+		$tret[name] = $row[name];
+		$tret[allowed] = $row[allowed];
+		$tret[created] = strftime($GLOBALS[cfg][strftime], $row[created]);
+		$tret[lastmessage] = getAge($row[lastmessage]);
 	}
 	return $tret;
 }
@@ -437,10 +477,11 @@ function getChatMessages ($channel) {
 	#FIXME I NEED A SECURITY FUNCTION !!! REALLY !!! PLEASE
 	$sql = mysql_query("SELECT id,sender,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable]." WHERE channel='".$channel."' ORDER BY timestamp ASC LIMIT 15;");
 	while ($row = mysql_fetch_array($sql)) {
-		$tret[$count++][id] = $row[id];
-		$tret[$count++][sender] = $row[sender];
-		$tret[$count++][timestamp] = getAge($row[timestamp]);
-		$tret[$count++][message] = $row[message];
+		$tret[$count][id] = $row[id];
+		$tret[$count][sender] = $row[sender];
+		$tret[$count][timestamp] = getAge($row[timestamp]);
+		$tret[$count][message] = $row[message];
+		$count++;
 	}
 	return $tret;
 }
