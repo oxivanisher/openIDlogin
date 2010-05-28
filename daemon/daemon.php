@@ -2,9 +2,10 @@
 
 #jabber transport from openIDlogin to XMPP Server
 
-#read configs
-require_once('./inc/conf.inc.php');
-require_once('./inc/functions.inc.php');
+#set the path of the framework
+$GLOBALS[cfg][logindir]			= "/srv/www/instances/alptroeim.ch/htdocs/login";
+
+#read config and functions
 require_once($GLOBALS[cfg][logindir].'/conf.inc.php');
 require_once($GLOBALS[cfg][logindir].'/functions.inc.php');
 
@@ -25,18 +26,18 @@ include_once("inc/jaxl.class.php");
  
 /* Create an instance of XMPP Class */
 $jaxl = new JAXL(
-	$GLOBALS[cfg][xmpp][host],
-	$GLOBALS[cfg][xmpp][port],
-	$GLOBALS[cfg][xmpp][user],
-	$GLOBALS[cfg][xmpp][pass],
-	$GLOBALS[cfg][xmpp][domain],
+	$GLOBALS[cfg][daemon][xmpp][host],
+	$GLOBALS[cfg][daemon][xmpp][port],
+	$GLOBALS[cfg][daemon][xmpp][user],
+	$GLOBALS[cfg][daemon][xmpp][pass],
+	$GLOBALS[cfg][daemon][xmpp][domain],
 
-	$GLOBALS[cfg][logdb][host],
-	$GLOBALS[cfg][logdb][dbname],
-	$GLOBALS[cfg][logdb][user],
-	$GLOBALS[cfg][logdb][pass],
-	$GLOBALS[cfg][logEnable],
-	$GLOBALS[cfg][logDB]
+	$GLOBALS[cfg][daemon][logdb][host],
+	$GLOBALS[cfg][daemon][logdb][dbname],
+	$GLOBALS[cfg][daemon][logdb][user],
+	$GLOBALS[cfg][daemon][logdb][pass],
+	$GLOBALS[cfg][daemon][logEnable],
+	$GLOBALS[cfg][daemon][logDB]
 	);
 
 try {
@@ -44,21 +45,21 @@ try {
   msg (":Initiating connection");
   $jaxl->connect();
 
-	getUsers();
+	getXmppUsers();
 
   msg (":Setting timer to 0");
   $GLOBALS[timer] = 9999999999999999999;
   /* Communicate with Jabber Server */
   msg (":Start communicating with Server");
   while($jaxl->isConnected) {
-  	if ($GLOBALS[timer] < (time() - $GLOBALS[cfg][sleeptime]) ) {
+  	if ($GLOBALS[timer] < (time() - $GLOBALS[cfg][daemon][sleeptime]) ) {
 			$GLOBALS[timer] = time();
-			getUsers();
+			getXmppUsers();
 #			msg ("Yippie! I'm triggered :D");
 
 			$cnt = 0;
 			unset($GLOBALS[message]);
-			$msql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message FROM ".$GLOBALS[cfg][messagetable]." WHERE xmpp='1';");
+			$msql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE xmpp='1';");
 			while ($mrow = mysql_fetch_array($msql)) {
 				$GLOBALS[message][$cnt][id]					= $mrow[id];
 				$GLOBALS[message][$cnt][sender]			= $mrow[sender];
@@ -81,7 +82,7 @@ try {
 				}
 
 				msg ("MSG From: ".$GLOBALS[tempnames][$mymsg[sender]]."; To: ".$GLOBALS[tempnames][$mymsg[receiver]]." (".$msg.")");
-				$rsql = mysql_query("UPDATE ".$GLOBALS[cfg][messagetable]." SET xmpp='0' WHERE id='".$mymsg[id]."';");
+				$rsql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET xmpp='0' WHERE id='".$mymsg[id]."';");
 			}
 		}
     $jaxl->getXML();

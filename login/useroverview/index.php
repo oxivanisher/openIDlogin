@@ -1,10 +1,8 @@
 <?php
-require_once('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/inc/conf.inc.php');
-
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 
-#	$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][module][tablename]." WHERE 1;");
+#	$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE 1;");
 #	while ($rowv = mysql_fetch_array($sqlv))
 #		$GLOBALS[html] .= "&nbsp;- found admin: ".$rowv[openid]."<br />";
 
@@ -17,7 +15,7 @@ if ($_SESSION[loggedin] == 1) {
 
 	#draw user table
 
-	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][module][tablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
 	while ($rowa = mysql_fetch_array($sqla)) {
 		$admin = 1;
 	}
@@ -29,14 +27,14 @@ if ($_SESSION[loggedin] == 1) {
 	}
 
 	#fetching users from openid
-	$sqls = mysql_query("SELECT openid,timestamp FROM oom_openid_lastonline WHERE 1;");
+	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($rows = mysql_fetch_array($sqls)) {
 		$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
 		$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
 	}
 
 	#fetching users from smf
-	$sqls = mysql_query("SELECT member_name,openid_uri FROM smf_members WHERE openid_uri<>'';");
+	$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
 	while ($rows = mysql_fetch_array($sqls)) {
 		$GLOBALS[module][$rows[openid_uri]][smf] = utf8_decode($rows[member_name]);
 		$GLOBALS[module][$rows[openid_uri]][name] = utf8_decode($rows[openid_uri]);

@@ -1,9 +1,5 @@
 <?php
-require_once('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/inc/conf.inc.php');
 
-function encodeme($me) {
-	return utf8_encode(mysql_real_escape_string(str_replace('&', '&amp;', $me)));
-}
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
@@ -11,14 +7,14 @@ if ($_SESSION[loggedin] == 1) {
 #helper functions
 
 #fetching users from openid
-$sqls = mysql_query("SELECT openid,timestamp FROM oom_openid_lastonline WHERE 1;");
+$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 while ($rows = mysql_fetch_array($sqls)) {
 	$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
 	$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
 }
 
 #fetching users from smf
-$sqls = mysql_query("SELECT member_name,openid_uri FROM smf_members WHERE openid_uri<>'';");
+$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
 while ($rows = mysql_fetch_array($sqls)) {
 	$GLOBALS[module][$rows[openid_uri]][smf] = $rows[member_name];
 	$GLOBALS[module][$rows[openid_uri]][name] = $rows[openid_uri];
@@ -29,7 +25,7 @@ while ($rows = mysql_fetch_array($sqls)) {
 
 #send message -> functions
 if ($_POST[myjob] == "sendmessage") {
-	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][module][tablename]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 					$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
 					"', '".encodeme($_POST[message])."', '1', '1');");
 	$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
@@ -39,13 +35,13 @@ if ($_POST[myjob] == "sendmessage") {
 #delete message -> functions
 elseif ($_POST[myjob] == "deletemessage") {
 	$cbool = 0;
-	$csql = mysql_query("SELECT receiver FROM ".$GLOBALS[cfg][module][tablename]." WHERE id='".$_POST[id]."';");
+	$csql = mysql_query("SELECT receiver FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE id='".$_POST[id]."';");
 	while ($crow = mysql_fetch_array($csql))
 		if ($crow[receiver] == $_SESSION[openid_identifier])
 			$cbool = 1;
 
 	if ($cbool) {
-		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][module][tablename]." WHERE id='".$_POST[id]."';");
+		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE id='".$_POST[id]."';");
 		$GLOBALS[html] .= "<h3>Message deleted!</h3>";
 		$GLOBALS[myreturn][msg] = "deleted"; #FIXME ok check (error/sent)
 	} else {
@@ -57,18 +53,18 @@ elseif ($_POST[myjob] == "deletemessage") {
 #setup xmpp
 elseif ($_POST[myjob] == "setupxmpp") {
 	$cbool = 0;
-	$csql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][module][xmpptable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$csql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE openid='".$_SESSION[openid_identifier]."';");
 	while ($crow = mysql_fetch_array($csql)) {
 		$cbool = 1;
 		$tmpname = $crow[xmpp];
 	}
 
 	if ($cbool) {
-		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][module][xmpptable]." SET xmpp='".strtolower($_POST[user]).
+		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][xmpptable]." SET xmpp='".strtolower($_POST[user]).
 					"' WHERE openid='".$_SESSION[openid_identifier]."';");
 
 	} else {
-		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][module][xmpptable]." (openid,xmpp) VALUES ('".
+		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][xmpptable]." (openid,xmpp) VALUES ('".
 					$_SESSION[openid_identifier]."', '".strtolower($_POST[user])."');");
 	}
 	$GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
@@ -92,7 +88,7 @@ if ($_POST[myjob] == "composemessage") {
 
 
 } elseif ($_POST[myjob] == "setupxmppform") {
-	$csql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][module][xmpptable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$csql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE openid='".$_SESSION[openid_identifier]."';");
 	while ($crow = mysql_fetch_array($csql))
 		$tmpname = $crow[xmpp];
 	$GLOBALS[html] .= "<h2>Setup Jabber Traversal (XMPP)</h2>";
@@ -119,7 +115,7 @@ if ($_POST[myjob] == "composemessage") {
 
 
 } elseif ($_POST[myjob] == "readmessage") {
-	$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][module][tablename].
+	$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 				" WHERE id='".$_POST[id]."' AND receiver='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 	while ($row = mysql_fetch_array($sql)) {
 		if (($row[sender] == $_SESSION[openid_identifier]) OR ($row[receiver] == $_SESSION[openid_identifier])) {
@@ -144,7 +140,7 @@ if ($_POST[myjob] == "composemessage") {
 		$GLOBALS[myreturn][message][message] = utf8_decode($row[message]);
 	
 		if ($row[receiver] == $_SESSION[openid_identifier])
-			$sqlr = mysql_query("UPDATE ".$GLOBALS[cfg][module][tablename]." SET new='0', xmpp='0' WHERE id='".$row[id]."';");
+			$sqlr = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0', xmpp='0' WHERE id='".$row[id]."';");
 
 		}
 	}
@@ -172,7 +168,7 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 	$cnt = 0; $ncnt = 0;
 	$GLOBALS[html] .= "<tr><th>From</th><th>Age</th><th>Message</th><th>Time</th><th>Delete</th></tr>";
-	$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][module][tablename].
+	$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 				" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 	while ($row = mysql_fetch_array($sql)) {
 

@@ -1,21 +1,28 @@
 <?php
-require_once('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/inc/conf.inc.php');
-
-function encodeme($me) {
-	return utf8_encode(mysql_real_escape_string(str_replace('&', '&amp;', $me)));
-}
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
+
+	#get chat users from db
+
+
+
+
+
+
+
+
+/* marker */
+
 	#fetching users from openid
-	$sqls = mysql_query("SELECT openid,timestamp FROM oom_openid_lastonline WHERE 1;");
+	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($rows = mysql_fetch_array($sqls)) {
 		$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
 		$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
 	}
 
 	#fetching users from smf
-	$sqls = mysql_query("SELECT member_name,openid_uri FROM smf_members WHERE openid_uri<>'';");
+	$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
 	while ($rows = mysql_fetch_array($sqls)) {
 		$GLOBALS[module][$rows[openid_uri]][smf] = $rows[member_name];
 		$GLOBALS[module][$rows[openid_uri]][name] = $rows[openid_uri];
@@ -23,7 +30,7 @@ if ($_SESSION[loggedin] == 1) {
 
 	#send chat -> functions
 	if ($_POST[myjob] == "chat") {
-		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][module][tablename]." (sender,receiver,timestamp,message,new) VALUES ('".
+		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,receiver,timestamp,message,new) VALUES ('".
 					$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[chat])."', '1');");
 		$GLOBALS[html] .= "<h3>Chat to ".$_POST[user]." sent!</h3>";
 		$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
@@ -50,7 +57,7 @@ if ($_SESSION[loggedin] == 1) {
 	$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 	$cnt = 0; $ncnt = 0;
 	$GLOBALS[html] .= "<tr><th>From</th><th>To</th><th>Message</th><th>Time</th></tr>";
-	$sql = mysql_query("SELECT id,sender,receiver,timestamp,message FROM ".$GLOBALS[cfg][module][tablename].
+	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
 			" WHERE receiver='".$_SESSION[openid_identifier]."' OR sender='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 
 	while ($row = mysql_fetch_array($sql)) {

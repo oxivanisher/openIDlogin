@@ -1,5 +1,0 @@
-<?php
-
-$GLOBALS[cfg][module][tablename] = "oom_openid_usermanager";
-
-?>

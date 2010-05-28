@@ -3,7 +3,7 @@
 function setCookies () {
 	#set smf cookie
 	$GLOBALS[html] .= "<b>checking for smf user:</b><br />";
-	$sql = mysql_query("SELECT id_member,member_name,passwd,password_salt,email_address FROM smf_members WHERE openid_uri='".$_SESSION[openid_identifier]."';");
+	$sql = mysql_query("SELECT id_member,member_name,passwd,password_salt,email_address FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri='".$_SESSION[openid_identifier]."';");
 	while ($row = mysql_fetch_array($sql)) {
 		$data = array($row[id_member], sha1($row[passwd] . $row[password_salt]), (time() + 3600), 0);
 		setcookie('alpCookie',serialize($data),(time() + 3600),$GLOBALS[cfg][cookiepath],$GLOBALS[cfg][cookiedomain]);
@@ -101,7 +101,7 @@ function checkSites () {
 function fetchUsers () {
 	#smf
 	$count = 0;
-	$sql = mysql_query("SELECT openid_uri,member_name FROM smf_members WHERE 1;");
+	$sql = mysql_query("SELECT openid_uri,member_name FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
 			$GLOBALS[module][all][$row[openid_uri]] = utf8_decode($row[member_name]);
@@ -165,7 +165,7 @@ function drawProfileDropdown() {
 
 	$tmphtml .= "<select name='profile'>";
 	$tmphtml .= "<option value=''>Choose Profile</option>";
-	foreach ($GLOBALS[cfg][module][profile] as $myname => $myprofile) {
+	foreach ($GLOBALS[cfg][profile] as $myname => $myprofile) {
 		$tmphtml .= "<option value='".$myname."'>".$myprofile[name]."</option>";
 	}
 	$tmphtml .= "</select>";
@@ -179,7 +179,7 @@ function drawSmfUsersDropdown() {
 
 	$tmphtml .= "<select name='newuser'>";
 	$tmphtml .= "<option value=''>Choose User</option>";
-	$sqlt = mysql_query("SELECT member_name,id_member FROM smf_members WHERE openid_uri='' ORDER BY member_name ASC;");
+	$sqlt = mysql_query("SELECT member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri='' ORDER BY member_name ASC;");
 	while ($rowt = mysql_fetch_array($sqlt)) {
 		$tmphtml .= "<option value='".$rowt[id_member]."'>".utf8_decode($rowt[member_name])."</option>";
 	}
@@ -255,7 +255,7 @@ function getOnlineUsers () {
 	$bool = false; $cnt = 0;
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = ""; $onlineusersarray = array();
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = ""; $idleusersarray = array();
-	$onlinesql = mysql_query("SELECT openid,timestamp,name FROM oom_openid_lastonline WHERE 1;");
+	$onlinesql = mysql_query("SELECT openid,timestamp,name FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
 		if (empty($GLOBALS[module][all][$orow[openid]])) continue;
 		if ($orow[name] == '0') continue;
@@ -284,9 +284,9 @@ function getOnlineUsers () {
 function updateLastOnline () {
 	#magic
 	if ($GLOBALS[online][isintable])
-		mysql_query("UPDATE oom_openid_lastonline SET timestamp='".time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
+		mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	else if ((! empty($_SESSION[openid_identifier]) AND (! empty($_SESSION[myname]))))
-		mysql_query("INSERT INTO oom_openid_lastonline (openid,timestamp,name) VALUES ('".$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
+		mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (openid,timestamp,name) VALUES ('".$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
 }
 
 function jasonOut () {
@@ -309,14 +309,14 @@ function jasonOut () {
 			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
 			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
 
-			$sql = mysql_query("SELECT id FROM oom_openid_messages WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
+			$sql = mysql_query("SELECT id FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
 			while ($row = mysql_fetch_array($sql)) {
 				$GLOBALS[myreturn][newmsgs]++;
 				$GLOBALS[myreturn][newmsgid] = $row[id];
 			}
 
 #			if ($_POST[job] == "update") {
-#				$sql = mysql_query("SELECT timestamp FROM oom_openid_lastonline WHERE openid='".$_SESSION[openid_identifier]."';");
+#				$sql = mysql_query("SELECT timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_SESSION[openid_identifier]."';");
 #				while ($row = mysql_fetch_array($sql))
 #					$tmpts = $row[timestamp];
 #				if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
@@ -348,4 +348,34 @@ function jasonOut () {
 		exit;
 	}
 }
+
+function encodeme($me) {
+	return utf8_encode(mysql_real_escape_string(str_replace('&', '&amp;', $me)));
+}
+
+#daemon functions
+function getXmppUsers() {
+	#load users from db (oom_.._xmpp)
+	unset ($GLOBALS[xmpp]);
+	$sql = mysql_query("SELECT openid,xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql)) {
+		$GLOBALS[xmpp][$row[xmpp]] = $row[openid];
+		$GLOBALS[xmpp][$row[openid]] = $row[xmpp];
+	}
+
+	#get smf usernames for lookup
+	unset ($GLOBALS[tempnames]);
+	$smfsql = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
+	while ($smfrow = mysql_fetch_array($smfsql)) {
+		$GLOBALS[tempnames][$smfrow[openid_uri]] = $smfrow[member_name];
+		$GLOBALS[tempnames][strtolower($smfrow[member_name])] = $smfrow[openid_uri];
+	}
+}
+
+function msg ($msg) {
+	if ($GLOBALS[debug])
+	echo strftime("%a %d %b %H:%M:%S %Y", time())."\t".$msg."\n";
+}
+
+
 ?>

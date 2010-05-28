@@ -1,37 +1,36 @@
 <?php
-require_once('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/inc/conf.inc.php');
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 	$allowed = 0;
 
-	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][module][tablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
 	while ($rowa = mysql_fetch_array($sqla)) {
 		$allowed = 1;
 	}
 	if ($allowed == 1) {
 		$GLOBALS[html] .= "- you are allowed to use this module<br />";
-		$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][module][tablename]." WHERE openid<>'".$_SESSION[openid_identifier]."';");
+		$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE openid<>'".$_SESSION[openid_identifier]."';");
 		while ($rowv = mysql_fetch_array($sqlv))
 			$GLOBALS[html] .= "&nbsp;- also allowed: ".$rowv[openid]."<br />";
 
 		#apply profile function
 		if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile]))) {
 			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$_POST[user]." to ".
-							$GLOBALS[cfg][module][profile][$_POST[profile]][name]."</h3>";
+							$GLOBALS[cfg][profile][$_POST[profile]][name]."</h3>";
 			fetchUsers();
 	
 			#wordpress
 			if (! empty($GLOBALS[module][sites][wordpress][$_POST[user]])) {
 				$GLOBALS[html] .= "- mofifying wordpress user ".$GLOBALS[module][sites][wordpress][$_POST[user]]." :)<br />";
-				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][module][profile][$_POST[profile]][wordpress].
+				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][profile][$_POST[profile]][wordpress].
 						"'WHERE user_id='".$GLOBALS[module][sites][wordpress][$_POST[user]]."' AND meta_key='wp_user_level';");
 			}
 
 			#smf
 			if (! empty($GLOBALS[module][sites][smf][$_POST[user]])) {
 				$GLOBALS[html] .= "- modifying smf user ".$GLOBALS[module][sites][smf][$_POST[user]]." :)<br />";
-				$sql = mysql_query("UPDATE smf_members SET id_group='".$GLOBALS[cfg][module][profile][$_POST[profile]][smf].
+				$sql = mysql_query("UPDATE smf_members SET id_group='".$GLOBALS[cfg][profile][$_POST[profile]][smf].
 						"', lngfile='german-utf8' WHERE member_name='".$GLOBALS[module][sites][smf][$_POST[user]]."';");
 			}
 
@@ -44,7 +43,7 @@ if ($_SESSION[loggedin] == 1) {
 				}
 
 				$sql = mysql_query("SELECT user_id FROM eqdkp_users WHERE username='".
-							$GLOBALS[cfg][module][profile][$_POST[profile]][eqdkp]."';");
+							$GLOBALS[cfg][profile][$_POST[profile]][eqdkp]."';");
 				while ($row = mysql_fetch_array($sql))
 					$tmpid = $row[user_id];
 

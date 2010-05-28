@@ -1,49 +1,5 @@
 <?php
   
-  /*
-   * Author:
-   *    Abhinav Singh
-   *
-   * Contact:
-   *    mailsforabhinav@gmail.com
-   *    admin@abhinavsingh.com
-   *
-   * Site:
-   *    http://abhinavsingh.com
-   *    http://abhinavsingh.com/blog
-   *
-   * Source:
-   *    http://code.google.com/p/jaxl
-   *
-   * About:
-   *    JAXL stands for "Just Another XMPP Library"
-   *    For geeks, JAXL stands for "Jabber XMPP Library"
-   *    
-   *    I wrote this library while developing Gtalkbots (http://gtalkbots.com)
-   *    I have highly customized it to work with Gtalk Servers and inspite of
-   *    production level usage at Gtalkbots, I recommend still not to use this
-   *    for any live project.
-   *    
-   *    Feel free to add me in Gtalk and drop an IM.
-   *
-  */
-  
-  /*
-   * ==================================== IMPORTANT =========================================
-   * JAXL extends XMPP and should be the starting point for all your applications
-   * You should never try to change XMPP class until you are confident about it
-   *
-   * Methods you might be interested in:
-   *    eventMessage(), eventPresence()
-   *    sendMessage($jid,$message), sendStatus($status)
-   *    subscribe($jid)
-   *    roster('get')
-   *    roster('add',$jid) 
-   *    roster('remove',$jid)
-   *    roster('update',$jid,$name,$groups)
-   * ==================================== IMPORTANT =========================================
-  */
-  
   /* Include XMPP Class */
   include_once("xmpp.class.php");
   
@@ -69,7 +25,7 @@
 
 					#check for admin rights
 					$isadmin = 0;
-					$sqlt = mysql_query("SELECT openid FROM oom_openid_usermanager WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+					$sqlt = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
 					while ($myrow = mysql_fetch_array($sqlt))
 						$isadmin = 1;
 					if ($isadmin)
@@ -88,7 +44,7 @@
 					$help .= "!recent | show recent messages (max 10)\n";
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
-						$help .= "exit | exit daemon (will restart)\n";
+						$help .= "!exit | exit daemon (will restart)\n";
 					}
 
 					## what do we have to do? ##
@@ -111,7 +67,7 @@
 						} else {
 							if ($cont) {
 								msg ("->\tMessage to ".$rec." delivered: ".$cont);
-								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][messagetable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 												$GLOBALS[xmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
 												utf8_decode(str_replace("'","\'",trim($cont)))."', '1', '1');");
 
@@ -149,7 +105,7 @@
 							#create output
 							$boolon = 1; $booli = 1; $booloff = 1; $tmpon = ""; $tmpi = ""; $tmpoff = "";
 							$reton = ""; $reti = ""; $retoff = ""; $cnton = 0; $cnti = 0; $cntoff = 0; $boolj = 1; $tmpj = ""; $cntj = 0;
-							$sqla = mysql_query("SELECT member_name,openid_uri FROM smf_members WHERE openid_uri<>'';");
+							$sqla = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
 							while ($rowa = mysql_fetch_array($sqla)) {
 								if ($GLOBALS[tmp][online][$rowa[openid_uri]] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
 									if ($boolon) $boolon = 0;
@@ -183,7 +139,7 @@
 						#recent messages
 						} elseif ($content == "!recent") {
 							$cnt = 0; $out = "";
-							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][messagetable].
+							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][msg][msgtable].
 											" WHERE receiver='".$GLOBALS[xmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
 							while ($row = mysql_fetch_array($sql)) {
 								$out .= $GLOBALS[tempnames][$row[sender]]." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
