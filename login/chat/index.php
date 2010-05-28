@@ -3,7 +3,6 @@
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 
-	#get chat users from db
 
 
 
@@ -13,21 +12,7 @@ if ($_SESSION[loggedin] == 1) {
 
 
 /* marker */
-
-	#fetching users from openid
-	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
-	while ($rows = mysql_fetch_array($sqls)) {
-		$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
-		$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
-	}
-
-	#fetching users from smf
-	$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
-	while ($rows = mysql_fetch_array($sqls)) {
-		$GLOBALS[module][$rows[openid_uri]][smf] = $rows[member_name];
-		$GLOBALS[module][$rows[openid_uri]][name] = $rows[openid_uri];
-	}
-
+	
 	#send chat -> functions
 	if ($_POST[myjob] == "chat") {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,receiver,timestamp,message,new) VALUES ('".

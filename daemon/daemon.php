@@ -44,8 +44,8 @@ try {
   /* Initiate the connection */
   msg (":Initiating connection");
   $jaxl->connect();
-
-	getXmppUsers();
+	$myoldstring = "A"; $mystring = "B";
+	fetchUsers();
 
   msg (":Setting timer to 0");
   $GLOBALS[timer] = 9999999999999999999;
@@ -54,8 +54,10 @@ try {
   while($jaxl->isConnected) {
   	if ($GLOBALS[timer] < (time() - $GLOBALS[cfg][daemon][sleeptime]) ) {
 			$GLOBALS[timer] = time();
-			getXmppUsers();
+			fetchUsers();
 #			msg ("Yippie! I'm triggered :D");
+
+
 
 			$cnt = 0;
 			unset($GLOBALS[message]);
@@ -73,15 +75,15 @@ try {
 			if ($cnt)
 			foreach ($GLOBALS[message] as $mymsg) {
 				#here goes the magic to send openID msgs to jabber :D
-				if (isset($GLOBALS[xmpp][$mymsg[receiver]])) {
+				if (isset($GLOBALS[users][byuri][$mymsg[receiver]][xmpp])) {
 					$msg = "Receiver has XMPP";
-					$jaxl->sendMessage($GLOBALS[xmpp][$mymsg[receiver]], $GLOBALS[tempnames][$mymsg[sender]].": ".
+					$jaxl->sendMessage($GLOBALS[users][byuri][$mymsg[receiver]][xmpp], utf8_encode($GLOBALS[users][byuri][$mymsg[sender]][utf8name]).": ".
 									utf8_encode($mymsg[subject])."\n".utf8_encode($mymsg[message]));
 				} else {
 					$msg = "Receiver has no XMPP";
 				}
 
-				msg ("MSG From: ".$GLOBALS[tempnames][$mymsg[sender]]."; To: ".$GLOBALS[tempnames][$mymsg[receiver]]." (".$msg.")");
+				msg ("MSG From: ".$GLOBALS[users][byuri][$mymsg[sender]][name]."; To: ".$GLOBALS[users][byuri][$mymsg[receiver]][name]." (".$msg.")");
 				$rsql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET xmpp='0' WHERE id='".$mymsg[id]."';");
 			}
 		}

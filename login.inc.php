@@ -27,32 +27,7 @@ $GLOBALS[redirect] = 0;
 $GLOBALS[myreturn][loggedin] = 0;
 
 #browser debug "woraround". working with POST but accepting GET also.
-if ($_POST[ssoInpUsername] == "")
-	$_POST[ssoInpUsername] = $_GET[ssoInpUsername];
-if ($_POST[ssoInpLogout] == "")
-	$_POST[ssoInpLogout] = $_GET[ssoInpLogout];
-if ($_POST[ssoInpReferer] == "")
-	$_POST[ssoInpReferer] = $_GET[ssoInpReferer];
-if ($_POST[module] == "")
-	$_POST[module] = $_GET[module];
-if ($_POST[user] == "")
-	$_POST[user] = $_GET[user];
-if ($_POST[message] == "")
-	$_POST[message] = $_GET[message];
-if ($_POST[id] == "")
-	$_POST[id] = $_GET[id];
-if ($_POST[subject] == "")
-	$_POST[subject] = $_GET[subject];
-if ($_POST[receiver] == "")
-	$_POST[receiver] = $_GET[receiver];
-if ($_POST[profile] == "")
-	$_POST[profile] = $_GET[profile];
-if ($_POST[job] == "")
-	$_POST[job] = $_GET[job];
-if ($_POST[myjob] == "")
-	$_POST[myjob] = $_GET[myjob];
-if ($_POST[ajax] == "")
-	$_POST[ajax] = $_GET[ajax];
+if (empty($_POST)) $_POST = $_GET;
 
 #one session only magic!
 if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
@@ -177,6 +152,7 @@ switch ($_POST[job]) {
 		$GLOBALS[redirect] = 1;
 		break;
 
+	#login.js calls this on page reloads
 	case "status":
 		fetchUsers();
 		getOnlineUsers();
@@ -194,6 +170,7 @@ switch ($_POST[job]) {
 
 		break;
 
+	#login.js calls this on periodically updates
 	case "update":
 		fetchUsers();
 		getOnlineUsers();
@@ -219,11 +196,8 @@ switch ($_POST[job]) {
 }
 
 #last online implementation
-# manages also ajax requests, json output and exit on ajax!!
 if ($_POST[job] == "logout")
 	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout] - 1)."' WHERE openid='".$myoldid."';");
-#else
-#	updateLastOnline();
 
 #generate final html output
 echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Administration</title>";
@@ -250,10 +224,10 @@ if (! empty($_SESSION[tmp][referer])) {
 
 if ($GLOBALS[redirect]) {
 	$GLOBALS[html] .= "<br /><br /><br /><br /><h2><center>-&gt; Redirecting</center></h2><br /><br /><br />";
-	echo "<body onLoad='ssoRefresh();' style='background:#000000 url(/site/games/WoW/template_background.jpg) no-repeat fixed top;'>\n";
+	echo "<body onLoad='ssoRefresh();' style='".$GLOBALS[cfg][standalonebodystlye]."'>\n";
 } elseif ($GLOBALS[submitform]) {
 	$GLOBALS[html] .= "<br /><br /><br /><br /><h2><center>-&gt; Submitting</center></h2><br /><br /><br />";
-	echo "<body onLoad='ssoRefresh();' style='background:#000000 url(/site/games/WoW/template_background.jpg) no-repeat fixed top;'>\n";
+	echo "<body onLoad='ssoRefresh();' style='".$GLOBALS[cfg][standalonebodystlye]."'>\n";
 } else {	
 	echo "<script type='text/javascript' src='tablesort.js'></script>";
 	echo "<script type='text/javascript' src='login.js'></script>";

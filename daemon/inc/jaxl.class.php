@@ -14,18 +14,18 @@
 			if (isset($jid[0])) {
 
 				#does the sender have a entry in the xmpp database?
-				if (empty($GLOBALS[xmpp][strtolower($jid[0])])) {
+				if (empty($GLOBALS[users][byxmpp][strtolower($jid[0])])) {
 					msg ("Recieved MSG from unauthorized user: ".$jid[0]);
 					$this->sendMessage($fromJid, "You are not allowed to use this bot! Please setup your XMPP Traversal on the homepage.");
 				} else {
-					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[xmpp][strtolower($jid[0])]);
+					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[users][byxmpp][strtolower($jid[0])]);
 
 					#lastonline update in db
-					$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+					updateTimestamp($GLOBALS[users][byxmpp][strtolower($jid[0])]);
 
 					#check for admin rights
 					$isadmin = 0;
-					$sqlt = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$GLOBALS[xmpp][strtolower($jid[0])]."';");
+					$sqlt = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$GLOBALS[users][byxmpp][strtolower($jid[0])]."';");
 					while ($myrow = mysql_fetch_array($sqlt))
 						$isadmin = 1;
 					if ($isadmin)
@@ -37,6 +37,7 @@
 					$help  = "How to communicate with me:\n";
 					$help .= "!command | run a command\n";
 					$help .= "user:message | send a message to a user\n";
+					$help .= "r:message | reply to the last mesasge\n";
 
 					$help .= "\nAvailable Commands:\n";
 					$help .= "!help | show this help\n";
@@ -47,7 +48,7 @@
 						$help .= "!exit | exit daemon (will restart)\n";
 					}
 
-					##Â what do we have to do? ##
+					## what do we have to do? ##
 
 					#check and split for message
 					$tmpi = explode(":", $content);
@@ -55,8 +56,20 @@
 						$ismessage = 1;
 						for ($i = 1; $i <= count($tmpi); $i++) 
 							$message .= $tmpi[$i];
-						$rec = $GLOBALS[tempnames][utf8_decode(trim(strtolower($tmpi[0])))];
+						$rec = $GLOBALS[users][byutf8name][utf8_decode(trim(strtolower($tmpi[0])))];
 						$cont = trim(str_replace($tmpi[0].':', '', $content));
+
+						if (trim(strtolower($tmpi[0])) == "r") {
+							$rrec = "";
+							$sqlr = mysql_query("SELECT sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
+											$GLOBALS[users][byxmpp][strtolower($jid[0])]."' ORDER BY timestamp DESC LIMIT 1;");
+							while ($rowr = mysql_fetch_array($sqlr))
+								$rrec = $rowr[sender];
+							if (! empty($rrec)) {
+								msg ("->\tReply triggered to: ".$rrec);
+								$rec = $rrec;
+							}
+						}
 
 						#is there a target user?
 						if (empty($rec)) {
@@ -68,7 +81,7 @@
 							if ($cont) {
 								msg ("->\tMessage to ".$rec." delivered: ".$cont);
 								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-												$GLOBALS[xmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
+												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
 												utf8_decode(str_replace("'","\'",trim($cont)))."', '1', '1');");
 
 								#sql ok?
@@ -105,30 +118,29 @@
 							#create output
 							$boolon = 1; $booli = 1; $booloff = 1; $tmpon = ""; $tmpi = ""; $tmpoff = "";
 							$reton = ""; $reti = ""; $retoff = ""; $cnton = 0; $cnti = 0; $cntoff = 0; $boolj = 1; $tmpj = ""; $cntj = 0;
-							$sqla = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
-							while ($rowa = mysql_fetch_array($sqla)) {
-								if ($GLOBALS[tmp][online][$rowa[openid_uri]] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
+							foreach ($GLOBALS[users][byuri] as $myuri) {
+								if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
 									if ($boolon) $boolon = 0;
 									else $tmpon = ", ";
-									$reton .= $tmpon.utf8_encode($rowa[member_name]);
+									$reton .= $tmpon.utf8_encode($myuri[utf8name]);
 									$cnton++;
-								} elseif ($GLOBALS[tmp][online][$rowa[openid_uri]] > (time() - $GLOBALS[cfg][lastidletimeout])) {
+								} elseif ($myuri[online] > (time() - $GLOBALS[cfg][lastidletimeout])) {
 									if ($booli) $booli = 0;
 									else $tmpi = ", ";
-									$reti .= $tmpi.utf8_encode($rowa[member_name]);
+									$reti .= $tmpi.utf8_encode($myuri[utf8name]);
 									$cnti++;
 								} else {
 									if ($booloff) $booloff = 0;
 									else $tmpoff = ", ";
-									$retoff .= $tmpoff.utf8_encode($rowa[member_name]);
+									$retoff .= $tmpoff.utf8_encode($myuri[utf8name]);
 									$cntoff++;
 								}
 
 								#check for xmpp
-								if (isset($GLOBALS[xmpp][$rowa[openid_uri]])) {
+								if (! empty($myuri[xmpp])) {
 									if ($boolj) $boolj = 0;
 									else $tmpj = ", ";
-									$retj .= $tmpj.utf8_encode($rowa[member_name]);
+									$retj .= $tmpj.utf8_encode($myuri[utf8name]);
 									$cntj++;
 								} 
 							}
@@ -142,7 +154,7 @@
 							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][msg][msgtable].
 											" WHERE receiver='".$GLOBALS[xmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
 							while ($row = mysql_fetch_array($sql)) {
-								$out .= $GLOBALS[tempnames][$row[sender]]." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
+								$out .= utf8_encode($GLOBALS[users][byuri][$row[sender]][utf8name])." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
 								$cnt++;
 							}
 
@@ -170,6 +182,23 @@
 				msg ("Message received, but something is not ok! jid: ".$fromJid."; content: ".$content);
 			}
 
+			#show online users as status message
+			$cnton = 0; $cnti = 0; $cntoff = 0;
+			foreach ($GLOBALS[users][byuri] as $myuri) {
+				if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
+					$cnton++;
+				} elseif ($myuri[online] > (time() - $GLOBALS[cfg][lastidletimeout])) {
+					$cnti++;
+				} else {
+					$cntoff++;
+				}
+			}
+			$mystring = "on: ".$cnton." | afk: ".$cnti." | off: ".$cntoff;
+			if ($myoldstring != $mystring) {
+				$this->sendStatus($mystring);
+				$myoldstring = $mystring;
+			}
+
 			if($this->logDB) {
   	      // Save the message in the database
     	    $timestamp = date('Y-m-d H:i:s');
@@ -191,6 +220,7 @@
     }
     
     function setStatus() {
+
       // Set a custom status or use $this->status
       $this->sendStatus("Ready for Communication.");
       msg ("Setting Status");

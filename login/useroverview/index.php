@@ -1,16 +1,7 @@
 <?php
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-
-#	$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE 1;");
-#	while ($rowv = mysql_fetch_array($sqlv))
-#		$GLOBALS[html] .= "&nbsp;- found admin: ".$rowv[openid]."<br />";
-
-	#functions
-#	if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile]))) {
-#	} elseif (($_POST[myjob] == "registeruser") and (! empty($_POST[newuser])) and (! empty($_POST[newurl]))) {
-#	}
-
+	fetchUsers();
 	#init stuff
 
 	#draw user table
@@ -26,6 +17,7 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "&nbsp;= you are user";
 	}
 
+/*
 	#fetching users from openid
 	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($rows = mysql_fetch_array($sqls)) {
@@ -40,12 +32,13 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[module][$rows[openid_uri]][name] = utf8_decode($rows[openid_uri]);
 	}
 
+*/
 	#fetching users from wordpress
 	$sqlw = mysql_query("SELECT user_id,url FROM wp_openid_identities WHERE 1;");
 	while ($roww = mysql_fetch_array($sqlw)) {
 		$sqlp = mysql_query("SELECT user_nicename FROM wp_users WHERE ID='".$roww[user_id]."';");
 		while ($rowp = mysql_fetch_array($sqlp)) {
-			$GLOBALS[module][$roww[url]][wordpress] = $rowp[user_nicename];
+			$tmpwp[$roww[url]] = $rowp[user_nicename];
 		}
 	}
 
@@ -54,7 +47,7 @@ if ($_SESSION[loggedin] == 1) {
 	while ($rowi = mysql_fetch_array($sqli)) {
 		$sqlk = mysql_query("SELECT user_name FROM WIKI_user WHERE user_id='".$rowi[uoi_user]."';");
 		while ($rowk = mysql_fetch_array($sqlk)) {
-			$GLOBALS[module][$rowi[uoi_openid]][wiki] = $rowk[user_name];
+			$tmpwi[$rowi[uoi_openid]] = $rowk[user_name];
 		}
 	}
 
@@ -65,14 +58,14 @@ if ($_SESSION[loggedin] == 1) {
 	$GLOBALS[html] .= "<tr><th>Forum</th><th>Blog</th><th>Wiki</th><th>Last online</th>";
 	if ($admin) $GLOBALS[html] .= "<th>OpenID</th>";
 	$GLOBALS[html] .= "</tr>";
-	foreach ($GLOBALS[module] as $myoid) {
-		if (! empty($myoid[name])) {
-			if ( $myoid[online] > ( time() - $GLOBALS[cfg][lastonlinetimeout])) $tmp = "color: lime;";
-			elseif ( $myoid[online] > ( time() - $GLOBALS[cfg][lastidletimeout])) $tmp = "color: orange;";
+	foreach ($GLOBALS[users][byuri] as $myuri) {
+		if (! empty($myuri[name])) {
+			if ( $myuri[online] > ( time() - $GLOBALS[cfg][lastonlinetimeout])) $tmp = "color: lime;";
+			elseif ( $myuri[online] > ( time() - $GLOBALS[cfg][lastidletimeout])) $tmp = "color: orange;";
 			else $tmp = "";
-			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myoid[smf])."</td><td>".$myoid[wordpress]."</td><td>".
-							$myoid[wiki]."</td><td>".getAge($myoid[online])."</td>";
-			if ($admin) $GLOBALS[html] .= "<td>".$myoid[name]."</td>";
+			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[name])."</td><td>".$tmpwp[$myuri[uri]]."</td><td>".
+												$tmpwi[$myuri[uri]]."</td><td>".getAge($myuri[online])."</td>";
+			if ($admin) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
 			$GLOBALS[html] .= "</tr>";
 		}
 	}

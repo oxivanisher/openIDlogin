@@ -97,86 +97,123 @@ function checkSites () {
 	}
 }
 
+#daemon function
+function getXmppUsers() {
+	#load users from db (oom_.._xmpp)
+	$count = 0;
+	$sql = mysql_query("SELECT openid,xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql)) {
+		$GLOBALS[users][byxmpp][$row[xmpp]] = $row[openid];
+		$GLOBALS[users][byuri][$row[openid]][xmpp] = $row[xmpp];
+		$GLOBALS[users][bylowxmpp][strtolower($row[xmpp])] = $row[openid];
+
+		$count++;
+	}
+	$GLOBALS[users][count][xmpp] = $count;
+}
+
 #fetch users function
 function fetchUsers () {
-	#smf
+	#cleanup
+	unset ($GLOBALS[users]);
 	$count = 0;
-	$sql = mysql_query("SELECT openid_uri,member_name FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
+	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
-			$GLOBALS[module][all][$row[openid_uri]] = utf8_decode($row[member_name]);
-			$GLOBALS[module][sites][smf][$row[openid_uri]] = $row[member_name];
-			$GLOBALS[module][sites][openid][utf8_decode($row[member_name])] = $row[openid_uri];
+			#experimental
+			$tmpname = utf8_decode($row[member_name]);
+			$tmpuri = $row[openid_uri];
+			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
+			$GLOBALS[users][byutf8name][strtolower($row[member_name])] = $tmpuri;
+			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
+			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
+			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
+			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
 			$count++;
 		}
+	$GLOBALS[users][count][all] = $count;
 	$GLOBALS[html] .= "= ".$count." users found.<br />";
+
+	getXmppUsers();
+
+	#fetching users from openid lastonline db
+	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	while ($rows = mysql_fetch_array($sqls))
+		$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
 
 	#eqdkp
 	$count = 0;
-	foreach ($GLOBALS[module][sites][smf] as $myopenid => $myusername) {
-		$sql = mysql_query("SELECT user_id FROM eqdkp_users WHERE username='".strtolower($myusername."';"));
-		while ($row = mysql_fetch_array($sql)) {
-			if (! empty($row[user_id])) {
-				$GLOBALS[module][sites][eqdkp][$myopenid] = $row[user_id];
+	$sql = mysql_query("SELECT user_id,username FROM eqdkp_users WHERE 1;"); #username='".strtolower($myurl[name]."';"));
+	while ($row = mysql_fetch_array($sql)) {
+		foreach ($GLOBALS[users][byuri] as $myurl) {
+			if (strtolower($myurl[name]) == $row[username]) {
+				$GLOBALS[users][byuri][$myurl[uri]][eqdkp] = $row[user_id];
 				$count++;
 			}
 		}
 	}
+	$GLOBALS[users][count][eqdkp] = $count;
 
 	#mediawiki
 	$count = 0;
 	$sql = mysql_query("SELECT uoi_user,uoi_openid FROM WIKI_user_openid WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[uoi_user])) {
-			$GLOBALS[module][sites][mediawiki][$row[uoi_openid]] = $row[uoi_user];
+			$GLOBALS[users][byuri][$row[uoi_openid]][mediawiki] = $row[uoi_user];
 			$count++;
 		}
+	$GLOBALS[users][count][mediawiki] = $count;
 
 	#wordpress
 	$count = 0;
 	$sql = mysql_query("SELECT user_id,url FROM wp_openid_identities WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[url])) {
-			$GLOBALS[module][sites][wordpress][$row[url]] = $row[user_id];
+			$GLOBALS[users][byuri][$row[url]][wordpress] = $row[user_id];
 			$count++;
 		}
+	$GLOBALS[users][count][wordpress] = $count;
+
+	#get chat users from db
+	$count = 0;
+	$sql = mysql_query("SELECT id,openid FROM ".$GLOBALS[cfg][chat][usertable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql)) {
+		$GLOBALS[users][byuri][$row[openid]][chat] = $row[id];
+	}
+	$GLOBALS[users][count][chat] = $count;
 }
 
 #draw users dropdown
 function drawUsersDropdown($selected = FALSE) {
 	$tmphtml = "";
-
 	$tmphtml .= "<select name='user'>";
 	$tmphtml .= "<option value=''>Choose User</option>";
-	asort ($GLOBALS[module][all]);
-	foreach ($GLOBALS[module][all] as $myurl => $myname) {
-		if ($selected == $myname) $stmp = " selected";
+
+	ksort($GLOBALS[users][byname]);
+	foreach ($GLOBALS[users][byname] as $tmpname => $mytmpurl)
+	if (! empty($GLOBALS[users][byuri][$mytmpurl])) {
+		if ($selected == $GLOBALS[users][byuri][$mytmpurl][uri]) $stmp = " selected";
 		else $stmp = "";
-		$tmphtml .= "<option value='".$myurl."'".$stmp.">".$myname."</option>";
+		$tmphtml .= "<option value='".$GLOBALS[users][byuri][$mytmpurl][uri]."'".
+								$stmp.">".$GLOBALS[users][byuri][$mytmpurl][name]."</option>";
 	}
 	$tmphtml .= "</select>";
-
 	return $tmphtml;
 }
 
 #draw profile dropdown
 function drawProfileDropdown() {
-	$tmphtml = "";
-
-	$tmphtml .= "<select name='profile'>";
+	$tmphtml = "<select name='profile'>";
 	$tmphtml .= "<option value=''>Choose Profile</option>";
-	foreach ($GLOBALS[cfg][profile] as $myname => $myprofile) {
+	foreach ($GLOBALS[cfg][profile] as $myname => $myprofile)
 		$tmphtml .= "<option value='".$myname."'>".$myprofile[name]."</option>";
-	}
 	$tmphtml .= "</select>";
-
 	return $tmphtml;
 }
 
-#draw smf users dropdown
+#draw smf users without openid dropdown
 function drawSmfUsersDropdown() {
 	$tmphtml = "";
-
 	$tmphtml .= "<select name='newuser'>";
 	$tmphtml .= "<option value=''>Choose User</option>";
 	$sqlt = mysql_query("SELECT member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri='' ORDER BY member_name ASC;");
@@ -184,37 +221,36 @@ function drawSmfUsersDropdown() {
 		$tmphtml .= "<option value='".$rowt[id_member]."'>".utf8_decode($rowt[member_name])."</option>";
 	}
 	$tmphtml .= "</select>";
-
 	return $tmphtml;
 }
 
 function getAge($timestamp) {
-        $ageOfMsg = time() - $timestamp;
-        if ($timestamp == 0) {
-                $ageOfMsgReturn = "";
-        } elseif ($ageOfMsg < '60') {
-                $ageOfMsgReturn = $ageOfMsg." sec(s)";
-        } elseif ($ageOfMsg > '59' && $ageOfMsg < '3600') {
-                $ageOfMsg = round(($ageOfMsg/60),1);
-                $ageOfMsgReturn = $ageOfMsg." min(s)";
-        } elseif ($ageOfMsg >= '3600' && $ageOfMsg < '86400') {
-                $ageOfMsg = round(($ageOfMsg/3600),1);
-                $ageOfMsgReturn = $ageOfMsg." hr(s)";
-        } elseif ($ageOfMsg >= '86400' && $ageOfMsg < '604800') {
-                $ageOfMsg = round(($ageOfMsg/86400),1);
-                $ageOfMsgReturn = $ageOfMsg." day(s)";
-        } elseif ($ageOfMsg >= '604800' && $ageOfMsg < '31449600') {
-                $ageOfMsg = round(($ageOfMsg/604800),1);
-                $ageOfMsgReturn = $ageOfMsg." week(s)";
-        } else  {
-                $ageOfMsg = round(($ageOfMsg/31449600),1);
-                $ageOfMsgReturn = $ageOfMsg." year(s)";
-        }
-        return $ageOfMsgReturn;
+	$ageOfMsg = time() - $timestamp;
+	if ($timestamp == 0) {
+		$ageOfMsgReturn = "";
+	} elseif ($ageOfMsg < '60') {
+		$ageOfMsgReturn = $ageOfMsg." sec(s)";
+	} elseif ($ageOfMsg > '59' && $ageOfMsg < '3600') {
+		$ageOfMsg = round(($ageOfMsg/60),1);
+		$ageOfMsgReturn = $ageOfMsg." min(s)";
+	} elseif ($ageOfMsg >= '3600' && $ageOfMsg < '86400') {
+		$ageOfMsg = round(($ageOfMsg/3600),1);
+		$ageOfMsgReturn = $ageOfMsg." hr(s)";
+	} elseif ($ageOfMsg >= '86400' && $ageOfMsg < '604800') {
+		$ageOfMsg = round(($ageOfMsg/86400),1);
+		$ageOfMsgReturn = $ageOfMsg." day(s)";
+	} elseif ($ageOfMsg >= '604800' && $ageOfMsg < '31449600') {
+		$ageOfMsg = round(($ageOfMsg/604800),1);
+		$ageOfMsgReturn = $ageOfMsg." week(s)";
+	} else  {
+		$ageOfMsg = round(($ageOfMsg/31449600),1);
+		$ageOfMsgReturn = $ageOfMsg." year(s)";
+	}
+	return $ageOfMsgReturn;
 }
 
 function genMsgUrl($user) {
-	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[module][sites][openid][$user]."'>".$user."</a>";
+	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byname][$user]."'>".$user."</a>";
 }
 
 function checkSession () {
@@ -255,16 +291,16 @@ function getOnlineUsers () {
 	$bool = false; $cnt = 0;
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = ""; $onlineusersarray = array();
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = ""; $idleusersarray = array();
-	$onlinesql = mysql_query("SELECT openid,timestamp,name FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
-		if (empty($GLOBALS[module][all][$orow[openid]])) continue;
+		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
 		$cnt++;
 		if ($orow[openid] == $_SESSION[openid_identifier]) $bool = true;
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
-			else $otmp = ", "; $ousers .= $otmp.$orow[name]; array_push($onlineusersarray, $orow[name]); continue; }
+			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
-			else $itmp = ", "; $iusers .= $itmp.$orow[name]; array_push($idleusersarray, $orow[name]); continue; }
+			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
 	}
 
 	$GLOBALS[onlineusers] = $ocnt;
@@ -353,29 +389,13 @@ function encodeme($me) {
 	return utf8_encode(mysql_real_escape_string(str_replace('&', '&amp;', $me)));
 }
 
-#daemon functions
-function getXmppUsers() {
-	#load users from db (oom_.._xmpp)
-	unset ($GLOBALS[xmpp]);
-	$sql = mysql_query("SELECT openid,xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
-	while ($row = mysql_fetch_array($sql)) {
-		$GLOBALS[xmpp][$row[xmpp]] = $row[openid];
-		$GLOBALS[xmpp][$row[openid]] = $row[xmpp];
-	}
-
-	#get smf usernames for lookup
-	unset ($GLOBALS[tempnames]);
-	$smfsql = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
-	while ($smfrow = mysql_fetch_array($smfsql)) {
-		$GLOBALS[tempnames][$smfrow[openid_uri]] = $smfrow[member_name];
-		$GLOBALS[tempnames][strtolower($smfrow[member_name])] = $smfrow[openid_uri];
-	}
-}
-
 function msg ($msg) {
 	if ($GLOBALS[debug])
-	echo strftime("%a %d %b %H:%M:%S %Y", time())."\t".$msg."\n";
+	echo strftime($GLOBALS[cfg][strftime], time())."\t".$msg."\n";
 }
 
+function updateTimestamp($openid) {
+	$sqltsu = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$openid."';");
+}
 
 ?>

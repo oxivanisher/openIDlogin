@@ -4,24 +4,7 @@
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 
-#helper functions
-
-#fetching users from openid
-$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
-while ($rows = mysql_fetch_array($sqls)) {
-	$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
-	$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
-}
-
-#fetching users from smf
-$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
-while ($rows = mysql_fetch_array($sqls)) {
-	$GLOBALS[module][$rows[openid_uri]][smf] = $rows[member_name];
-	$GLOBALS[module][$rows[openid_uri]][name] = $rows[openid_uri];
-}
-
-
-###Â Functions! ###
+### Functions! ###
 
 #send message -> functions
 if ($_POST[myjob] == "sendmessage") {
@@ -30,6 +13,7 @@ if ($_POST[myjob] == "sendmessage") {
 					"', '".encodeme($_POST[message])."', '1', '1');");
 	$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
 	$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+	updateTimestamp($_SESSION[openid_identifier]);
 }
 
 #delete message -> functions
@@ -50,6 +34,20 @@ elseif ($_POST[myjob] == "deletemessage") {
 	}
 }
 
+#delete all message -> functions
+elseif ($_POST[myjob] == "deleteallmessage") {
+	$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."';");
+	$GLOBALS[html] .= "<h3>All your messages where deleted!</h3>";
+	$GLOBALS[myreturn][msg] = "alldeleted"; #FIXME ok check (error/sent)
+}
+
+#mark all viewed -> functions
+elseif ($_POST[myjob] == "allviewed") {
+	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE receiver='".$_SESSION[openid_identifier]."';");
+	$GLOBALS[html] .= "<h3>All your messages are now read!</h3>";
+	$GLOBALS[myreturn][msg] = "allviewed"; #FIXME ok check (error/sent)
+}
+
 #setup xmpp
 elseif ($_POST[myjob] == "setupxmpp") {
 	$cbool = 0;
@@ -62,13 +60,11 @@ elseif ($_POST[myjob] == "setupxmpp") {
 	if ($cbool) {
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][xmpptable]." SET xmpp='".strtolower($_POST[user]).
 					"' WHERE openid='".$_SESSION[openid_identifier]."';");
-
 	} else {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][xmpptable]." (openid,xmpp) VALUES ('".
 					$_SESSION[openid_identifier]."', '".strtolower($_POST[user])."');");
 	}
 	$GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
-
 }
 
 #init stuff
@@ -81,7 +77,7 @@ if ($_POST[myjob] == "composemessage") {
 	$GLOBALS[html] .= "<input type='hidden' name='myjob' value='sendmessage' />";
 	$GLOBALS[html] .= "<input type='hidden' name='subject' value='HTML GUI' />";
 	$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-	$GLOBALS[html] .= "TO: ".drawUsersDropdown($GLOBALS[module][all][$_POST[user]])."<br />";;
+	$GLOBALS[html] .= "TO: ".drawUsersDropdown($_POST[user])."<br />";;
 	$GLOBALS[html] .= "Message:<br /><textarea name='message' cols='50' rows='5'></textarea><br />";
 	$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
 	$GLOBALS[html] .= "</form>";
@@ -157,8 +153,8 @@ if ($_POST[myjob] == "composemessage") {
 
 } elseif ($_POST[myjob] == "getusers") {
 	$cnt = 0;
-	foreach ($GLOBALS[module] as $myuser) {
-		$GLOBALS[myreturn][users][$cnt][name] = $myuser[smf];
+	foreach ($GLOBALS[users][byuri] as $myuser) {
+		$GLOBALS[myreturn][users][$cnt][name] = $myuser[uri];
 		$GLOBALS[myreturn][users][$cnt][openid] = $myuser[name];
 		$cnt++;
 	}
@@ -172,15 +168,15 @@ if ($_POST[myjob] == "composemessage") {
 				" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 	while ($row = mysql_fetch_array($sql)) {
 
-		if (empty($GLOBALS[module][$row[sender]][smf]))
+		if (empty($GLOBALS[users][byuri][$row[sender]][name]))
 			$sender = $row[sender];
 		else
-			$sender = $GLOBALS[module][$row[sender]][smf];
+			$sender = $GLOBALS[users][byuri][$row[sender]][name];
 
-		if (empty($GLOBALS[module][$row[receiver]][smf]))
+		if (empty($GLOBALS[users][byuri][$row[receiver]][name]))
 			$receiver = $row[receiver];
 		else
-			$receiver = $GLOBALS[module][$row[receiver]][smf];
+			$receiver = $GLOBALS[module][$row[receiver]][name];
 
 		if ($row[receiver] == $_SESSION[openid_identifier]) {
 			$GLOBALS[myreturn][messages][$cnt][mine] = 1;
@@ -223,6 +219,9 @@ if ($_POST[myjob] == "composemessage") {
 		$cnt++;
 	}
 	$GLOBALS[html] .= "</table>";
+
+	$GLOBALS[html] .= "<center><a href='?module=".$_POST[module]."&myjob=allviewed'>Mark all messages as read.</a>  |";  
+	$GLOBALS[html] .= " <a href='?module=".$_POST[module]."&myjob=deleteallmessage'>Delete all messages (!)</a></center>";
 
 	$GLOBALS[myreturn][newmessages] = $ncnt;
 	}

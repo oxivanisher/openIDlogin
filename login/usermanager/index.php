@@ -21,22 +21,22 @@ if ($_SESSION[loggedin] == 1) {
 			fetchUsers();
 	
 			#wordpress
-			if (! empty($GLOBALS[module][sites][wordpress][$_POST[user]])) {
-				$GLOBALS[html] .= "- mofifying wordpress user ".$GLOBALS[module][sites][wordpress][$_POST[user]]." :)<br />";
+			if (! empty($GLOBALS[users][byuri][$_POST[user]][wordpress])) {
+				$GLOBALS[html] .= "- modifying wordpress user ".$GLOBALS[users][byuri][$_POST[user]][wordpress]." :)<br />";
 				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][profile][$_POST[profile]][wordpress].
-						"'WHERE user_id='".$GLOBALS[module][sites][wordpress][$_POST[user]]."' AND meta_key='wp_user_level';");
+						"'WHERE user_id='".$GLOBALS[users][byuri][$_POST[user]][wordpress]."' AND meta_key='wp_user_level';");
 			}
 
 			#smf
-			if (! empty($GLOBALS[module][sites][smf][$_POST[user]])) {
-				$GLOBALS[html] .= "- modifying smf user ".$GLOBALS[module][sites][smf][$_POST[user]]." :)<br />";
+			if (! empty($GLOBALS[users][byuri][$_POST[user]][smf])) {
+				$GLOBALS[html] .= "- modifying smf user ".$GLOBALS[users][byuri][$_POST[user]][smf]." :)<br />";
 				$sql = mysql_query("UPDATE smf_members SET id_group='".$GLOBALS[cfg][profile][$_POST[profile]][smf].
-						"', lngfile='german-utf8' WHERE member_name='".$GLOBALS[module][sites][smf][$_POST[user]]."';");
+						"', lngfile='german-utf8', additional_groups='' WHERE id_member='".$GLOBALS[users][byuri][$_POST[user]][smf]."';");
 			}
 
 			#eqdkp
-			if (! empty($GLOBALS[module][sites][eqdkp][$_POST[user]])) {
-				$GLOBALS[html] .= "- modifying eqdkp user ".$GLOBALS[module][sites][eqdkp][$_POST[user]]." :)<br />";
+			if (! empty($GLOBALS[users][byuri][$_POST[user]][eqdkp])) {
+				$GLOBALS[html] .= "- modifying eqdkp user ".$GLOBALS[users][byuri][$_POST[user]][eqdkp]." :)<br />";
 				$sql = mysql_query("SELECT auth_id,auth_value FROM eqdkp_auth_options WHERE 1 ORDER BY auth_id asc;");
 				while ($row = mysql_fetch_array($sql)) {
 					$GLOBALS[module][eqdkp][$row[auth_id]] = $row[auth_value];
@@ -54,7 +54,7 @@ if ($_SESSION[loggedin] == 1) {
 				}
 
 				$sql = mysql_query("SELECT auth_id,auth_setting FROM eqdkp_auth_users WHERE user_id='".
-						$GLOBALS[module][sites][eqdkp][$_POST[user]]."' ORDER BY auth_id asc;");
+						$GLOBALS[users][byuri][$_POST[user]][eqdkp]."' ORDER BY auth_id asc;");
 				while ($row = mysql_fetch_array($sql)) {
 					$GLOBALS[module][eqdkp3][$row[auth_id]] = $row[auth_setting];
 				}
@@ -76,16 +76,16 @@ if ($_SESSION[loggedin] == 1) {
 
 					if ($mode) {
 						$sql = mysql_query("INSERT INTO eqdkp_auth_users (user_id, auth_id, auth_setting) VALUES ('".
-								$GLOBALS[module][sites][eqdkp][$_POST[user]]."', '".$myname."', '".$value."');");
-#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[module][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (new)<br />";
+								$GLOBALS[users][byuri][$_POST[user]][eqdkp]."', '".$myname."', '".$value."');");
+#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[cfg][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (new)<br />";
 					} else {
 						$sql2 = mysql_query("UPDATE eqdkp_auth_users SET auth_setting='".$value."' WHERE user_id='".
-								$GLOBALS[module][sites][eqdkp][$_POST[user]]."' AND auth_id='".$myname."';");
-#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[module][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (update)<br />";
+								$GLOBALS[users][byuri][$_POST[user]][eqdkp]."' AND auth_id='".$myname."';");
+#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[cfg][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (update)<br />";
 					}
 
 
-					$sqlz = mysql_query("UPDATE eqdkp_users SET user_active='1', user_lang='german' WHERE user_id='".$GLOBALS[module][sites][eqdkp][$_POST[user]]."';");
+					$sqlz = mysql_query("UPDATE eqdkp_users SET user_active='1', user_lang='german' WHERE user_id='".$GLOBALS[users][byuri][$_POST[user]][eqdkp]."';");
 				}
 				
 
@@ -98,8 +98,7 @@ if ($_SESSION[loggedin] == 1) {
 			if (isValidURL($_POST[newurl])) {
 				$GLOBALS[html] .= "- ".$_POST[newurl]." is a valid URL<br />";
 
-				$sql = mysql_query("UPDATE smf_members SET openid_uri='".$_POST[newurl]."' WHERE id_member='".$_POST[newuser]."';");
-#				$sql = mysql_query("INSERT INTO oom_openid_lastonline (openid,timestamp,name) VALUES (".$_POST[newurl]."', '0', '".."') ;");
+				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][usernametable]." SET openid_uri='".$_POST[newurl]."' WHERE id_member='".$_POST[newuser]."';");
 
 				$GLOBALS[html] .= "<h3>=&gt; User registred!</h3>";
 			} else {
