@@ -1,38 +1,17 @@
 <?php
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	fetchUsers();
 	#init stuff
+	fetchUsers();
+	updateTimestamp($_SESSION[openid_identifier]);
 
 	#draw user table
-
-	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
-	while ($rowa = mysql_fetch_array($sqla)) {
-		$admin = 1;
-	}
-
-	if ($admin) {
+	if ($_SESSION[isadmin]) {
 		$GLOBALS[html] .= "&nbsp;= you are admin";
 	} else {
 		$GLOBALS[html] .= "&nbsp;= you are user";
 	}
 
-/*
-	#fetching users from openid
-	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
-	while ($rows = mysql_fetch_array($sqls)) {
-		$GLOBALS[module][$rows[openid]][smf] = $rows[openid];
-		$GLOBALS[module][$rows[openid]][online] = $rows[timestamp];
-	}
-
-	#fetching users from smf
-	$sqls = mysql_query("SELECT member_name,openid_uri FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri<>'';");
-	while ($rows = mysql_fetch_array($sqls)) {
-		$GLOBALS[module][$rows[openid_uri]][smf] = utf8_decode($rows[member_name]);
-		$GLOBALS[module][$rows[openid_uri]][name] = utf8_decode($rows[openid_uri]);
-	}
-
-*/
 	#fetching users from wordpress
 	$sqlw = mysql_query("SELECT user_id,url FROM wp_openid_identities WHERE 1;");
 	while ($roww = mysql_fetch_array($sqlw)) {
@@ -56,21 +35,20 @@ if ($_SESSION[loggedin] == 1) {
 	$GLOBALS[html] .= "<h2>Registred users</h2>";
 	$GLOBALS[html] .= "<table>";
 	$GLOBALS[html] .= "<tr><th>Forum</th><th>Blog</th><th>Wiki</th><th>Last online</th>";
-	if ($admin) $GLOBALS[html] .= "<th>OpenID</th>";
+	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
 	$GLOBALS[html] .= "</tr>";
 	foreach ($GLOBALS[users][byuri] as $myuri) {
 		if (! empty($myuri[name])) {
 			if ( $myuri[online] > ( time() - $GLOBALS[cfg][lastonlinetimeout])) $tmp = "color: lime;";
 			elseif ( $myuri[online] > ( time() - $GLOBALS[cfg][lastidletimeout])) $tmp = "color: orange;";
 			else $tmp = "";
-			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[name])."</td><td>".$tmpwp[$myuri[uri]]."</td><td>".
+			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[uri])."</td><td>".$tmpwp[$myuri[uri]]."</td><td>".
 												$tmpwi[$myuri[uri]]."</td><td>".getAge($myuri[online])."</td>";
-			if ($admin) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
+			if ($_SESSION[isadmin]) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
 			$GLOBALS[html] .= "</tr>";
 		}
 	}
 	$GLOBALS[html] .= "</table>";
-
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
 }

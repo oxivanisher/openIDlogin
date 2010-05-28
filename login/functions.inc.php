@@ -487,12 +487,41 @@ function getChatMessages ($channel) {
 }
 
 function checkChatRights ($channel) {
-
+	
 	return 0;
 }
 
 function setChatRights ($channel, $myarray) {
 
 	return 0;
+}
+
+function getChannelState ($channel) {
+	$tdatas = getChatChannel($channel);
+	$tdata = unserialize($tdata[allowed]);
+	print_r($tdata);
+	return 0;
+}
+
+function genAllowedCheckbox ($template = NULL) {
+		$tret = "<table>\n"; $walk = 1; $max = 5;
+		foreach ($GLOBALS[users][byuri] as $myuri) {
+			if ($walk == ($max + 1)) $walk = 1;
+			if ($walk == 1) $tret .= "<tr>\n";
+
+			if ($template)
+			if (in_array($myuri[chat], $template)) $check = " checked";
+			else $check = "";
+
+			if (empty($myuri[chat])) $dis = " DISABLED";
+			else $dis = "";
+
+			$tret  .= "<td><input type='checkbox' name='allowed[]' value='".$myuri[chat]."' ".$check.$dis."/> ".$myuri[name]."</td>\n";
+			if ($walk == $max) $tret .= "</tr>\n";
+			$walk++;
+		}
+		for ($i = $walk; $i <= $max; $i++) $tret .= "<td>&nbsp</td>\n";
+		if ($walk != $max) $tret .= "</tr>\n";
+		return $tret."</table>\n";
 }
 ?>

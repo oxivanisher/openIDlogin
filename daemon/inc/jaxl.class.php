@@ -7,7 +7,7 @@
     var $bot_status = FALSE;
 
     function eventMessage($fromJid, $content, $offline = FALSE) {
-
+			$tmpskip = 0;
 
 			#do we have an ok sender?
 			$jid = explode("/", $fromJid);
@@ -47,6 +47,7 @@
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
 						$help .= "!exit | exit daemon (will restart)\n";
+						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
 					}
 
 					## what do we have to do? ##
@@ -102,13 +103,35 @@
 
 						#admin commands
 						if ($isadmin) {
+
+							#exit the daemon
 							if ($content == "!exit") {
 								msg ("\tExiting...");
 								$this->sendMessage($fromJid, "Deamon exiting!");
 								exit;
+
+							#mass mailer
+							} elseif (substr($content, 0, 5) == "!mass") {
+								$mymassmsg = str_replace("'", '"', utf8_decode( trim( str_replace("!mass", "", $content) ) ) );
+
+								if (! empty($mymassmsg)) {
+									foreach ($GLOBALS[users][byuri] as $myuri)
+										$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+														$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$myuri[uri]."', '".time()."', 'MASS/XMPP/".$jid[1]."', '".
+														$mymassmsg."', '1', '1');");
+
+									msg ("\tMassmail sent!");
+									$this->sendMessage($fromJid, "\tMassmail sent!");
+								} else {
+									msg ("\tNo message found.");
+									$this->sendMessage($fromJid, "No text found!");
+								}
+								$tmpskip = 1;
 							}
 						}
-						if ($content == "!users") {
+						if ($tmpskip) {
+							true;
+						} elseif ($content == "!users") {
 							msg ("\tShowing all users");
 
 							#get last online timestamps
@@ -145,6 +168,8 @@
 									$cntj++;
 								} 
 							}
+							
+							#create users online output
 							$mymessage = "\n";
 							if ($cnton) $mymessage .= $cnton." Users online:\n".$reton."\n\n";
 							if ($cnti) $mymessage .= $cnti." Users afk:\n".$reti."\n\n";
@@ -152,16 +177,13 @@
 							if ($cntj) $mymessage .= $cntj." Users with Jabber Traversal:\n".$retj."\n\n";
 							$mymessage .= "Total ".($cnton + $cnti + $cntoff);
 
-
-//							$mymessage = $cnton." Users online:\n".$reton."\n\n".$cnti." Users idle:\n".$reti."\n\n".
-//														$cntoff." Users offline:\n".$retoff."\n\n".$cntj." Users with Jabber Traversal:\n".$retj."\n\nTotal ".($cnton + $cnti + $cntoff);
 							$this->sendMessage($fromJid, $mymessage);
 
 						#recent messages
 						} elseif ($content == "!recent") {
 							$cnt = 0; $out = "";
 							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][msg][msgtable].
-											" WHERE receiver='".$GLOBALS[xmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
+											" WHERE receiver='".$GLOBALS[users][byxmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
 							while ($row = mysql_fetch_array($sql)) {
 								$out .= utf8_encode($GLOBALS[users][byuri][$row[sender]][utf8name])." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
 								$cnt++;
@@ -189,18 +211,18 @@
 						#show the help
 						} elseif ($content == "!help") {
 							msg ("\tShowing help");
-							$this->sendMessage($fromJid, "Showing help:\n".$help);
+							$this->sendMessage($fromJid, "Showing help:\n".htmlspecialchars($help));
 
 						#no such command
 						} else {
 							msg ("\tNo command found: ".$content);
-							$this->sendMessage($fromJid, "No such command.\n".$help);
+							$this->sendMessage($fromJid, "No such command.\n".htmlspecialchars($help));
 						}
 
 					#malformated message
 					} else {
 						msg ("\tMalformated message");
-						$this->sendMessage($fromJid, "Malformated message!\n".$help);
+						$this->sendMessage($fromJid, "Malformated message!\n".htmlspecialchars($help));
 					}
 				}
 			} else {

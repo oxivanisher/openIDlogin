@@ -33,6 +33,12 @@ if (empty($_POST)) $_POST = $_GET;
 if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
 	checkSession();
 
+#is this user admin?
+$_SESSION[isadmin] = 0;
+$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
+while ($rowa = mysql_fetch_array($sqla))
+	$_SESSION[isadmin] = 1;
+
 #find out what we have to do (like magic)
 if ($_POST[ssoInpLogout] == 1) {
 	$_POST[job] = "logout";

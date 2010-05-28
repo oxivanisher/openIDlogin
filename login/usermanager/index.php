@@ -2,13 +2,7 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	$allowed = 0;
-
-	$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
-	while ($rowa = mysql_fetch_array($sqla)) {
-		$allowed = 1;
-	}
-	if ($allowed == 1) {
+	if ($_SESSION[isadmin] == 1) {
 		$GLOBALS[html] .= "- you are allowed to use this module<br />";
 		$sqlv = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE openid<>'".$_SESSION[openid_identifier]."';");
 		while ($rowv = mysql_fetch_array($sqlv))
@@ -133,6 +127,7 @@ if ($_SESSION[loggedin] == 1) {
 	} else {
 		$GLOBALS[html] .= "<b>= You are not allowed to use this module!</b>";
 	}
+	updateTimestamp($_SESSION[openid_identifier]);
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
 }

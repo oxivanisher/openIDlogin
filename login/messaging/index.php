@@ -9,6 +9,7 @@ if ($_SESSION[loggedin] == 1) {
 #send message -> functions
 switch ($_POST[myjob]) {
 
+	#send message function
 	case "sendmessage":
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 						$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
@@ -16,6 +17,20 @@ switch ($_POST[myjob]) {
 		$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
 		$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
 		updateTimestamp($_SESSION[openid_identifier]);
+	break;
+
+	#admin mass mailer
+	case "massmail":
+		if ($_SESSION[isadmin]) {
+			foreach ($GLOBALS[users][byuri] as $myuri)
+				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+								$_SESSION[openid_identifier]."', '".$myuri[uri]."', '".time()."', '".encodeme($_POST[subject]).
+								"', '".encodeme($_POST[message])."', '1', '1');");
+
+			$GLOBALS[html] .= "<h3>Message sent to everyone!</h3>";
+			$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+			updateTimestamp($_SESSION[openid_identifier]);
+		}
 	break;
 
 	#delete message -> functions
@@ -34,6 +49,7 @@ switch ($_POST[myjob]) {
 			$GLOBALS[html] .= "<h3>Nice try .. Message NOT deleted, since it's not yours!!</h3>";
 		$GLOBALS[myreturn][msg] = "error";
 		}
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#delete all message -> functions
@@ -41,6 +57,7 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."';");
 		$GLOBALS[html] .= "<h3>All your messages where deleted!</h3>";
 		$GLOBALS[myreturn][msg] = "alldeleted"; #FIXME ok check (error/sent)
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#mark all viewed -> functions
@@ -48,6 +65,7 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE receiver='".$_SESSION[openid_identifier]."';");
 		$GLOBALS[html] .= "<h3>All your messages are now read!</h3>";
 		$GLOBALS[myreturn][msg] = "allviewed"; #FIXME ok check (error/sent)
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#setup xmpp
@@ -67,6 +85,7 @@ switch ($_POST[myjob]) {
 						$_SESSION[openid_identifier]."', '".strtolower($_POST[user])."');");
 		}
 		$GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 }
 #init stuff
@@ -145,6 +164,7 @@ switch ($_POST[myjob]) {
 		$GLOBALS[html] .= "<big><pre>".$GLOBALS[myreturn][message][message]."</pre></big>";
 		$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&myjob=deletemessage&id=".
 											$GLOBALS[myreturn][message][id]."'>Delete this message</a>";
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	case "getusers":
@@ -215,6 +235,19 @@ switch ($_POST[myjob]) {
 		$GLOBALS[html] .= " <a href='?module=".$_POST[module]."&myjob=deleteallmessage'>Delete all messages (!)</a></center>";
 
 		$GLOBALS[myreturn][newmessages] = $ncnt;
+
+		if ($_SESSION[isadmin]) {
+			$GLOBALS[html] .= "<h3>Admin mass mailer</h3>";
+			$GLOBALS[html] .= "<form action='?' method='POST'>";
+			$GLOBALS[html] .= "<input type='hidden' name='myjob' value='massmail' />";
+			$GLOBALS[html] .= "<input type='hidden' name='subject' value='MASS/HTML GUI' />";
+			$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+			$GLOBALS[html] .= "Message:<br /><textarea name='message' cols='50' rows='5'></textarea><br />";
+			$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
+			$GLOBALS[html] .= "</form>";			
+		}
+
+		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 }
 } else {
