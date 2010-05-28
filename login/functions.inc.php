@@ -309,14 +309,14 @@ function getOnlineUsers () {
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = ""; $idleusersarray = array();
 	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
-		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
+		if (empty($GLOBALS[users][byuri][$orow[openid]][utf8name])) continue;
 		if ($orow[name] == '0') continue;
 		$cnt++;
 		if ($orow[openid] == $_SESSION[openid_identifier]) $bool = true;
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
-			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
+			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][utf8name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][utf8name]); continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
-			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
+			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][utf8name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][utf8name]); continue; }
 	}
 
 	$GLOBALS[onlineusers] = $ocnt;
@@ -366,14 +366,6 @@ function jasonOut () {
 				$GLOBALS[myreturn][newmsgs]++;
 				$GLOBALS[myreturn][newmsgid] = $row[id];
 			}
-
-#			if ($_POST[job] == "update") {
-#				$sql = mysql_query("SELECT timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_SESSION[openid_identifier]."';");
-#				while ($row = mysql_fetch_array($sql))
-#					$tmpts = $row[timestamp];
-#				if ($tmpts < (time() - $GLOBALS[cfg][lastidletimeout]))
-#					$GLOBALS[myreturn][felloffline] = 0;
-#			}
 		}
 
 		if (! $_POST[ajax]) {
@@ -414,7 +406,7 @@ function updateTimestamp($openid) {
 	$sqltsu = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$openid."';");
 }
 
-function getChatChannels ($owner = NULL) {
+function getAllChatChannels ($owner = NULL) {
 	$tret = array();
 	$count = 0;
 	if ($owner) $search = " WHERE owner='".$owner."'";
@@ -422,9 +414,38 @@ function getChatChannels ($owner = NULL) {
 
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search.";");
 	while ($row = mysql_fetch_array($sql)) {
+		if ($row[owner] == 0) {
+			$owner = "Willhelm";
+		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
+		else
+			$owner = $row[owner];
 
-		#FIXME i need a securtiycheck with allowed!
+		$tret[$count][id] = $row[id];
+		$tret[$count][owner] = $row[owner];
+		$tret[$count][ownername] = $owner;
+		$tret[$count][name] = $row[name];
+		$tret[$count][allowed] = $row[allowed];
+		$tret[$count][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
+		$tret[$count][lastmessage] = getAge($row[lastmessage]);
+		$count++;
+	}
+	return $tret;
+}
 
+function getMyChatChannels () {
+	$tret = array();
+	$count = 0;
+
+	$bool = 1; $wtmp = ""; $wsearch = "";
+	foreach ($GLOBALS[chat][subscr] as $subs => $chanid) {
+		if ($bool) $bool = 0;
+		else $wtmp = " OR";
+		$wsearch .= $wtmp." id='".$chanid."'";
+	}
+
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search." WHERE ".$wsearch.";");
+	while ($row = mysql_fetch_array($sql)) {
 		if ($row[owner] == 0) {
 			$owner = "Willhelm";
 		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
@@ -450,9 +471,6 @@ function getChatChannel ($myid) {
 
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable]." WHERE id='".$myid."';");
 	while ($row = mysql_fetch_array($sql)) {
-
-		#FIXME i need a securtiycheck with allowed!
-
 		if ($row[owner] == 0) {
 			$owner = "Willhelm";
 		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
@@ -471,36 +489,32 @@ function getChatChannel ($myid) {
 	return $tret;
 }
 
-function getChatMessages ($channel) {
+function getMyChatMessages ($since = NULL) {
+	$data = getMyChatChannels();
 	$tret = array();
 	$count = 0;
-	#FIXME I NEED A SECURITY FUNCTION !!! REALLY !!! PLEASE
-	$sql = mysql_query("SELECT id,sender,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable]." WHERE channel='".$channel."' ORDER BY timestamp ASC LIMIT 15;");
-	while ($row = mysql_fetch_array($sql)) {
-		$tret[$count][id] = $row[id];
-		$tret[$count][sender] = $row[sender];
-		$tret[$count][timestamp] = getAge($row[timestamp]);
-		$tret[$count][message] = $row[message];
-		$count++;
+
+	if (empty($since)) $stmp = "";
+	else $stmp = " AND timestamp<'".$since."'";
+
+	$bool = 1; $wtmp = ""; $wsearch = "";
+	foreach ($GLOBALS[chat][subscr] as $subs => $chanid) {
+		if ($bool) $bool = 0;
+		else $wtmp = " OR";
+		$wsearch .= $wtmp." channel='".$chanid."'";
+		$tret[msg][$chanid] = array();
 	}
+
+	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
+					" WHERE".$wsearch." ORDER BY timestamp ASC LIMIT 10;");
+	while ($row = mysql_fetch_array($sql)) {
+		$tret[msg][$row[channel]][id] = $row[id];
+		$tret[msg][$row[channel]][sender] = $GLOBALS[users][byuri][$row[sender]][utf8name];
+		$tret[msg][$row[channel]][ts] = getAge($row[timestamp]);
+		$tret[msg][$row[channel]][msg] = $row[message];
+	}
+	$tret[chan] = $data;
 	return $tret;
-}
-
-function checkChatRights ($channel) {
-	
-	return 0;
-}
-
-function setChatRights ($channel, $myarray) {
-
-	return 0;
-}
-
-function getChannelState ($channel) {
-	$tdatas = getChatChannel($channel);
-	$tdata = unserialize($tdata[allowed]);
-	print_r($tdata);
-	return 0;
 }
 
 function genAllowedCheckbox ($template = NULL) {

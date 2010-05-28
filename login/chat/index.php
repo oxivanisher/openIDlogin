@@ -26,7 +26,7 @@ if ($_SESSION[loggedin] == 1) {
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
 														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
 				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
-							$_SESSION[openid_identifier]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
+							$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
 				$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
 				$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
 			} else {
@@ -149,13 +149,13 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "</form>";
 		break;
 
-		default:
+		case "viewchannellist":
 			#list channels
-			$GLOBALS[html] .= "<h3>List Channels | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
+			$GLOBALS[html] .= "<h3>View Messages | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
 			$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 			$cnt = 0; $ncnt = 0;
 			$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th><th>Join / Leave</th></tr>";
-			foreach (getChatChannels() as $data) {
+			foreach (getAllChatChannels() as $data) {
 				$GLOBALS[html] .= "<tr>";
 				$GLOBALS[html] .= "<td><a href='?module=".$_POST[module]."&myjob=vieweditchannel&id=".$data[id]."'>".$data[name]."</a></td>";
 				$GLOBALS[html] .= "<td>".$data[ownername]."</td>";
@@ -177,6 +177,34 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "</tr>";
 			}
 			$GLOBALS[html] .= "</table>";
+		break;
+
+		default:
+			$mymsgs = getMyChatMessages();
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>View Messages</a> | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module].
+												"&myjob=viewcreatechannel'>Create Channel</a></h3>";
+			$GLOBALS[html] .= "<br />";
+			$GLOBALS[html] .= "<table><tr>";
+			foreach ($mymsgs[chan] as $mychan) {
+				$GLOBALS[html] .= "<form action='?' method='POST'>";
+				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='chat' />";
+				$GLOBALS[html] .= "<input type='hidden' name='channel' value='".$mychan[id]."' />";
+				$GLOBALS[html] .= "<td valign='bottom'>";
+				$GLOBALS[html] .= "<b>".$mychan[name]."</b><br />";
+				foreach ($mymsgs[msg][$mychan[id]] as $mymsg) {
+					$GLOBALS[html] .= $mymsg[name].": ".$mymsg[msg]."<br />";
+				}
+
+				$GLOBALS[html] .= "<input type='text' name='chat' value='' size='20'/>";
+				$GLOBALS[html] .= "<input type='submit' name='submit' value='submit' />";
+
+				$GLOBALS[html] .= "</td>";
+				$GLOBALS[html] .= "</form>";
+			}
+			$GLOBALS[html] .= "</tr></table>";
+
+
 	}
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
