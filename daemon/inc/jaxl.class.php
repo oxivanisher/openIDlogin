@@ -37,7 +37,7 @@
 					$help  = "How to communicate with me:\n";
 					$help .= "!command | run a command\n";
 					$help .= "user:message | send a message to a user\n";
-					$help .= "r:message | reply to the last mesasge\n";
+					$help .= "r:message | reply to the last message\n";
 
 					$help .= "\nAvailable Commands:\n";
 					$help .= "!help | show this help\n";

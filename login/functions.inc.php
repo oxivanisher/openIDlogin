@@ -398,4 +398,35 @@ function updateTimestamp($openid) {
 	$sqltsu = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$openid."';");
 }
 
+function getChatChannels ($owner = NULL) {
+	$tret = array();
+	$count = 0;
+	if ($owner) $search = " WHERE owner='".$owner."'";
+	else $search = " WHERE 1";
+
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][usertable].$search.";");
+	while ($row = mysql_fetch_array($sql)) {
+		$tret[$count++][id] = $row[id];
+		$tret[$count++][owner] = $row[owner];
+		$tret[$count++][name] = getAge($row[name]);
+		$tret[$count++][allowed] = $row[allowed];
+		$tret[$count++][created] = getAge($row[created]);
+		$tret[$count++][lastmessage] = $row[lastmessage];
+	}
+	return $tret;
+}
+
+function getChatMessages ($channel) {
+	$tret = array();
+	$count = 0;
+	#FIXME I NEED A SECURITY FUNCTION !!! REALLY !!! PLEASE
+	$sql = mysql_query("SELECT id,sender,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable]." WHERE channel='".$channel."' ORDER BY timestamp ASC LIMIT 15;");
+	while ($row = mysql_fetch_array($sql)) {
+		$tret[$count++][id] = $row[id];
+		$tret[$count++][sender] = $row[sender];
+		$tret[$count++][timestamp] = getAge($row[timestamp]);
+		$tret[$count++][message] = $row[message];
+	}
+	return $tret;
+}
 ?>

@@ -2,10 +2,9 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
+	fetchUsers();
 
-
-
-
+	
 
 
 
@@ -15,9 +14,9 @@ if ($_SESSION[loggedin] == 1) {
 	
 	#send chat -> functions
 	if ($_POST[myjob] == "chat") {
-		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,receiver,timestamp,message,new) VALUES ('".
-					$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[chat])."', '1');");
-		$GLOBALS[html] .= "<h3>Chat to ".$_POST[user]." sent!</h3>";
+		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
+					$_SESSION[openid_identifier]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
+		$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
 		$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
 
 	}
