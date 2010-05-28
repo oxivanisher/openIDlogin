@@ -42,6 +42,7 @@
 					$help .= "\nAvailable Commands:\n";
 					$help .= "!help | show this help\n";
 					$help .= "!users | show a list of all users\n";
+					$help .= "!status <your status> | set your web status (currently you cant use : )\n";
 					$help .= "!recent | show recent messages (max 10)\n";
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
@@ -79,10 +80,10 @@
 						#is there content?
 						} else {
 							if ($cont) {
-								msg ("->\tMessage to ".$rec." delivered: ".$cont);
+								msg ("->\tMessage to ".$rec." delivered.");
 								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
-												utf8_decode(str_replace("'","\'",trim($cont)))."', '1', '1');");
+												utf8_decode(htmlspecialchars(str_replace("'",'"',str_replace("\\",'',trim($cont)))))."', '1', '1');");
 
 								#sql ok?
 								if ($sql)
@@ -144,8 +145,16 @@
 									$cntj++;
 								} 
 							}
-							$mymessage = $cnton." Users online:\n".$reton."\n\n".$cnti." Users idle:\n".$reti."\n\n".
-														$cntoff." Users offline:\n".$retoff."\n\n".$cntj." Users with Jabber Traversal:\n".$retj."\n\nTotal ".($cnton + $cnti + $cntoff);
+							$mymessage = "\n";
+							if ($cnton) $mymessage .= $cnton." Users online:\n".$reton."\n\n";
+							if ($cnti) $mymessage .= $cnti." Users afk:\n".$reti."\n\n";
+							if ($cntoff) $mymessage .= $cntoff." Users offline:\n".$retoff."\n\n";
+							if ($cntj) $mymessage .= $cntj." Users with Jabber Traversal:\n".$retj."\n\n";
+							$mymessage .= "Total ".($cnton + $cnti + $cntoff);
+
+
+//							$mymessage = $cnton." Users online:\n".$reton."\n\n".$cnti." Users idle:\n".$reti."\n\n".
+//														$cntoff." Users offline:\n".$retoff."\n\n".$cntj." Users with Jabber Traversal:\n".$retj."\n\nTotal ".($cnton + $cnti + $cntoff);
 							$this->sendMessage($fromJid, $mymessage);
 
 						#recent messages
@@ -160,6 +169,22 @@
 
 							msg ("\tShowing recent messages");
 							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".$out);
+
+						#set status
+						} elseif (substr($content, 0, 7) == "!status") {
+							$mywebstatus = str_replace("'", '"', utf8_decode( trim( str_replace("!status", "", $content) ) ) );
+
+							if (! empty($mywebstatus)) {
+								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
+												$mywebstatus."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+
+								msg ("\tWebsite status set.");
+								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", $content) ));
+							} else {
+								msg ("\tNo status found.");
+								$this->sendMessage($fromJid, "No status set!");
+							}
+
 
 						#show the help
 						} elseif ($content == "!help") {
@@ -185,14 +210,16 @@
 			#show online users as status message
 			$cnton = 0; $cnti = 0; $cntoff = 0;
 			foreach ($GLOBALS[users][byuri] as $myuri) {
-				if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
-					$cnton++;
-				} elseif ($myuri[online] > (time() - $GLOBALS[cfg][lastidletimeout])) {
-					$cnti++;
-				} else {
-					$cntoff++;
+				if (! empty($myuri[online]))
+					if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
+						$cnton++;
+					} elseif ($myuri[online] > (time() - $GLOBALS[cfg][lastidletimeout])) {
+						$cnti++;
+					} else {
+						$cntoff++;
+					}
 				}
-			}
+			
 			$mystring = "on: ".$cnton." | afk: ".$cnti." | off: ".$cntoff;
 			if ($myoldstring != $mystring) {
 				$this->sendStatus($mystring);

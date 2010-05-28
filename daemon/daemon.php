@@ -83,8 +83,9 @@ try {
 					$msg = "Receiver has no XMPP";
 				}
 
-				msg ("MSG From: ".$GLOBALS[users][byuri][$mymsg[sender]][name]."; To: ".$GLOBALS[users][byuri][$mymsg[receiver]][name]." (".$msg.")");
 				$rsql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET xmpp='0' WHERE id='".$mymsg[id]."';");
+				msg ("MSG From: ".utf8_encode($GLOBALS[users][byuri][$mymsg[sender]][name])."; To: ".
+						utf8_encode($GLOBALS[users][byuri][$mymsg[receiver]][name])." (".utf8_encode($msg).")");
 			}
 		}
     $jaxl->getXML();

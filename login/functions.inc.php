@@ -103,11 +103,13 @@ function getXmppUsers() {
 	$count = 0;
 	$sql = mysql_query("SELECT openid,xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql)) {
-		$GLOBALS[users][byxmpp][$row[xmpp]] = $row[openid];
-		$GLOBALS[users][byuri][$row[openid]][xmpp] = $row[xmpp];
-		$GLOBALS[users][bylowxmpp][strtolower($row[xmpp])] = $row[openid];
+		if (! empty($GLOBALS[users][byuri][$row[openid]][name])) {
+			$GLOBALS[users][byxmpp][$row[xmpp]] = $row[openid];
+			$GLOBALS[users][byuri][$row[openid]][xmpp] = $row[xmpp];
+			$GLOBALS[users][bylowxmpp][strtolower($row[xmpp])] = $row[openid];
 
-		$count++;
+			$count++;
+		}
 	}
 	$GLOBALS[users][count][xmpp] = $count;
 }
@@ -137,9 +139,13 @@ function fetchUsers () {
 	getXmppUsers();
 
 	#fetching users from openid lastonline db
-	$sqls = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
-	while ($rows = mysql_fetch_array($sqls))
-		$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
+	$sqls = mysql_query("SELECT openid,timestamp,status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	while ($rows = mysql_fetch_array($sqls)) {
+		if (! empty($GLOBALS[users][byuri][$rows[openid]][name])) {
+			$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
+			$GLOBALS[users][byuri][$rows[openid]][status] = utf8_decode($rows[status]);
+		}
+	}
 
 	#eqdkp
 	$count = 0;
@@ -147,8 +153,10 @@ function fetchUsers () {
 	while ($row = mysql_fetch_array($sql)) {
 		foreach ($GLOBALS[users][byuri] as $myurl) {
 			if (strtolower($myurl[name]) == $row[username]) {
-				$GLOBALS[users][byuri][$myurl[uri]][eqdkp] = $row[user_id];
-				$count++;
+				if (! empty($GLOBALS[users][byuri][$myurl[uri]][name])) {
+					$GLOBALS[users][byuri][$myurl[uri]][eqdkp] = $row[user_id];
+					$count++;
+				}
 			}
 		}
 	}
@@ -159,8 +167,10 @@ function fetchUsers () {
 	$sql = mysql_query("SELECT uoi_user,uoi_openid FROM WIKI_user_openid WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[uoi_user])) {
-			$GLOBALS[users][byuri][$row[uoi_openid]][mediawiki] = $row[uoi_user];
-			$count++;
+			if (! empty($GLOBALS[users][byuri][$row[uoi_openid]][name])) {
+				$GLOBALS[users][byuri][$row[uoi_openid]][mediawiki] = $row[uoi_user];
+				$count++;
+			}
 		}
 	$GLOBALS[users][count][mediawiki] = $count;
 
@@ -169,8 +179,10 @@ function fetchUsers () {
 	$sql = mysql_query("SELECT user_id,url FROM wp_openid_identities WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[url])) {
-			$GLOBALS[users][byuri][$row[url]][wordpress] = $row[user_id];
-			$count++;
+			if (! empty($GLOBALS[users][byuri][$row[url]][name])) {
+				$GLOBALS[users][byuri][$row[url]][wordpress] = $row[user_id];
+				$count++;
+			}
 		}
 	$GLOBALS[users][count][wordpress] = $count;
 
@@ -178,7 +190,10 @@ function fetchUsers () {
 	$count = 0;
 	$sql = mysql_query("SELECT id,openid FROM ".$GLOBALS[cfg][chat][usertable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql)) {
-		$GLOBALS[users][byuri][$row[openid]][chat] = $row[id];
+		if (! empty($GLOBALS[users][byuri][$row[openid]][name])) {
+			$GLOBALS[users][byuri][$row[openid]][chat] = $row[id];
+			$GLOBALS[users][bychat][$row[id]] = $row[openid];
+		}
 	}
 	$GLOBALS[users][count][chat] = $count;
 }
@@ -327,7 +342,7 @@ function updateLastOnline () {
 
 function jasonOut () {
 	#return json as header and exit on ajax requests
-	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR ($_POST[ajax] == 1)) {
+	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR ($_POST[myjob] == "update") OR ($_POST[myjob] == "status") OR ($_POST[ajax] == 1)) {
 		$GLOBALS[myreturn][openid_identifier] = $_SESSION[openid_identifier];
 
 		if ($GLOBALS[debug]) {
@@ -428,5 +443,15 @@ function getChatMessages ($channel) {
 		$tret[$count++][message] = $row[message];
 	}
 	return $tret;
+}
+
+function checkChatRights ($channel) {
+
+	return 0;
+}
+
+function setChatRights ($channel, $myarray) {
+
+	return 0;
 }
 ?>

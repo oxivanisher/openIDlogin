@@ -2,9 +2,15 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	fetchUsers();
+	#make sure, the user has a chat id
+	$bool = 1;
+	$sql = mysql_query("SELECT id FROM ".$GLOBALS[cfg][chat][usertable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	while ($row = mysql_fetch_array($sql))
+		$bool = 0;
+	if ($bool)
+		$sql2 = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][usertable]." (openid,lastonline) VALUES ('".$_SESSION[openid_identifier]."', '".time()."');");
 
-	
+	fetchUsers();
 
 
 
@@ -21,68 +27,61 @@ if ($_SESSION[loggedin] == 1) {
 
 	}
 
-	#get chat status -> functions
+	#get chat status -> functions (site refresh ajax request)
 	elseif ($_POST[myjob] == "status") {
+		
 		$GLOBALS[myreturn][msg] = "status";
+	}
 
+	#get chat update -> functions (update poll ajax request)
+	elseif ($_POST[myjob] == "update") {
+		
+		$GLOBALS[myreturn][msg] = "update";
 	}
 
 	#get users -> functions
 	elseif ($_POST[myjob] == "getusers") {
 		$cnt = 0;
-		foreach ($GLOBALS[module] as $myuser) {
-			$GLOBALS[myreturn][users][$cnt][name] = $myuser[smf];
-			$GLOBALS[myreturn][users][$cnt][openid] = $myuser[name];
+		foreach ($GLOBALS[users][byuri] as $myuri) {
+			$GLOBALS[myreturn][users][$cnt][name] = $myuri[name];
+			$GLOBALS[myreturn][users][$cnt][openid] = $myuri[uri];
 			$cnt++;
 		}
 	}
 
-	$GLOBALS[html] .= "<h3>List Messages</h3>";
+	$GLOBALS[html] .= "<h3>List Channels</h3>";
 	$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 	$cnt = 0; $ncnt = 0;
-	$GLOBALS[html] .= "<tr><th>From</th><th>To</th><th>Message</th><th>Time</th></tr>";
-	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
-			" WHERE receiver='".$_SESSION[openid_identifier]."' OR sender='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
+	$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th></tr>";
 
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].
+											" WHERE 1 ORDER BY name ASC;");
 	while ($row = mysql_fetch_array($sql)) {
-		if (empty($GLOBALS[module][$row[sender]][smf]))
-			$sender = $row[sender];
+		if ($row[owner] == 0) {
+			$owner = "Willhelm";
+		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 		else
-			$sender = $GLOBALS[module][$row[sender]][smf];
+			$owner = $row[owner];
 
-		if (empty($GLOBALS[module][$row[receiver]][smf]))
-			$receiver = $row[receiver];
-		else
-			$receiver = $GLOBALS[module][$row[receiver]][smf];
+		$GLOBALS[myreturn][channels][$cnt][id] = $row[id];
+		$GLOBALS[myreturn][channels][$cnt][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
+		$GLOBALS[myreturn][channels][$cnt][lastmessage] = getAge($row[lastmessage]);
+		$GLOBALS[myreturn][channels][$cnt][name] = $row[name];
+		$GLOBALS[myreturn][channels][$cnt][owner] = $owner;
+		$GLOBALS[myreturn][channels][$cnt][ownername] = $owner;
 
-		if ($row[receiver] == $_SESSION[openid_identifier]) {
-			$GLOBALS[myreturn][chatmessages][$cnt][mine] = 1;
-			if ($row['new'] == "1") $ncnt++;
-		} else {
-			$GLOBALS[myreturn][chatmessages][$cnt][mine] = 0;
-		}
-
-		$GLOBALS[myreturn][chatmessages][$cnt][id] = $row[id];
-		$GLOBALS[myreturn][chatmessages][$cnt][age] = getAge($row[timestamp]);
-		$GLOBALS[myreturn][chatmessages][$cnt][receiver] = $receiver;
-		$GLOBALS[myreturn][chatmessages][$cnt][sender] = $sender;
-		$GLOBALS[myreturn][chatmessages][$cnt][chat] = utf8_decode(substr($row[chat], 0, 40));
-		$GLOBALS[myreturn][chatmessages][$cnt]['new'] = $row['new'];
-		$GLOBALS[myreturn][chatmessages][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
 
 		$GLOBALS[html] .= "<tr>";
-		$GLOBALS[html] .= "<td>".$sender." | ".$GLOBALS[myreturn][chatmessages][$cnt][age]."</td>";
-		$GLOBALS[html] .= "<td>".$receiver."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][chatmessages][$cnt][subject]."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][chatmessages][$cnt][chat]."</td>";
-		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][chatmessages][$cnt][date]."</td>";
+		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][name]."</td>";
+		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][owner]."</td>";
+		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][created]."</td>";
+		$GLOBALS[html] .= "<td>".$GLOBALS[myreturn][channels][$cnt][lastmessage]."</td>";
 		$GLOBALS[html] .= "</tr>";
 
 		$cnt++;
 	}
 	$GLOBALS[html] .= "</table>";
-
-	$GLOBALS[myreturn][newchats] = $ncnt;
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
 }
