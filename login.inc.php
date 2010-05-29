@@ -113,29 +113,39 @@ switch ($_POST[job]) {
 			$GLOBALS[myreturn][msg] = "load module ".$_POST[module];
 			$GLOBALS[html] = "";
 			if (file_exists('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php')) {
-				$GLOBALS[html] .= "<h2><a href='?'>Module Index</a></h2>";
-				$GLOBALS[html] .= "<ul><li><h3><a href='?module=".$_POST[module]."'>".$_POST[module]." Index</a></h3></li></ul>";
-				include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
+				$GLOBALS[html] .= "<h2><a href='?'>Modul &Uuml;bersicht</a> &gt;";
+				if (file_exists($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php')) {
+					include($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php');
+					$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2>";
+					include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
+				} else {
+					$GLOBALS[html] .= "No Module description found!";
+				}
 				$GLOBALS[html] .= "<br />";
 			} else {
 				$GLOBALS[html] .= "<b>Module ".$_POST[module]." not found!</b>";
 			}
 		} else {
 			$GLOBALS[myreturn][msg] = "refreshing";
-			$GLOBALS[html] = "<h2>Module Index</h2><br />";
+			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
 			if (! empty($_SESSION[error]))
 				$GLOBALS[html] .= "ERROR: ".$_SESSION[error];
 				$GLOBALS[html] .= "<ul>";
 
 	
 			if (is_dir($GLOBALS[cfg][moduledir])) {
-			    if ($dh = opendir($GLOBALS[cfg][moduledir])) {
-	        		while (($file = readdir($dh)) !== false) {
-								if (is_dir($GLOBALS[cfg][moduledir]."/".$file))
-						if (($file != ".") AND ($file != "..") AND ($file != "Auth"))
-			            	$GLOBALS[html] .= "<li><h3><a href='?module=".$file."'>$file</a></h3></li>";
-			        }
-			        closedir($dh);
+				if ($dh = opendir($GLOBALS[cfg][moduledir])) {
+	      	while (($file = readdir($dh)) !== false) {
+						if (is_dir($GLOBALS[cfg][moduledir]."/".$file))
+							if (($file != ".") AND ($file != "..") AND ($file != "Auth")) {
+									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
+										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
+										if (($MODULE[admin] AND $_SESSION[isadmin]) OR (! $MODULE[admin]))
+					        		$GLOBALS[html] .= "<li><h3><a href='?module=".$file."'>".$MODULE[name]."</a></h3>".$MODULE[comment]."<br /><br /></li>";
+									}
+								}
+			      }
+			      closedir($dh);
 				}
 				$GLOBALS[html] .= "</ul>";
 			} 
