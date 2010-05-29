@@ -19,7 +19,8 @@ $con = @mysql_pconnect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOB
     or exit("Connection failed.");
 @mysql_select_db ($GLOBALS[cfg][mysqlDB], $con)
 	or exit("Database not found.");
-mysql_set_charset('utf8',$con);
+mysql_query('set character set utf8;');
+#mysql_set_charset('UTF8',$con);
 
 /* Include JAXL Class */
 include_once("inc/jaxl.class.php");
@@ -77,15 +78,15 @@ try {
 				#here goes the magic to send openID msgs to jabber :D
 				if (isset($GLOBALS[users][byuri][$mymsg[receiver]][xmpp])) {
 					$msg = "Receiver has XMPP";
-					$jaxl->sendMessage($GLOBALS[users][byuri][$mymsg[receiver]][xmpp], utf8_encode($GLOBALS[users][byuri][$mymsg[sender]][utf8name]).": ".
-									utf8_encode($mymsg[subject])."\n".utf8_encode($mymsg[message]));
+					$jaxl->sendMessage($GLOBALS[users][byuri][$mymsg[receiver]][xmpp], $GLOBALS[users][byuri][$mymsg[sender]][name].": ".
+									xmppencode($mymsg[subject])."\n".xmppencode($mymsg[message]));
 				} else {
 					$msg = "Receiver has no XMPP";
 				}
 
 				$rsql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET xmpp='0' WHERE id='".$mymsg[id]."';");
-				msg ("MSG From: ".utf8_encode($GLOBALS[users][byuri][$mymsg[sender]][name])."; To: ".
-						utf8_encode($GLOBALS[users][byuri][$mymsg[receiver]][name])." (".utf8_encode($msg).")");
+				msg ("MSG From: ".$GLOBALS[users][byuri][$mymsg[sender]][name]."; To: ".
+						$GLOBALS[users][byuri][$mymsg[receiver]][name]." (".$msg.")");
 			}
 		}
     $jaxl->getXML();

@@ -123,12 +123,12 @@ function fetchUsers () {
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
 			#experimental
-			$tmpname = utf8_decode($row[member_name]);
+			$tmpname = $row[member_name];
 			$tmpuri = $row[openid_uri];
 			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
-			$GLOBALS[users][byutf8name][strtolower($row[member_name])] = $tmpuri;
+#			$GLOBALS[users][byutf8name][strtolower($row[member_name])] = $tmpuri;
 			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
-			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
+#			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
 			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
 			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
 			$count++;
@@ -143,7 +143,7 @@ function fetchUsers () {
 	while ($rows = mysql_fetch_array($sqls)) {
 		if (! empty($GLOBALS[users][byuri][$rows[openid]][name])) {
 			$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
-			$GLOBALS[users][byuri][$rows[openid]][status] = utf8_decode($rows[status]);
+			$GLOBALS[users][byuri][$rows[openid]][status] = $rows[status];
 		}
 	}
 
@@ -233,7 +233,7 @@ function drawSmfUsersDropdown() {
 	$tmphtml .= "<option value=''>Choose User</option>";
 	$sqlt = mysql_query("SELECT member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri='' ORDER BY member_name ASC;");
 	while ($rowt = mysql_fetch_array($sqlt)) {
-		$tmphtml .= "<option value='".$rowt[id_member]."'>".utf8_decode($rowt[member_name])."</option>";
+		$tmphtml .= "<option value='".$rowt[id_member]."'>".$rowt[member_name]."</option>";
 	}
 	$tmphtml .= "</select>";
 	return $tmphtml;
@@ -309,14 +309,14 @@ function getOnlineUsers () {
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = ""; $idleusersarray = array();
 	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
-		if (empty($GLOBALS[users][byuri][$orow[openid]][utf8name])) continue;
+		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
 		$cnt++;
 		if ($orow[openid] == $_SESSION[openid_identifier]) $bool = true;
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
-			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][utf8name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][utf8name]); continue; }
+			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
-			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][utf8name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][utf8name]); continue; }
+			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
 	}
 
 	$GLOBALS[onlineusers] = $ocnt;
@@ -394,7 +394,11 @@ function jasonOut () {
 }
 
 function encodeme($me) {
-	return utf8_encode(mysql_real_escape_string(str_replace('&', '&amp;', $me)));
+	return mysql_real_escape_string(htmlspecialchars(str_replace('&', '&amp;', trim($me))));
+}
+
+function xmppencode($me) {
+	return utf8_encode(htmlspecialchars($me));
 }
 
 function msg ($msg) {
@@ -513,9 +517,9 @@ function getMyChatMessages ($since = NULL) {
 	while ($row = mysql_fetch_array($sql)) {
 		$tret[msg][$count][id] = $row[id];
 		$tret[msg][$count][channel] = $row[channel];
-		$tret[msg][$count][sender] = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[sender]]][utf8name];
+		$tret[msg][$count][sender] = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[sender]]][name];
 		$tret[msg][$count][ts] = getAge($row[timestamp]);
-		$tret[msg][$count][msg] = utf8_decode($row[message]);
+		$tret[msg][$count][msg] = $row[message];
 		$count++;
 	}
 	}

@@ -194,7 +194,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='chat' />";
 				$GLOBALS[html] .= "<input type='hidden' name='channel' value='".$mychan[id]."' />";
 				$GLOBALS[html] .= "<td valign='bottom'>";
-				$GLOBALS[html] .= "<b>".utf8_decode($mychan[name])."</b><br />";
+				$GLOBALS[html] .= "<b>".$mychan[name]."</b><br />";
 				foreach ($mymsgs[msg] as $mymsg) {
 					if ($mymsg[channel] == $mychan[id])
 						$GLOBALS[html] .= $mymsg[sender].": ".$mymsg[msg]."<br />";

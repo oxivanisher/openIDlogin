@@ -50,7 +50,7 @@
 						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
 					}
 
-					## what do we have to do? ##
+					## what do we have to do? ##
 
 					#check and split for message
 					$tmpi = explode(":", $content);
@@ -58,13 +58,14 @@
 						$ismessage = 1;
 						for ($i = 1; $i <= count($tmpi); $i++) 
 							$message .= $tmpi[$i];
-						$rec = $GLOBALS[users][byutf8name][utf8_decode(trim(strtolower($tmpi[0])))];
+						$rec = $GLOBALS[users][byname][utf8_decode(strtolower(trim($tmpi[0])))];
 						$cont = trim(str_replace($tmpi[0].':', '', $content));
 
 						if (trim(strtolower($tmpi[0])) == "r") {
 							$rrec = "";
 							$sqlr = mysql_query("SELECT sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
-											$GLOBALS[users][byxmpp][strtolower($jid[0])]."' ORDER BY timestamp DESC LIMIT 1;");
+											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' AND sender<>'".
+											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' ORDER BY timestamp DESC LIMIT 1;");
 							while ($rowr = mysql_fetch_array($sqlr))
 								$rrec = $rowr[sender];
 							if (! empty($rrec)) {
@@ -84,11 +85,11 @@
 								msg ("->\tMessage to ".$rec." delivered.");
 								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
-												utf8_decode(htmlspecialchars(str_replace("'",'"',str_replace("\\",'',trim($cont)))))."', '1', '1');");
+												utf8_decode(encodeme($cont))."', '1', '1');");
 
 								#sql ok?
 								if ($sql)
-									$this->sendMessage($fromJid, "Message to ".utf8_decode($rec)." sent (".$jid[0].", ".$jid[1].")!");
+									$this->sendMessage($fromJid, "Message to ".$rec." sent (".$jid[0].", ".$jid[1].")!");
 								else
 									$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
 							} else {
@@ -112,13 +113,13 @@
 
 							#mass mailer
 							} elseif (substr($content, 0, 5) == "!mass") {
-								$mymassmsg = str_replace("'", '"', utf8_decode( trim( str_replace("!mass", "", $content) ) ) );
+								$mymassmsg = str_replace("!mass", "", $content);
 
 								if (! empty($mymassmsg)) {
 									foreach ($GLOBALS[users][byuri] as $myuri)
 										$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 														$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$myuri[uri]."', '".time()."', 'MASS/XMPP/".$jid[1]."', '".
-														$mymassmsg."', '1', '1');");
+														utf8_decode(encodeme($mymassmsg))."', '1', '1');");
 
 									msg ("\tMassmail sent!");
 									$this->sendMessage($fromJid, "\tMassmail sent!");
@@ -146,17 +147,17 @@
 								if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout])) {
 									if ($boolon) $boolon = 0;
 									else $tmpon = ", ";
-									$reton .= $tmpon.utf8_encode($myuri[utf8name]);
+									$reton .= $tmpon.$myuri[name];
 									$cnton++;
 								} elseif ($myuri[online] > (time() - $GLOBALS[cfg][lastidletimeout])) {
 									if ($booli) $booli = 0;
 									else $tmpi = ", ";
-									$reti .= $tmpi.utf8_encode($myuri[utf8name]);
+									$reti .= $tmpi.$myuri[name];
 									$cnti++;
 								} else {
 									if ($booloff) $booloff = 0;
 									else $tmpoff = ", ";
-									$retoff .= $tmpoff.utf8_encode($myuri[utf8name]);
+									$retoff .= $tmpoff.$myuri[name];
 									$cntoff++;
 								}
 
@@ -164,7 +165,7 @@
 								if (! empty($myuri[xmpp])) {
 									if ($boolj) $boolj = 0;
 									else $tmpj = ", ";
-									$retj .= $tmpj.utf8_encode($myuri[utf8name]);
+									$retj .= $tmpj.$myuri[name];
 									$cntj++;
 								} 
 							}
@@ -177,7 +178,7 @@
 							if ($cntj) $mymessage .= $cntj." Users with Jabber Traversal:\n".$retj."\n\n";
 							$mymessage .= "Total ".($cnton + $cnti + $cntoff);
 
-							$this->sendMessage($fromJid, $mymessage);
+							$this->sendMessage($fromJid, xmppencode($mymessage));
 
 						#recent messages
 						} elseif ($content == "!recent") {
@@ -185,23 +186,23 @@
 							$sql = mysql_query("SELECT sender,subject,timestamp,message FROM ".$GLOBALS[cfg][msg][msgtable].
 											" WHERE receiver='".$GLOBALS[users][byxmpp][strtolower($jid[0])]."' ORDER BY timestamp ASC LIMIT 10;");
 							while ($row = mysql_fetch_array($sql)) {
-								$out .= utf8_encode($GLOBALS[users][byuri][$row[sender]][utf8name])." | ".getAge($row[timestamp])." | ".$row[subject]."\n".utf8_encode($row[message])."\n\n";
+								$out .= $GLOBALS[users][byuri][$row[sender]][name]." | ".getAge($row[timestamp])." | ".$row[subject]."\n".$row[message]."\n\n";
 								$cnt++;
 							}
 
 							msg ("\tShowing recent messages");
-							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".$out);
+							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".xmppencode($out));
 
 						#set status
 						} elseif (substr($content, 0, 7) == "!status") {
-							$mywebstatus = str_replace("'", '"', utf8_decode( trim( str_replace("!status", "", $content) ) ) );
+							$mywebstatus = str_replace("'", '"', trim( str_replace("!status", "", $content) ) );
 
 							if (! empty($mywebstatus)) {
 								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
 												$mywebstatus."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
 
 								msg ("\tWebsite status set.");
-								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", $content) ));
+								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", xmppencode($content)) ));
 							} else {
 								msg ("\tNo status found.");
 								$this->sendMessage($fromJid, "No status set!");
@@ -211,18 +212,18 @@
 						#show the help
 						} elseif ($content == "!help") {
 							msg ("\tShowing help");
-							$this->sendMessage($fromJid, "Showing help:\n".htmlspecialchars($help));
+							$this->sendMessage($fromJid, "Showing help:\n".xmppencode($help));
 
 						#no such command
 						} else {
 							msg ("\tNo command found: ".$content);
-							$this->sendMessage($fromJid, "No such command.\n".htmlspecialchars($help));
+							$this->sendMessage($fromJid, "No such command.\n".xmppencode($help));
 						}
 
 					#malformated message
 					} else {
 						msg ("\tMalformated message");
-						$this->sendMessage($fromJid, "Malformated message!\n".htmlspecialchars($help));
+						$this->sendMessage($fromJid, "Malformated message!\n".xmppencode($help));
 					}
 				}
 			} else {

@@ -146,8 +146,8 @@ switch ($_POST[myjob]) {
 			$GLOBALS[myreturn][message][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
 			$GLOBALS[myreturn][message][age] = getAge($row[timestamp]);
 			$GLOBALS[myreturn][message][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
-			$GLOBALS[myreturn][message][subject] = utf8_decode($row[subject]);
-			$GLOBALS[myreturn][message][message] = utf8_decode($row[message]);
+			$GLOBALS[myreturn][message][subject] = $row[subject];
+			$GLOBALS[myreturn][message][message] = $row[message];
 		
 			if ($row[receiver] == $_SESSION[openid_identifier])
 				$sqlr = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0', xmpp='0' WHERE id='".$row[id]."';");
@@ -194,8 +194,8 @@ switch ($_POST[myjob]) {
 			$GLOBALS[myreturn][messages][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
 			$GLOBALS[myreturn][messages][$cnt][age] = getAge($row[timestamp]);
 			$GLOBALS[myreturn][messages][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
-			$GLOBALS[myreturn][messages][$cnt][subject] = utf8_decode($row[subject]);
-			$GLOBALS[myreturn][messages][$cnt][message] = utf8_decode($row[message]);
+			$GLOBALS[myreturn][messages][$cnt][subject] = $row[subject];
+			$GLOBALS[myreturn][messages][$cnt][message] = $row[message];
 			$GLOBALS[myreturn][messages][$cnt]['new'] = $row['new'];
 
 			if ($row[receiver] == $_SESSION[openid_identifier]) {

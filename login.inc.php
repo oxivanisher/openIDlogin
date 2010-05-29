@@ -12,7 +12,8 @@ $con = @mysql_pconnect($GLOBALS[cfg][mysqlHost], $GLOBALS[cfg][mysqlUser], $GLOB
     or exit("Connection failed.");
 @mysql_select_db ($GLOBALS[cfg][mysqlDB], $con)
     or exit("Database not found.");
-mysql_set_charset('utf8',$con);
+mysql_query('set character set utf8;');
+mysql_set_charset('UTF8',$con);
 
 session_start();
 
@@ -207,6 +208,7 @@ if ($_POST[job] == "logout")
 
 #generate final html output
 echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Administration</title>";
+echo '<meta http-equiv="Content-Type" content="text/html; charset=utf8" />';
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css1]."' type='text/css' />\n";
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css2]."' type='text/css' />\n";
 echo "</head>";
