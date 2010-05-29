@@ -2,6 +2,6 @@
 
 	$MODULE[admin]		= 0;
 	$MODULE[name]			= "Private Nachrichten";
-	$MODULE[comment]	= "Sende und empfange Nachrichten anderer Websiten Benutzer.<br />Du kannst dir auch die Verkn&uuml;pfung deines Jabber Accounts mit der Website einstellen.";
+	$MODULE[comment]	= "Sende und empfange Nachrichten anderer Websiten Benutzer.<br />Du kannst dir auch die Verkn&uuml;pfung deines Jabber Accounts mit der Website einstellen.<br /><a href='http://alptroeim.ch/wiki/index.php/Nachrichtensystem'>Wiki Eintrag zum Nachrichtensystem.</a>";
 
 ?>

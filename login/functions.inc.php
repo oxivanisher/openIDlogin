@@ -152,7 +152,7 @@ function fetchUsers () {
 	$sql = mysql_query("SELECT user_id,username FROM eqdkp_users WHERE 1;"); #username='".strtolower($myurl[name]."';"));
 	while ($row = mysql_fetch_array($sql)) {
 		foreach ($GLOBALS[users][byuri] as $myurl) {
-			if (strtolower($myurl[name]) == $row[username]) {
+			if (strtolower($myurl[name]) == strtolower($row[username])) {
 				if (! empty($GLOBALS[users][byuri][$myurl[uri]][name])) {
 					$GLOBALS[users][byuri][$myurl[uri]][eqdkp] = $row[user_id];
 					$count++;
