@@ -44,19 +44,21 @@ while ($rowa = mysql_fetch_array($sqla))
 if ($_POST[ssoInpLogout] == 1) {
 	$_POST[job] = "logout";
 	$_SESSION[user][nickname] = "";
+} elseif ($_POST[job] == "login") {
+	$_POST[job] = "auth";
+	$_SESSION[user][nickname] = $_POST[ssoInpUsername];
+	$_SESSION[tmp][referer] = $_POST[ssoInpReferer];
+	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } elseif ($_POST[job] == "verify") {
 	$_SESSION[tmp][referer] = $_POST[ssoInpReferer];
+} elseif ($_POST[job] == "module") {
+	$_POST[job] = "ajax";
 } elseif ($_POST[job] == "status") {
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } elseif ($_POST[job] == "update") {
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } elseif ($_SESSION[loggedin] == 1) {
 	$_POST[job] = "refresh";
-	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
-} elseif ($_POST[job] == "login") {
-	$_POST[job] = "auth";
-	$_SESSION[user][nickname] = $_POST[ssoInpUsername];
-	$_SESSION[tmp][referer] = $_POST[ssoInpReferer];
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } else {
 	$_POST[job] = "nix zu tun";
@@ -155,7 +157,17 @@ switch ($_POST[job]) {
 		$GLOBALS[html] .= "<br />";	
 		$_SESSION[error] = "";
 		break;
-	
+
+	case "ajax":
+#		fetchUsers();
+		setCookies();
+		$GLOBALS[myreturn][loggedin] = 1;
+		if (file_exists('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php')) {
+			include('/srv/www/instances/alptroeim.ch/htdocs/'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
+		}
+		jasonOut();
+	break;
+
 	case "logout":
 #		$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
 #		header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');

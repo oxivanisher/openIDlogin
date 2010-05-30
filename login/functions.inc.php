@@ -386,7 +386,6 @@ function jasonOut () {
 		$m_time = explode(" ",microtime());
 		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
 		$GLOBALS[myreturn][rutime][round($totaltime,3)];
-
 		header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
 		#javascript exit :D
 		exit;

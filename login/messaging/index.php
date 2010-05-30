@@ -11,24 +11,42 @@ switch ($_POST[myjob]) {
 
 	#send message function
 	case "sendmessage":
+		if (empty($_POST[subject])) {
+			if ($_POST[ajax]) {
+				$_POST[subject] = "AJAX GUI";
+			} else {
+				$_POST[subject] = "Unknown Source!";
+			}
+		}
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 						$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
 						"', '".encodeme($_POST[message])."', '1', '1');");
-		$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
-		$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+#		if ($sql) {
+			$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
+			$GLOBALS[myreturn][msg] = "sent";
+#		} else {
+#			$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." NOT sent!</h3>";
+#			$GLOBALS[myreturn][msg] = "notsent";
+#		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#admin mass mailer
 	case "massmail":
+		fetchUsers();
 		if ($_SESSION[isadmin]) {
 			foreach ($GLOBALS[users][byuri] as $myuri)
 				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 								$_SESSION[openid_identifier]."', '".$myuri[uri]."', '".time()."', '".encodeme($_POST[subject]).
 								"', '".encodeme($_POST[message])."', '1', '1');");
 
-			$GLOBALS[html] .= "<h3>Message sent to everyone!</h3>";
-			$GLOBALS[myreturn][msg] = "sent"; #FIXME ok check (error/sent)
+#			if ($sql) {
+				$GLOBALS[html] .= "<h3>Message sent to everyone!</h3>";
+				$GLOBALS[myreturn][msg] = "sent";
+#			} else {
+#				$GLOBALS[html] .= "<h3>Message to everyone NOT sent!</h3>";
+#				$GLOBALS[myreturn][msg] = "notsent";
+#			}
 			updateTimestamp($_SESSION[openid_identifier]);
 		}
 	break;
@@ -44,10 +62,10 @@ switch ($_POST[myjob]) {
 		if ($cbool) {
 			$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE id='".$_POST[id]."';");
 			$GLOBALS[html] .= "<h3>Message deleted!</h3>";
-			$GLOBALS[myreturn][msg] = "deleted"; #FIXME ok check (error/sent)
+			$GLOBALS[myreturn][msg] = "deleted";
 		} else {
 			$GLOBALS[html] .= "<h3>Nice try .. Message NOT deleted, since it's not yours!!</h3>";
-		$GLOBALS[myreturn][msg] = "error";
+			$GLOBALS[myreturn][msg] = "error";
 		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
@@ -55,14 +73,20 @@ switch ($_POST[myjob]) {
 	#delete all message -> functions
 	case "deleteallmessage":
 		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."';");
-		$GLOBALS[html] .= "<h3>All your messages where deleted!</h3>";
-		$GLOBALS[myreturn][msg] = "alldeleted"; #FIXME ok check (error/sent)
+#		if ($sql) {
+			$GLOBALS[html] .= "<h3>All your messages where deleted!</h3>";
+			$GLOBALS[myreturn][msg] = "alldeleted";
+#		} else {
+#			$GLOBALS[html] .= "<h3>All your messages where NOT deleted!</h3>";
+#			$GLOBALS[myreturn][msg] = "allnotdeleted";
+#		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#mark all viewed -> functions
 	case "allviewed":
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE receiver='".$_SESSION[openid_identifier]."';");
+
 		$GLOBALS[html] .= "<h3>All your messages are now read!</h3>";
 		$GLOBALS[myreturn][msg] = "allviewed"; #FIXME ok check (error/sent)
 		updateTimestamp($_SESSION[openid_identifier]);
@@ -86,6 +110,12 @@ switch ($_POST[myjob]) {
 		}
 		$GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
 		updateTimestamp($_SESSION[openid_identifier]);
+	break;
+
+	#set user status
+	case "setstatus":
+		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
+    	    	$_POST[status]."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	break;
 }
 #init stuff
@@ -168,15 +198,30 @@ switch ($_POST[myjob]) {
 	break;
 
 	case "getusers":
-		$cnt = 0;
+		#return user:online status   0 off, 1 on, 2 idle
+		fetchUsers();
+		$cnt = 1;
 		foreach ($GLOBALS[users][byuri] as $myuser) {
-			$GLOBALS[myreturn][users][$cnt][name] = $myuser[uri];
-			$GLOBALS[myreturn][users][$cnt][openid] = $myuser[name];
+			$GLOBALS[myreturn][users][$cnt][name] = $myuser[name];
+			$GLOBALS[myreturn][users][$cnt][openid] = $myuser[uri];
+#			$GLOBALS[myreturn][users][$myuser[name]] = $myuser[uri];
 			$cnt++;
 		}
 	break;
 
+	case "getopenid":
+		fetchUsers();
+		$GLOBALS[myreturn][openid] = $GLOBALS[users][byname][strtolower($_POST[name])];
+	break;
+
+	case "getname":
+		fetchUsers();
+		$GLOBALS[myreturn][name] = $GLOBALS[users][byname][$_POST[openid]];
+	break;
+
+
 	default:
+		fetchUsers();
 		$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>List Messages</a> | <a href='?module=".$_POST[module]."&myjob=composemessage'>Compose Message</a>";
 		$GLOBALS[html] .= " | <a href='?module=".$_POST[module]."&myjob=setupxmppform'>Setup Jabber Traversal (XMPP)</a></h3>";
 		$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
