@@ -119,7 +119,7 @@ function fetchUsers () {
 	#cleanup
 	unset ($GLOBALS[users]);
 	$count = 0;
-	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
+	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1 ORDER BY member_name;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
 			#experimental
@@ -134,7 +134,7 @@ function fetchUsers () {
 			$count++;
 		}
 	$GLOBALS[users][count][all] = $count;
-	$GLOBALS[html] .= "= ".$count." users found.<br />";
+//	$GLOBALS[html] .= "= ".$count." users found.<br />";
 
 	getXmppUsers();
 
@@ -264,6 +264,28 @@ function getAge($timestamp) {
 	return $ageOfMsgReturn;
 }
 
+function getNiceAge($timestamp) {
+	$ageOfMsg = time() - $timestamp;
+	if ($timestamp == 0) {
+		$ageOfMsgReturn = "";
+	} elseif ($ageOfMsg < '60') {
+		$ageOfMsgReturn = "vor ".$ageOfMsg." Sek";
+	} elseif ($ageOfMsg < '3600') {
+		$ageOfMsg = round(($ageOfMsg/60),1);
+		$ageOfMsgReturn = "vor ".$ageOfMsg." Min";
+	} elseif ($ageOfMsg <= '86400') {
+		$ageOfMsgReturn = strftime("um %H:%M Uhr", $ageOfMsg);
+	} elseif ($ageOfMsg <= '604800') {
+		$ageOfMsgReturn = strftime("am %A", $ageOfMsg);
+	} elseif ($ageOfMsg <= '2419200') {
+		$ageOfMsgReturn = strftime("im %B", $ageOfMsg);
+	} else  {
+		$ageOfMsg = round(($ageOfMsg/31449600),1);
+		$ageOfMsgReturn = strftime("anno %Y", $ageOfMsg);
+	}
+	return $ageOfMsgReturn;
+}
+
 function genMsgUrl($user) {
 	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
 					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
@@ -312,7 +334,8 @@ function getOnlineUsers () {
 		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
 		$cnt++;
-		if ($orow[openid] == $_SESSION[openid_identifier]) $bool = true;
+		if ($orow[openid] == $_SESSION[openid_identifier]) { $bool = true; $ocnt++; if ($obool) $obool = 0; 
+			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
 			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
@@ -343,7 +366,9 @@ function updateLastOnline () {
 
 function jasonOut () {
 	#return json as header and exit on ajax requests
-	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR ($_POST[myjob] == "update") OR ($_POST[myjob] == "status") OR ($_POST[ajax] == 1)) {
+	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR
+			($_POST[myjob] == "update") OR ($_POST[myjob] == "status") OR
+			($_POST[ajax] == 1)) {
 		$GLOBALS[myreturn][openid_identifier] = $_SESSION[openid_identifier];
 
 		if ($GLOBALS[debug]) {
@@ -361,11 +386,15 @@ function jasonOut () {
 			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
 			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
 
-			$sql = mysql_query("SELECT id FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
+			$tmppa = array();
+			$sql = mysql_query("SELECT id,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
 			while ($row = mysql_fetch_array($sql)) {
 				$GLOBALS[myreturn][newmsgs]++;
 				$GLOBALS[myreturn][newmsgid] = $row[id];
+				array_push($tmppa, $GLOBALS[users][byuri][$row[sender]][name]);
 			}
+			array_unique($tmppa);
+			$GLOBALS[myreturn][newmsgsfrom] = $tmppa;
 		}
 
 		if (! $_POST[ajax]) {
@@ -386,7 +415,10 @@ function jasonOut () {
 		$m_time = explode(" ",microtime());
 		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
 		$GLOBALS[myreturn][rutime][round($totaltime,3)];
-		header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
+		if ($GLOBALS[jsonobject])
+			header('X-JSON: '.json_encode($GLOBALS[myreturn], JSON_FORCE_OBJECT).'');
+		else
+			header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
 		#javascript exit :D
 		exit;
 	}

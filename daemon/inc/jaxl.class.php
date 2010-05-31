@@ -44,62 +44,22 @@
 					$help .= "!users | show a list of all users\n";
 					$help .= "!status <your status> | set your web status (currently you cant use : )\n";
 					$help .= "!recent | show recent messages (max 10)\n";
+					$help .= "!lastseen | shows when which users where last online\n";
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
 						$help .= "!exit | exit daemon (will restart)\n";
 						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
+						$help .= "!clearcache | clears the fucking eqdkp cache\n";
 					}
 
 					## what do we have to do? ##
 
 					#check and split for message
 					$tmpi = explode(":", $content);
-					if (count($tmpi) > 1) {
-						$ismessage = 1;
-						for ($i = 1; $i <= count($tmpi); $i++) 
-							$message .= $tmpi[$i];
-						$rec = $GLOBALS[users][byname][utf8_decode(strtolower(trim($tmpi[0])))];
-						$cont = trim(str_replace($tmpi[0].':', '', $content));
 
-						if (trim(strtolower($tmpi[0])) == "r") {
-							$rrec = "";
-							$sqlr = mysql_query("SELECT sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
-											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' AND sender<>'".
-											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' ORDER BY timestamp DESC LIMIT 1;");
-							while ($rowr = mysql_fetch_array($sqlr))
-								$rrec = $rowr[sender];
-							if (! empty($rrec)) {
-								msg ("->\tReply triggered to: ".$rrec);
-								$rec = $rrec;
-							}
-						}
 
-						#is there a target user?
-						if (empty($rec)) {
-							msg ("->\tNo target User found: ".$tmpi[0]);
-							$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
-
-						#is there content?
-						} else {
-							if ($cont) {
-								msg ("->\tMessage to ".$rec." delivered.");
-								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
-												utf8_decode(encodeme($cont))."', '1', '1');");
-
-								#sql ok?
-								if ($sql)
-									$this->sendMessage($fromJid, "Message to ".$rec." sent (".$jid[0].", ".$jid[1].")!");
-								else
-									$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
-							} else {
-								msg ("->\tMessage to ".$rec." dropped. No content found.");
-								$this->sendMessage($fromJid, "No content submitted!");
-							}
-						}
-
-					#is the message a comand message?
-					} elseif (substr($content, 0, 1) == "!") {
+				#is the message a comand message?
+				if (substr($content, 0, 1) == "!") {
 						msg ("\tCommand mode enabled.");
 
 						#admin commands
@@ -109,6 +69,13 @@
 							if ($content == "!exit") {
 								msg ("\tExiting...");
 								$this->sendMessage($fromJid, "Deamon exiting!");
+								exit;
+
+							#clear fucking eqdkp cache heavy dirty oxi workaround
+							} elseif ($content == "!clearcache") {
+								system('rm -rf /srv/www/instances/alptroeim.ch/htdocs/site/templates/cache/*');
+								msg ("\tClearing cache...");
+								$this->sendMessage($fromJid, "Clearing cache!");
 								exit;
 
 							#mass mailer
@@ -208,6 +175,31 @@
 								$this->sendMessage($fromJid, "No status set!");
 							}
 
+						#get last seen users
+						} elseif (substr($content, 0, 9) == "!lastseen") {
+							$myuser = str_replace("'", '"', trim( str_replace("!lastseen", "", $content) ) );
+
+							$tmpuser = $GLOBALS[users][byname][strtolower($myuser)];
+							if ($tmpuser) {
+								$this->sendMessage($fromJid, "User ".$myuser." last seen: ".getAge($GLOBALS[users][byuri][$tmpuser][online]));
+							} else {
+								$tmpout = "\n";
+								foreach ($GLOBALS[users][byuri] as $myuri)
+									$tmpout .= xmppencode($myuri[name])." ".getAge($myuri[online])."\n";
+
+								$this->sendMessage($fromJid, $tmpout);
+							}
+#							if (! empty($mywebstatus)) {
+#								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
+#												$mywebstatus."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+#
+#								msg ("\tWebsite status set.");
+#								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", xmppencode($content)) ));
+#							} else {
+#								msg ("\tNo status found.");
+#								$this->sendMessage($fromJid, "No status set!");
+#							}
+
 
 						#show the help
 						} elseif ($content == "!help") {
@@ -220,7 +212,52 @@
 							$this->sendMessage($fromJid, "No such command.\n".xmppencode($help));
 						}
 
-					#malformated message
+					#send message
+					} elseif (count($tmpi) > 1) {
+						$ismessage = 1;
+						for ($i = 1; $i <= count($tmpi); $i++) 
+							$message .= $tmpi[$i];
+						$rec = $GLOBALS[users][byname][utf8_decode(strtolower(trim($tmpi[0])))];
+						$cont = trim(str_replace($tmpi[0].':', '', $content));
+
+						if (trim(strtolower($tmpi[0])) == "r") {
+							$rrec = "";
+							$sqlr = mysql_query("SELECT sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
+											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' AND sender<>'".
+											$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."' ORDER BY timestamp DESC LIMIT 1;");
+							while ($rowr = mysql_fetch_array($sqlr))
+								$rrec = $rowr[sender];
+							if (! empty($rrec)) {
+								msg ("->\tReply triggered to: ".$rrec);
+								$rec = $rrec;
+							}
+						}
+
+						#is there a target user?
+						if (empty($rec)) {
+							msg ("->\tNo target User found: ".$tmpi[0]);
+							$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
+
+						#is there content?
+						} else {
+							if ($cont) {
+								msg ("->\tMessage to ".$rec." delivered.");
+								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
+												utf8_decode(encodeme($cont))."', '1', '1');");
+
+								#sql ok?
+								if ($sql)
+									$this->sendMessage($fromJid, "Message to ".$rec." sent (".$jid[0].", ".$jid[1].")!");
+								else
+									$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
+							} else {
+								msg ("->\tMessage to ".$rec." dropped. No content found.");
+								$this->sendMessage($fromJid, "No content submitted!");
+							}
+						}
+
+						#malformated message
 					} else {
 						msg ("\tMalformated message");
 						$this->sendMessage($fromJid, "Malformated message!\n".xmppencode($help));

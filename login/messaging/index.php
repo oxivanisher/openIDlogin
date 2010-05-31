@@ -117,6 +117,21 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
     	    	$_POST[status]."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	break;
+
+	#get user status
+	case "getstatus":
+		$bool = 0;
+		$sql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_POST[name]."';");
+		while ($row = mysql_fetch_array($sql)) {
+			$GLOBALS[myreturn][status] = $row[status];
+			$bool = 1;
+		}
+		if ($bool)
+			$GLOBALS[myreturn][msg] = "on";
+		else
+			$GLOBALS[myreturn][msg] = "nok";
+		
+	break;
 }
 #init stuff
 
@@ -197,6 +212,122 @@ switch ($_POST[myjob]) {
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
+
+
+	case "readmessages":
+		fetchUsers();
+		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
+					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$GLOBALS[users][byname][strtolower($_POST[name])].
+					"') OR (receiver='".$GLOBALS[users][byname][strtolower($_POST[name])]."' AND sender='".$_SESSION[openid_identifier].
+					"') ORDER BY timestamp DESC LIMIT 0,5;");
+		$cnt = 0; $bool = 0;
+		while ($row = mysql_fetch_array($sql)) {
+	#			$GLOBALS[myreturn][message][$cnt][sender] = $row[sender];
+	#			$GLOBALS[myreturn][message][$cnt][receiver] = $row[receiver];
+	#			$GLOBALS[myreturn][message][$cnt][sendername] = $GLOBALS[users][byuri][$row[sender]][name];
+	#			$GLOBALS[myreturn][message][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
+	#			$GLOBALS[myreturn][message][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
+	#			$GLOBALS[myreturn][message][$cnt][subject] = $row[subject];
+
+				if ($row['new'] == 1) {
+					if (($row[receiver] == $_SESSION[openid_identifier]) AND ($row[timestamp] < (time() - 10)))
+						$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE id='".$row[id]."';");
+					$new = 1;
+				} else
+					$new = 0;
+
+
+				if ($new)	$mynewreturn  = "<b>";
+				else			$mynewreturn  = "";
+
+				$mynewreturn .= 						$GLOBALS[users][byuri][$row[sender]][name]." ".getNiceAge($row[timestamp]);
+
+				if ($new)	$mynewreturn .= ":</b> ";
+				else			$mynewreturn .= ": <i>";
+
+				$mynewreturn .= 						str_replace("\n", "<br />", $row[message]);
+
+				if ($new)	$mynewreturn .= "";
+				else			$mynewreturn .= "</i>";
+
+
+				$GLOBALS[myreturn][message][$cnt][id] = $row[id];
+				$GLOBALS[myreturn][message][$cnt][msg] = $mynewreturn;
+
+				$cnt++;
+				$bool = 1;
+		}
+		if ($bool) {
+			$GLOBALS[myreturn][msg] = "ok";
+		} else {
+			$GLOBALS[myreturn][msg] = "nok";
+		}
+		$GLOBALS[myreturn][message] = array_reverse($GLOBALS[myreturn][message]);
+
+		updateTimestamp($_SESSION[openid_identifier]);
+	break;
+
+
+	#list messages for ajax
+	case "list":
+	#		$GLOBALS[myreturn][messages][$cnt][id] = $row[id];
+#			$GLOBALS[myreturn][messages][$cnt][sender] = $row[sender];
+#			$GLOBALS[myreturn][messages][$cnt][receiver] = $row[receiver];
+	#		$GLOBALS[myreturn][messages][$cnt][sendername] = $GLOBALS[users][byuri][$row[sender]][name];
+#			$GLOBALS[myreturn][messages][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
+#			$GLOBALS[myreturn][messages][$cnt][age] = getAge($row[timestamp]);
+#			$GLOBALS[myreturn][messages][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
+#			$GLOBALS[myreturn][messages][$cnt][subject] = $row[subject];
+	#		$GLOBALS[myreturn][messages][$cnt][message] = $row[message];
+	#		$GLOBALS[myreturn][messages][$cnt]['new'] = $row['new'];
+
+#			$tcnt = count($GLOBALS[myreturn][$GLOBALS[users][byuri][$row[sender]][name]]);
+#			if (! is_array($GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]]))
+#				$GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]] = array();
+#			array_push($GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]], $row[message]);
+#			$tcnt = count($tmparr[$tmpname]);
+#				$tmparr[count($tmparr)][name][$tmpname][count($tmparr[name][$tmpname])] = array("msg", $row[message]));
+#				array_push($tmparr[count($tmparr)][name][$tmpname][count($tmparr[name][$tmpname])], array("msg", $row[message]));
+#				$tmparr[name][count($tmparr)][$tmpname][count($tmparr[name][$tmpname])][count($tmparr[name][$tmpname][msg])][msg] = $row[message];
+
+		fetchUsers();
+		$tmpuser = ""; $tcnt = 0; $ncnt = 0; $bool = 0;	$tarray = array(); $farray = array();
+		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
+					" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY sender DESC, timestamp DESC;");
+		while ($row = mysql_fetch_array($sql)) {
+			$tmpname = $GLOBALS[users][byuri][$row[sender]][name];
+
+			if ($row['new'] == "1") $ncnt++;
+
+			if ($tmpuser != $tmpname) {
+				$tcnt++;
+//				$tmparr[$tcnt][namea] = $tmpname;
+				$tmpuser = $tmpname;
+			}
+/*			if ($tmpuser != $tmpname) {
+				$tmpuser = $tmpname;
+
+				if ($bool) {
+					array_push($farray, $tarray);
+					unset($tarray);
+					$tarray = array();
+				}
+				$bool = 1;
+			}
+			array_push($tarray, array("msg", $row[message]));
+*/
+			$tmparr[$tcnt][namea][$tmpname][count($tmparr[$tcnt][$tmpname])][msg] = $row[message];
+//			$tmparr[count($tmparr)][$tmpname][count($tmparr[$tmpname][msg])][msg] = $row[message];
+
+//				$tmparr[name][count($tmparr)][$tmpname][count($tmparr[name][$tmpname])][msg] = $tmpname;
+
+#				$tmparr[name][$tmpname][count($tmparr[name][$tmpname])] = $row[message];
+	}
+	$GLOBALS[myreturn][messages] = $tmparr;
+	$GLOBALS[myreturn][newmsgs] = $ncnt;
+
+	break;
+
 	case "getusers":
 		#return user:online status   0 off, 1 on, 2 idle
 		fetchUsers();
@@ -225,49 +356,32 @@ switch ($_POST[myjob]) {
 		$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>List Messages</a> | <a href='?module=".$_POST[module]."&myjob=composemessage'>Compose Message</a>";
 		$GLOBALS[html] .= " | <a href='?module=".$_POST[module]."&myjob=setupxmppform'>Setup Jabber Traversal (XMPP)</a></h3>";
 		$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
-		$cnt = 0; $ncnt = 0;
+		$cnt = 0; $ncnt = 0; $GLOBALS[jsonobject] = 0;
 		$GLOBALS[html] .= "<tr><th>From</th><th>Age</th><th>Message</th><th>Time</th><th>Delete</th></tr>";
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 					" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY timestamp DESC;");
 		while ($row = mysql_fetch_array($sql)) {
 
-
-			$GLOBALS[myreturn][messages][$cnt][id] = $row[id];
-			$GLOBALS[myreturn][messages][$cnt][sender] = $row[sender];
-			$GLOBALS[myreturn][messages][$cnt][receiver] = $row[receiver];
-			$GLOBALS[myreturn][messages][$cnt][sendername] = $GLOBALS[users][byuri][$row[sender]][name];
-			$GLOBALS[myreturn][messages][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
-			$GLOBALS[myreturn][messages][$cnt][age] = getAge($row[timestamp]);
-			$GLOBALS[myreturn][messages][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
-			$GLOBALS[myreturn][messages][$cnt][subject] = $row[subject];
-			$GLOBALS[myreturn][messages][$cnt][message] = $row[message];
-			$GLOBALS[myreturn][messages][$cnt]['new'] = $row['new'];
-
-			if ($row[receiver] == $_SESSION[openid_identifier]) {
-				$GLOBALS[myreturn][messages][$cnt][mine] = 1;
-				if ($row['new'] == "1") $ncnt++;
-			} else $GLOBALS[myreturn][messages][$cnt][mine] = 0;
+			if ($row['new'] == "1") $ncnt++;
 
 			if (($row[receiver] == $_SESSION[openid_identifier]) AND ($row['new'] == "1")) $tmp = "color: lime; ";
 			else $tmp = "";
 
 			$GLOBALS[html] .= "<tr style='".$tmp."'>";
-			$GLOBALS[html] .= "<td style='vertical-align: top;'>".genMsgUrl($GLOBALS[myreturn][messages][$cnt][sender])."</td>";
-			$GLOBALS[html] .= "<td style='vertical-align: top;'>".$GLOBALS[myreturn][messages][$cnt][age]."</td>";
+			$GLOBALS[html] .= "<td style='vertical-align: top;'>".genMsgUrl($row[sender])."</td>";
+			$GLOBALS[html] .= "<td style='vertical-align: top;'>".getAge($row[timestamp])."</td>";
 
 			$GLOBALS[html] .= "<td style='vertical-align: top;'>";
-			if ($GLOBALS[myreturn][messages][$cnt][mine])
-				$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&myjob=readmessage&id=".$GLOBALS[myreturn][messages][$cnt][id]."'>";
-			$GLOBALS[html] .= str_replace("\n", "<br />", $GLOBALS[myreturn][messages][$cnt][message]);
-			if ($GLOBALS[myreturn][messages][$cnt][mine])
+				$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&myjob=readmessage&id=".$row[id]."'>";
+			$GLOBALS[html] .= str_replace("\n", "<br />", $row[message]);
 				$GLOBALS[html] .= "</a>";
 			$GLOBALS[html] .= "</td>";
 
-			$GLOBALS[html] .= "<td style='vertical-align: top;'>".$GLOBALS[myreturn][messages][$cnt][date]."</td>";
+			$GLOBALS[html] .= "<td style='vertical-align: top;'>".strftime($GLOBALS[cfg][strftime], $row[timestamp])."</td>";
 
 			if ($row[receiver] == $_SESSION[openid_identifier]) {
 				$GLOBALS[html] .= "<td style='vertical-align: top;'><a href='?module=".$_POST[module]."&myjob=deletemessage&id=".
-				$GLOBALS[myreturn][messages][$cnt][id]."'>Delete</a></td>";
+				$row[id]."'>Delete</a></td>";
 			} else $GLOBALS[html] .= "<td>&nbsp;</td>";
 
 			$GLOBALS[html] .= "</tr>";
