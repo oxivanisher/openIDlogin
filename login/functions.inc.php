@@ -441,6 +441,17 @@ function updateTimestamp($openid) {
 	$sqltsu = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$openid."';");
 }
 
+function getIP() {
+	$ip;
+
+	if (getenv("HTTP_CLIENT_IP")) $ip = getenv("HTTP_CLIENT_IP");
+	else if(getenv("HTTP_X_FORWARDED_FOR")) $ip = getenv("HTTP_X_FORWARDED_FOR");
+	else if(getenv("REMOTE_ADDR")) $ip = getenv("REMOTE_ADDR");
+	else $ip = "UNKNOWN";
+
+	return $ip;
+}
+
 function getAllChatChannels ($owner = NULL) {
 	$tret = array();
 	$count = 0;

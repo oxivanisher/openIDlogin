@@ -11,6 +11,7 @@ switch ($_POST[myjob]) {
 
 	#send message function
 	case "sendmessage":
+		print_r($GLOBALS); exit;
 		if (empty($_POST[subject])) {
 			if ($_POST[ajax]) {
 				$_POST[subject] = "AJAX GUI";
@@ -406,7 +407,7 @@ switch ($_POST[myjob]) {
 			$GLOBALS[html] .= "</form>";			
 		}
 
-		updateTimestamp($_SESSION[openid_identifier]);
+//		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 }
 } else {

@@ -23,6 +23,12 @@ $pape_policy_uris = array(PAPE_AUTH_MULTI_FACTOR_PHYSICAL, PAPE_AUTH_MULTI_FACTO
 require_once($GLOBALS[cfg][moduledir].'/functions.inc.php');
 require_once($GLOBALS[cfg][moduledir].'/openid.inc.php');
 
+
+if ($GLOBALS[debug])
+	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][requestlogtable]." (ts,req,que,scr,ref,post,get,ip) VALUES ('".time().
+					"', '".$_SERVER[REQUEST_URI]."', '".$_SERVER[QUERY_STRING]."', '".$_SERVER[SCRIPT_NAME].
+					"', '".$_SERVER[HTTP_REFERER]."', '".json_encode($_POST)."', '".json_encode($_GET)."', '".getIP()."');");
+
 #define empty status var
 $GLOBALS[redirect] = 0;
 $GLOBALS[myreturn][loggedin] = 0;
