@@ -11,7 +11,7 @@ switch ($_POST[myjob]) {
 
 	#send message function
 	case "sendmessage":
-		print_r($GLOBALS); exit;
+//		print_r($GLOBALS); exit;
 		if (empty($_POST[subject])) {
 			if ($_POST[ajax]) {
 				$_POST[subject] = "AJAX GUI";
