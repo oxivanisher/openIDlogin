@@ -50,7 +50,7 @@ if ($_SESSION[loggedin] == 1) {
 	}
 	$GLOBALS[html] .= "</table>";
 } else {
-	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
+	sysmsg ("You are not logged in!", 1);
 }
 
 ?>

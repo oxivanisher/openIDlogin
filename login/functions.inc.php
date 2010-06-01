@@ -322,6 +322,10 @@ function createSession () {
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][sessiontable]." SET hash='".$_SESSION[hash]."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	else
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][sessiontable]." (openid,hash) VALUES ('".$_SESSION[openid_identifier]."', '".$_SESSION[hash]."');");
+
+	$_SESSION[phpdebug] = 0;
+	$_SESSION[jsdebug] = 0;
+	$_SESSION[reqdebug] = 0;
 }
 
 function getOnlineUsers () {
@@ -376,6 +380,7 @@ function jasonOut () {
 			$GLOBALS[myreturn][sites] = $_SESSION[sites];
 		}
 
+		$GLOBALS[myreturn][debug] = $_SESSION[jsdebug];
 
 		$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
 
@@ -590,4 +595,62 @@ function genAllowedCheckbox ($template = NULL) {
 		if ($walk != $max) $tret .= "</tr>\n";
 		return $tret."</table>\n";
 }
+
+
+function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
+	switch ($lvl) {
+		case 0:
+			$rmsg = "ERROR: ";
+		break;
+
+		case 1:
+			$rmsg = "WARNING: ";
+		break;
+
+		case 2:
+			$rmsg = "INFO: ";
+		break;
+
+		default:
+			$rmsg = "UNSET: ";
+	}
+
+	#bot implement
+	#hash -> ressource
+	#module -> daemon
+	#user -> senderopenid
+
+	if ($GLOBALS[bot]) {
+		$thash = $subject;
+		$tmodule = "daemon";
+		$tuser = $user;
+		$tip = "XMPP";
+	} else {
+		$thash = $_SESSION[hash];
+		$tmodule = $_POST[module];
+		$tuser = $_SESSION[openid_identifier];
+		$tip = getIP();
+	}
+
+	if ($lvl <= $GLOBALS[sysmsglvl]) 
+		$sqlsysmsg = mysql_query("INSERT INTO ".$GLOBALS[cfg][systemmsgsdb]." (timestamp,user,ip,module,session,msg,lvl) VALUES ".
+												"('".time()."', '".$tuser."', '".$tip."', '".$tmodule."', '".$thash."', '".$msg."', '".$lvl."');");
+
+	if ($lvl < 2)
+		$GLOBALS[html] .= "<b>".$rmsg.$msg."</b>";
+
+	if ($lvl == 0)
+		alert($rmsg.$msg, $tuser);
+}
+
+function alert ($msg, $from) {
+	#fixme
+	#sendmessage to admins with "ERROR: ".$msg
+	$alertsql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE dev='1';");
+	while ($alertrow = mysql_fetch_array($alertsql)) {
+		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ".
+						"('".$from."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT: ".$msg."', 1, 1);");
+	}
+}
+
 ?>

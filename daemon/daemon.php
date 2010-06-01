@@ -9,8 +9,8 @@ $GLOBALS[cfg][logindir]			= "/srv/www/instances/alptroeim.ch/htdocs/login";
 require_once($GLOBALS[cfg][logindir].'/conf.inc.php');
 require_once($GLOBALS[cfg][logindir].'/functions.inc.php');
 
-
 $GLOBALS[debug] = 1;
+$GLOBALS[bot] = 1;
 
 echo "\n";
 msg ("connecting to mysql server");
@@ -80,6 +80,7 @@ try {
 					$msg = "Receiver has XMPP";
 					$jaxl->sendMessage($GLOBALS[users][byuri][$mymsg[receiver]][xmpp], $GLOBALS[users][byuri][$mymsg[sender]][name].": ".
 									xmppencode($mymsg[subject])."\n".xmppencode($mymsg[message]));
+					sysmsg ("Message to XMPP relayed.", 2, $mymsg[receiver], $mymsg[sender]);
 				} else {
 					$msg = "Receiver has no XMPP";
 				}

@@ -30,10 +30,10 @@ if ($_SESSION[loggedin] == 1) {
 							$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
 
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[channel]."';");
-				$GLOBALS[html] .= "<h3>Chat to channel ".$_POST[channel]." sent!</h3>";
+				sysmsg ("Chat to channel ".$_POST[channel]." sent!");
 				$GLOBALS[myreturn][msg] = "sent";
 			} else {
-				$GLOBALS[html] .= "<h3>Message NOT sent!</h3>";
+				sysmsg ("Message NOT sent!", 1);
 				$GLOBALS[myreturn][msg] = "notsent";
 			}
 		break;
@@ -43,10 +43,10 @@ if ($_SESSION[loggedin] == 1) {
 			$data = getChatChannel($_POST[id]);
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin])) {
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET name='".encodeme($_POST[name])."', allowed='".serialize($_POST[allowed])."' WHERE id='".$_POST[id]."';");
-				$GLOBALS[html] .= "<h3>Channel ".$_POST[channel]." edited!</h3>";
+				sysmsg ("Channel ".$_POST[channel]." edited!");
 				$GLOBALS[myreturn][msg] = "edited";
 			} else {
-				$GLOBALS[html] .= "<h3>Channel NOT edited!</h3>";
+				sysmsg ("Channel NOT edited!", 1);
 				$GLOBALS[myreturn][msg] = "notedited";
 			}
 		break;
@@ -65,10 +65,10 @@ if ($_SESSION[loggedin] == 1) {
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin])) {
 				$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][chat][channeltable]." WHERE id='".$_POST[id]."';");
 				$swl2 = mysql_query("DELETE FROM ".$GLOBALS[cfg][chat][msgtable]." WHERE channel='".$_POST[id]."';");
-				$GLOBALS[html] .= "<h3>Channel ".$_POST[id]." and all related messages deleted!</h3>";
+				sysmsg ("Channel ".$_POST[id]." and all related messages deleted!");
 				$GLOBALS[myreturn][msg] = "deleted"; #FIXME ok check (error/sent)
 			} else {
-				$GLOBALS[html] .= "<h3>Channel NOT deleted!</h3>";
+				sysmsg ("Channel ".$_POST[id]." NOT deleted!", 1);
 				$GLOBALS[myreturn][msg] = "notdeleted";
 			}
 		break;
@@ -79,10 +79,10 @@ if ($_SESSION[loggedin] == 1) {
 			if ((in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) OR ($_SESSION[isadmin])) {
 				array_push($GLOBALS[chat][subscr], $_POST[id]);
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][usertable]." SET subscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
-				$GLOBALS[html] .= "<h3>Channel joined!</h3>";
+				sysmsg ("Channel ".$_POST[id]." joined!");
 				$GLOBALS[myreturn][msg] = "joined";
 			} else {
-				$GLOBALS[html] .= "<h3>Channel NOT joined!</h3>";
+				sysmsg ("Channel ".$_POST[id]." NOT joined!", 1);
 				$GLOBALS[myreturn][msg] = "notjoined";
 			}
 		break;
@@ -97,7 +97,7 @@ if ($_SESSION[loggedin] == 1) {
 			unset ($GLOBALS[chat][subscr]);
 			$GLOBALS[chat][subscr] = $tmpsub;
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][usertable]." SET subscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
-			$GLOBALS[html] .= "<h3>Channel left!</h3>";
+			sysmsg ("Channel ".$_POST[id]." left!");
 			$GLOBALS[myreturn][msg] = "leaved"; #FIXME ok check (error/sent)
 		break;
 

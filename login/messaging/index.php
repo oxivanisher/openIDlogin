@@ -22,13 +22,13 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 						$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
 						"', '".encodeme($_POST[message])."', '1', '1');");
-#		if ($sql) {
-			$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." sent!</h3>";
+		if ($sql) {
+			sysmsg ("Message to ".$_POST[user]." sent!");
 			$GLOBALS[myreturn][msg] = "sent";
-#		} else {
-#			$GLOBALS[html] .= "<h3>Message to ".$_POST[user]." NOT sent!</h3>";
-#			$GLOBALS[myreturn][msg] = "notsent";
-#		}
+		} else {
+			sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
+			$GLOBALS[myreturn][msg] = "notsent";
+		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
@@ -42,12 +42,13 @@ switch ($_POST[myjob]) {
 								"', '".encodeme($_POST[message])."', '1', '1');");
 
 #			if ($sql) {
-				$GLOBALS[html] .= "<h3>Message sent to everyone!</h3>";
+				sysmsg ("Message to everyone sent!", 1);
 				$GLOBALS[myreturn][msg] = "sent";
 #			} else {
 #				$GLOBALS[html] .= "<h3>Message to everyone NOT sent!</h3>";
 #				$GLOBALS[myreturn][msg] = "notsent";
 #			}
+			
 			updateTimestamp($_SESSION[openid_identifier]);
 		}
 	break;
@@ -62,10 +63,10 @@ switch ($_POST[myjob]) {
 
 		if ($cbool) {
 			$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE id='".$_POST[id]."';");
-			$GLOBALS[html] .= "<h3>Message deleted!</h3>";
+			sysmsg ("Message deleted!", 1);
 			$GLOBALS[myreturn][msg] = "deleted";
 		} else {
-			$GLOBALS[html] .= "<h3>Nice try .. Message NOT deleted, since it's not yours!!</h3>";
+			sysmsg ("Nice try .. Message NOT deleted, since it's not yours!!", 0);
 			$GLOBALS[myreturn][msg] = "error";
 		}
 		updateTimestamp($_SESSION[openid_identifier]);
@@ -75,7 +76,7 @@ switch ($_POST[myjob]) {
 	case "deleteallmessage":
 		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."';");
 #		if ($sql) {
-			$GLOBALS[html] .= "<h3>All your messages where deleted!</h3>";
+			sysmsg ("All your messages where deleted!", 1);
 			$GLOBALS[myreturn][msg] = "alldeleted";
 #		} else {
 #			$GLOBALS[html] .= "<h3>All your messages where NOT deleted!</h3>";
@@ -88,7 +89,7 @@ switch ($_POST[myjob]) {
 	case "allviewed":
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE receiver='".$_SESSION[openid_identifier]."';");
 
-		$GLOBALS[html] .= "<h3>All your messages are now read!</h3>";
+		sysmsg ("All your messages are now read!", 1);
 		$GLOBALS[myreturn][msg] = "allviewed"; #FIXME ok check (error/sent)
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
@@ -109,7 +110,7 @@ switch ($_POST[myjob]) {
 			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][xmpptable]." (openid,xmpp) VALUES ('".
 						$_SESSION[openid_identifier]."', '".strtolower($_POST[user])."');");
 		}
-		$GLOBALS[html] .= "<h3>XMPP Setting updated!!</h3>";
+		sysmsg ("XMPP Setting updated!", 1);
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
@@ -117,6 +118,7 @@ switch ($_POST[myjob]) {
 	case "setstatus":
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
     	    	$_POST[status]."' WHERE openid='".$_SESSION[openid_identifier]."';");
+		sysmsg ("Userststus set");
 	break;
 
 	#get user status
@@ -132,6 +134,7 @@ switch ($_POST[myjob]) {
 		else
 			$GLOBALS[myreturn][msg] = "nok";
 		
+		sysmsg ("Fetched User status from ".$_POST[name]);
 	break;
 }
 #init stuff
@@ -220,7 +223,7 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$GLOBALS[users][byname][strtolower($_POST[name])].
 					"') OR (receiver='".$GLOBALS[users][byname][strtolower($_POST[name])]."' AND sender='".$_SESSION[openid_identifier].
-					"') ORDER BY timestamp DESC LIMIT 0,5;");
+					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$cnt = 0; $bool = 0;
 		while ($row = mysql_fetch_array($sql)) {
 	#			$GLOBALS[myreturn][message][$cnt][sender] = $row[sender];
@@ -411,7 +414,7 @@ switch ($_POST[myjob]) {
 	break;
 }
 } else {
-	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
+	sysmsg ("You are not logged in!", 1);
 }
 
 ?>

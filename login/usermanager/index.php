@@ -100,62 +100,6 @@ if ($_SESSION[loggedin] == 1) {
 			} else {
 				$GLOBALS[html] .= "<h3>=&gt; Not a valid URL!</h3>";
 			}
-
-
-		#kick user offline
-		} elseif (($_POST[myjob] == "kickoffline") and (! empty($_POST[user]))) {
-			$GLOBALS[html] .= "<h3>=&gt; Kicking User ID ".$_POST[user]." Offline</h3>";
-			#kicking user offline -> forcing logout in browser
-			# 1 killing his oom openid internal sessiontable
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][sessiontable]." SET hash='".generateHash()."' WHERE openid='".$_POST[user]."';");
-			# 2 setting his timestamp into the past
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".
-							(time() - $GLOBALS[cfg][lastidletimeout] - 10)."' WHERE openid='".$_POST[user]."';");
-
-		#push user idle
-		} elseif (($_POST[myjob] == "pushidle") and (! empty($_POST[user]))) {
-			$GLOBALS[html] .= "<h3>=&gt; Pushing User ID ".$_POST[user]." Idle</h3>";
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".
-							(time() - $GLOBALS[cfg][lastonlinetimeout] - 10)."' WHERE openid='".$_POST[user]."';");
-
-		#change user openid
-		} elseif (($_POST[myjob] == "changeopenid") and (! empty($_POST[user])) and (! empty($_POST[newurl]))) {
-
-			#change openid in db function
-			function changeOpenidUrl ($db, $field) {
-				$GLOBALS[html] .= "<h3>=&gt; Changing OpenID in DB ".$db."</h3>";
-				$sql = mysql_query("UPDATE ".$db." SET ".$field."='".$new."' WHERE ".$field."='".$old."';");
-				if ($sql)
-					$GLOBALS[html] .= "- Change OK<br />";
-				else
-					$GLOBALS[html] .= "- Change NOK<br />";
-			}
-
-			#kicking user offline -> forcing logout in browser
-			# 1 killing his oom openid internal sessiontable
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][sessiontable]." SET hash='".generateHash()."' WHERE openid='".$_POST[user]."';");
-			# 2 setting his timestamp into the past
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".
-							(time() - $GLOBALS[cfg][lastidletimeout] - 10)."' WHERE openid='".$_POST[user]."';");
-
-
-			#oom OpenID tables
-			changeOpenidUrl ($GLOBALS[cfg][sessiontable], "openid");
-			changeOpenidUrl ($GLOBALS[cfg][lastonlinedb], "openid");
-			changeOpenidUrl ($GLOBALS[cfg][chat][usertable], "openid");
-			changeOpenidUrl ($GLOBALS[cfg][msg][msgtable], "sender");
-			changeOpenidUrl ($GLOBALS[cfg][msg][msgtable], "receiver");
-			changeOpenidUrl ($GLOBALS[cfg][msg][xmpptable], "openid");
-
-			#smf
-			changeOpenidUrl (smf_members, "openid_uri");
-			
-			#wiki
-			changeOpenidUrl (WIKI_user_openid, "uoi_openid");
-
-			#wordpress
-			changeOpenidUrl (wp_openid_identities, "url");
-			changeOpenidUrl (wp_users, "user_url");
 		}
 
 
@@ -183,36 +127,12 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
 		$GLOBALS[html] .= "</tr></form></table><br />";
 
-		$GLOBALS[html] .= "<h2>Push User Idle</h2>";
-		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
-		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='pushidle' />";
-		$GLOBALS[html] .= "<td>".$uDropdown."</td>";
-		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
-		$GLOBALS[html] .= "</tr></form></table><br />";
-
-		$GLOBALS[html] .= "<h2>Kick User Offline</h2>";
-		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
-		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='kickoffline' />";
-		$GLOBALS[html] .= "<td>".$uDropdown."</td>";
-		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
-		$GLOBALS[html] .= "</tr></form></table><br />";
-
-		$GLOBALS[html] .= "<h2>Change User OpenID</h2>";
-		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
-		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='changeopenid' />";
-		$GLOBALS[html] .= "<td>".$uDropdown." to <input type='text' name='newurl' value='' size='40' /></td>";
-		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
-		$GLOBALS[html] .= "</tr></form></table><br />";
-
 	} else {
-		$GLOBALS[html] .= "<b>= You are not allowed to use this module!</b>";
+		sysmsg ("You are not allowed to use this module!", 0);
 	}
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {
-	$GLOBALS[html] .= "<b>= You are not logged in!</b>";
+	sysmsg ("You are not logged in!", 1);
 }
 
 

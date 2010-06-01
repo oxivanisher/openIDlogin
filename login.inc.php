@@ -24,14 +24,17 @@ require_once($GLOBALS[cfg][moduledir].'/functions.inc.php');
 require_once($GLOBALS[cfg][moduledir].'/openid.inc.php');
 
 
-if ($GLOBALS[debug])
+if ($_SESSION[reqdebug])
 	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][requestlogtable]." (ts,req,que,scr,ref,post,get,ip) VALUES ('".time().
 					"', '".$_SERVER[REQUEST_URI]."', '".$_SERVER[QUERY_STRING]."', '".$_SERVER[SCRIPT_NAME].
 					"', '".$_SERVER[HTTP_REFERER]."', '".json_encode($_POST)."', '".json_encode($_GET)."', '".getIP()."');");
 
 #define empty status var
 $GLOBALS[redirect] = 0;
+$GLOBALS[bot] = 0;
 $GLOBALS[myreturn][loggedin] = 0;
+if (isset($_SESSION[phpdebug]))
+	$GLOBALS[debug] = $_SESSION[phpdebug];
 
 #browser debug "woraround". working with POST but accepting GET also.
 if (empty($_POST)) $_POST = $_GET;
@@ -40,11 +43,15 @@ if (empty($_POST)) $_POST = $_GET;
 if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
 	checkSession();
 
+$GLOBALS[debug] = $_SESSION[phpdebug];
+
 #is this user admin?
 $_SESSION[isadmin] = 0;
-$sqla = mysql_query("SELECT id FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
-while ($rowa = mysql_fetch_array($sqla))
+$sqla = mysql_query("SELECT dev FROM ".$GLOBALS[cfg][admintablename]." WHERE openid='".$_SESSION[openid_identifier]."';");
+while ($rowa = mysql_fetch_array($sqla)) {
 	$_SESSION[isadmin] = 1;
+	$_SESSION[isdev] = $rowa[dev];
+}
 
 #find out what we have to do (like magic)
 if ($_POST[ssoInpLogout] == 1) {
@@ -77,7 +84,7 @@ switch ($_POST[job]) {
 			$_SESSION[error] = "no_ssoInpUsername_recieved";
 			$GLOBALS[redirect] = 1;
 		} else {
-			$GLOBALS[html] = "<br /><br /><br /><h2><center>Authorization in progress</center></h2><br /><br /><br />";
+			$GLOBALS[html] = "<br /><br /><br /><h2><center>".sysmsg("Checking Identity for ".$_POST[ssoInpUsername])."</center></h2><br /><br /><br />";
 			$GLOBALS[myreturn][msg] = "auth in progress";
 			$_SESSION[error] = "";
 
@@ -97,13 +104,13 @@ switch ($_POST[job]) {
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
 			$GLOBALS[redirect] = 1;
-			$GLOBALS[html] = "<br /><br /><br /><h2><center>Identity Verified!</center></h2><br /><br /><br />";
+			$GLOBALS[html] = "<br /><br /><br /><h2><center>".sysmsg("Identity Verified ".$_SESSION[openid_identifier])."</center></h2><br /><br /><br />";
 			$_SESSION[error] = "";
 
 		} else {
 			$GLOBALS[myreturn][msg] = "auth error";
 			$_SESSION[error] = "auth_error";
-			$GLOBALS[html] = "<br /><br /><br /><h2><center>Authentification Error:</center></h2><br /><h3><center>".$GLOBALS[html]."</center></h3><br /><br />";
+			$GLOBALS[html] = "<br /><br /><br /><h2><center>".sysmsg("Authentification Error!", 1)."</center></h2><br /><h3><center>".$GLOBALS[html]."</center></h3><br /><br />";
 		}
 		$GLOBALS[freshlogin] = 1;
 		break;
@@ -127,11 +134,11 @@ switch ($_POST[job]) {
 					$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2>";
 					include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
 				} else {
-					$GLOBALS[html] .= "No Module description found!";
+					sysmsg ("No Module description found!", 1);
 				}
 				$GLOBALS[html] .= "<br />";
 			} else {
-				$GLOBALS[html] .= "<b>Module ".$_POST[module]." not found!</b>";
+				sysmsg ("Module ".$_POST[module]." not found!", 0);
 			}
 		} else {
 			$GLOBALS[myreturn][msg] = "refreshing";
@@ -149,7 +156,8 @@ switch ($_POST[job]) {
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
 										if (($MODULE[admin] AND $_SESSION[isadmin]) OR (! $MODULE[admin]))
-					        		$GLOBALS[html] .= "<li><h3><a href='?module=".$file."'>".$MODULE[name]."</a></h3>".$MODULE[comment]."<br /><br /></li>";
+											if (($MODULE[dev] AND $_SESSION[isdev]) OR (! $MODULE[dev]))
+					        			$GLOBALS[html] .= "<li><h3><a href='?module=".$file."'>".$MODULE[name]."</a></h3>".$MODULE[comment]."<br /><br /></li>";
 									}
 								}
 			      }
@@ -183,7 +191,7 @@ switch ($_POST[job]) {
 		session_destroy();
 		session_write_close();
 		$_SESSION[error] = "";
-		$GLOBALS[html] = "<br /><br /><br /><h2><center>Logging out...</center></h2><br /><br /><br />";
+		$GLOBALS[html] = "<br /><br /><br /><h2><center>".sysmsg("Logging out...")."</center></h2><br /><br /><br />";
 		$GLOBALS[redirect] = 1;
 		break;
 
@@ -227,7 +235,7 @@ switch ($_POST[job]) {
 			$_SESSION[error] = "";
 		}
 		$GLOBALS[myreturn][msg] = "nothing";
-		$GLOBALS[html] = "<h2>You are not logged in!</h2>".$_SESSION[error];
+		sysmsg ("You are not logged in! ".$_SESSION[error]);
 }
 
 #last online implementation

@@ -17,6 +17,7 @@
 				if (empty($GLOBALS[users][byxmpp][strtolower($jid[0])])) {
 					msg ("Recieved MSG from unauthorized user: ".$jid[0]);
 					$this->sendMessage($fromJid, "You are not allowed to use this bot! Please setup your XMPP Traversal on the homepage.");
+					sysmsg ("Recieved MSG from unauthorized user: ".$jid[0], 1, "Unknown", $jid[1]);
 				} else {
 					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[users][byxmpp][strtolower($jid[0])]);
 
@@ -49,6 +50,7 @@
 						$help .= "\nAdmin Commands:\n";
 						$help .= "!exit | exit daemon (will restart)\n";
 						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
+						$help .= "!sysmsgs | show the latest 20 system messages\n";
 						$help .= "!clearcache | clears the fucking eqdkp cache\n";
 					}
 
@@ -69,14 +71,34 @@
 							if ($content == "!exit") {
 								msg ("\tExiting...");
 								$this->sendMessage($fromJid, "Deamon exiting!");
+								sysmsg ("Exiting Daemon...", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 								exit;
+
+							#show latest system messages
+							} elseif ($content == "!sysmsgs") {
+								msg ("\tShowing system messages");
+
+								$tmpret = "";
+								$sql = mysql_query("SELECT timestamp,user,msg FROM ".$GLOBALS[cfg][systemmsgsdb]." WHERE 1 ORDER BY timestamp ASC LIMIT 0,20;");
+								while ($row = mysql_fetch_array($sql)) {
+									if (! empty($GLOBALS[users][byuri][$row[user]][name]))
+										$tuser = $GLOBALS[users][byuri][$row[user]][name];
+									else
+										$tuser = $row[user];
+
+									$tmpret .= $tuser." ".getNiceAge($row[timestamp]).":\n".$row[msg]."\n\n";
+								}
+								$this->sendMessage($fromJid, "Showing system messages:\n".$tmpret);
+								sysmsg ("Showing system messages", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								$tmpskip = 1;
 
 							#clear fucking eqdkp cache heavy dirty oxi workaround
 							} elseif ($content == "!clearcache") {
 								system('rm -rf /srv/www/instances/alptroeim.ch/htdocs/site/templates/cache/*');
 								msg ("\tClearing cache...");
 								$this->sendMessage($fromJid, "Clearing cache!");
-								exit;
+								sysmsg ("Clearing cache...", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								$tmpskip = 1;
 
 							#mass mailer
 							} elseif (substr($content, 0, 5) == "!mass") {
@@ -90,9 +112,11 @@
 
 									msg ("\tMassmail sent!");
 									$this->sendMessage($fromJid, "\tMassmail sent!");
+									sysmsg ("Massmail sent!", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 								} else {
 									msg ("\tNo message found.");
 									$this->sendMessage($fromJid, "No text found!");
+									sysmsg ("No massmail message found.", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 								}
 								$tmpskip = 1;
 							}
@@ -101,6 +125,7 @@
 							true;
 						} elseif ($content == "!users") {
 							msg ("\tShowing all users");
+							sysmsg ("Showing all users...", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 
 							#get last online timestamps
 							$sql = mysql_query("SELECT timestamp,openid FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
@@ -159,6 +184,7 @@
 
 							msg ("\tShowing recent messages");
 							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".xmppencode($out));
+							sysmsg ("Showing recent messages", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 
 						#set status
 						} elseif (substr($content, 0, 7) == "!status") {
@@ -170,9 +196,11 @@
 
 								msg ("\tWebsite status set.");
 								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", xmppencode($content)) ));
-							} else {
+								sysmsg ("Website status set", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								} else {
 								msg ("\tNo status found.");
 								$this->sendMessage($fromJid, "No status set!");
+								sysmsg ("No website status found to set", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 							}
 
 						#get last seen users
@@ -199,17 +227,20 @@
 #								msg ("\tNo status found.");
 #								$this->sendMessage($fromJid, "No status set!");
 #							}
+						sysmsg ("Last seen message sent.", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 
 
 						#show the help
 						} elseif ($content == "!help") {
 							msg ("\tShowing help");
 							$this->sendMessage($fromJid, "Showing help:\n".xmppencode($help));
+							sysmsg ("Show help", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 
 						#no such command
 						} else {
 							msg ("\tNo command found: ".$content);
 							$this->sendMessage($fromJid, "No such command.\n".xmppencode($help));
+						sysmsg ("No command found", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 						}
 
 					#send message
@@ -230,6 +261,7 @@
 							if (! empty($rrec)) {
 								msg ("->\tReply triggered to: ".$rrec);
 								$rec = $rrec;
+								sysmsg ("Reply triggered to: ".$rrec, 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 							}
 						}
 
@@ -237,6 +269,7 @@
 						if (empty($rec)) {
 							msg ("->\tNo target User found: ".$tmpi[0]);
 							$this->sendMessage($fromJid, "No User '".$tmpi[0]."' found!");
+							sysmsg ("No target User found", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 
 						#is there content?
 						} else {
@@ -247,13 +280,17 @@
 												utf8_decode(encodeme($cont))."', '1', '1');");
 
 								#sql ok?
-								if ($sql)
+								if ($sql) {
 									$this->sendMessage($fromJid, "Message to ".$rec." sent (".$jid[0].", ".$jid[1].")!");
-								else
+									sysmsg ("Message successfully delivered to: ".$rec, 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								} else {
 									$this->sendMessage($fromJid, "Mysql Error! Please inform the Admin!");
+									sysmsg ("Mysql Error delivering message to: ".$rec, 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								}
 							} else {
 								msg ("->\tMessage to ".$rec." dropped. No content found.");
 								$this->sendMessage($fromJid, "No content submitted!");
+								sysmsg ("Message to ".$rec." dropped. No content found.", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 							}
 						}
 
@@ -261,10 +298,12 @@
 					} else {
 						msg ("\tMalformated message");
 						$this->sendMessage($fromJid, "Malformated message!\n".xmppencode($help));
+						sysmsg ("Malformated message", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 					}
 				}
 			} else {
 				msg ("Message received, but something is not ok! jid: ".$fromJid."; content: ".$content);
+				sysmsg ("Message received, but something is not ok! jid: ".$fromJid."; content: ".$content, 0, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 			}
 
 			#show online users as status message
