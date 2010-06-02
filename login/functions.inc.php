@@ -326,6 +326,7 @@ function createSession () {
 	$_SESSION[phpdebug] = 0;
 	$_SESSION[jsdebug] = 0;
 	$_SESSION[reqdebug] = 0;
+	$_SESSION[freshlogin] = 0;
 }
 
 function getOnlineUsers () {
@@ -382,7 +383,12 @@ function jasonOut () {
 
 		$GLOBALS[myreturn][debug] = $_SESSION[jsdebug];
 
-		$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
+
+		if ($GLOBALS[myreturn][felloffline] AND (! $_SESSION[freshlogin])) {
+			$GLOBALS[myreturn][felloffline] = 1;
+#			$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
+
+		}
 
 		$GLOBALS[myreturn][newmsgs] = 0;
 		if ($_SESSION[loggedin] AND (! $_POST[ajax])) {
@@ -412,9 +418,9 @@ function jasonOut () {
 		}
 
 
-		if ($GLOBALS[freshlogin]) {
+		if ($_SESSION[freshlogin]) {
 			$GLOBALS[myreturn][freshlogin] = 1;
-			$GLOBALS[freshlogin] = 0;
+			$_SESSION[freshlogin] = 0;
 		}	else $GLOBALS[myreturn][freshlogin] = 0;
 
 		$m_time = explode(" ",microtime());
@@ -637,7 +643,7 @@ function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
 												"('".time()."', '".$tuser."', '".$tip."', '".$tmodule."', '".$thash."', '".$msg."', '".$lvl."');");
 
 	if ($lvl < 2)
-		$GLOBALS[html] .= "<b>".$rmsg.$msg."</b>";
+		$GLOBALS[html] .= "<b>".$msg."</b>";
 
 	if ($lvl == 0)
 		alert($rmsg.$msg, $tuser);
