@@ -70,12 +70,11 @@ function getOpenIDURL() {
 	$_SESSION[openid_identifier] = $tmpuri;
 
 	if (empty($tmpuri)) {
-		$GLOBALS[myreturn][msg] = "Expected an OpenID URL.";
+		sysmsg ("Expected an OpenID URL.", 1);
 		header('X-JSON: '.json_encode($GLOBALS[myreturn]).')');
 		echo json_encode($GLOBALS[myreturn]);
 		exit(0);
 	}
-	#FIXME ... i only support 1 onlenid site ... not really open -.-
 	return $tmpuri;
 }
 
@@ -94,16 +93,16 @@ function openid_auth() {
 
     // No auth request means we can't begin OpenID.
     if (!$auth_request) {
-        $GLOBALS[myreturn][msg] = "invalid OpenID";
+        sysmsg ("invalid OpenID", 1);
     }
 
     $sreg_request = Auth_OpenID_SRegRequest::build(
                                      // Required
-                                     array('nickname'),
+                                     array('nickname', 'email', 'fullname'),
                                      // Optional
-                                     array('fullname', 'email'));
+                                     array('dob', 'gender', 'postalcode', 'country'));
 
-	if ($sreg_request) {
+		if ($sreg_request) {
         $auth_request->addExtension($sreg_request);
     }
 
@@ -127,11 +126,11 @@ function openid_auth() {
         // If the redirect URL can't be built, display an error
         // message.
         if (Auth_OpenID::isFailure($redirect_url)) {
-            $GLOBALS[myreturn][msg] = "Could not redirect to server: " . $redirect_url->message;
+            sysmsg ("Could not redirect to server: ".$redirect_url->message, 2);
         } else {
             // Send redirect.
-			$GLOBALS[myreturn][msg] = "redirect";
-			$GLOBALS[myreturn][redirect] = $redirect_url;
+						sysmsg ("Redirecting for OpenID", 2);
+						$GLOBALS[myreturn][redirect] = $redirect_url;
             header("Location: ".$redirect_url);
      }
     } else {
@@ -143,10 +142,10 @@ function openid_auth() {
         // Display an error if the form markup couldn't be generated;
         // otherwise, render the HTML.
         if (Auth_OpenID::isFailure($form_html)) {
-            $GLOBALS[myreturn][msg] = "Could not redirect to server: " . $form_html->message;
+            sysmsg ("Could not redirect to server: ".$form_html->message, 1);
         } else {
-			$GLOBALS[submitform] = 1;
-			$GLOBALS[html] = $form_html;
+					$GLOBALS[submitform] = 1;
+					$GLOBALS[html] .= $form_html;
         }
     }
 }
@@ -191,24 +190,37 @@ function openid_verify () {
 
         $sreg_resp = Auth_OpenID_SRegResponse::fromSuccessResponse($response);
 
-        $sreg = $sreg_resp->contents();
+        $sreg = $sreg_resp->contents($sreg_resp);
 
-        if (@$sreg['email']) {
-			$_SESSION[user][email] = escape($sreg['email']);
-			$GLOBALS[myreturn][user][email] = escape($sreg['email']);
-        }
+//				print_r($sreg); exit;
+				if (@$sreg['email'])
+					$_SESSION[user][email] = escape($sreg['email']);
 
-        if (@$sreg['nickname']) {
-   			$_SESSION[user][nickname] = escape($sreg['nickname']);
-			$GLOBALS[myreturn][user][nickname] = escape($sreg['nickname']);
-        }
+        if (@$sreg['nickname'])
+					$_SESSION[user][nickname] = escape($sreg['nickname']);
 
-        if (@$sreg['fullname']) {
-   			$_SESSION[user][fullname] = escape($sreg['fullname']);
-			$GLOBALS[myreturn][user][fullname] = escape($sreg['fullname']);        
-		}
+        if (@$sreg['fullname'])
+					$_SESSION[user][fullname] = escape($sreg['fullname']);
 
-	$pape_resp = Auth_OpenID_PAPE_Response::fromSuccessResponse($response);
+        if (@$sreg['dob'])
+					$_SESSION[user][dob] = escape($sreg['dob']);
+
+        if (@$sreg['gender'])
+					$_SESSION[user][gender] = escape($sreg['gender']);
+
+        if (@$sreg['country'])
+					$_SESSION[user][country] = escape($sreg['country']);
+
+        if (@$sreg['language'])
+					$_SESSION[user][language] = escape($sreg['language']);
+
+        if (@$sreg['timezone'])
+					$_SESSION[user][timezone] = escape($sreg['timezone']);
+
+        if (@$sreg['postalcode'])
+					$_SESSION[user][postalcode] = escape($sreg['postalcode']);
+
+//	$pape_resp = Auth_OpenID_PAPE_Response::fromSuccessResponse($response);
 
 /*	if ($pape_resp) {
             if ($pape_resp->auth_policies) {

@@ -17,7 +17,7 @@ if ($_SESSION[loggedin] == 1) {
 
 		$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=clearmsgs'>&gt; Clear System Messages</a></h3><br />";
 		$GLOBALS[html] .= "<table>";
-		$GLOBALS[html] .= "<tr><th>LVL</th><th>User</th><th>Module</th><th>Message</th><th>IP</th><th>Session</th></tr>";
+		$GLOBALS[html] .= "<tr><th>LVL</th><th>User</th><th>Module</th><th>Message</th><th>IP</th></tr>";
 		$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][systemmsgsdb]." WHERE 1 ORDER BY timestamp DESC;");
 		while ($row = mysql_fetch_array($sql)) {
 			$GLOBALS[html] .= "<tr>";
@@ -26,7 +26,6 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<td>".$row[module]."</td>";
 			$GLOBALS[html] .= "<td>".$row[msg]."</td>";
 			$GLOBALS[html] .= "<td>".$row[ip]."</td>";
-			$GLOBALS[html] .= "<td>".$row[session]."</td>";
 
 			$GLOBALS[html] .= "</tr>";
 		}
