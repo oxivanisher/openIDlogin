@@ -340,7 +340,12 @@ function getOnlineUsers () {
 		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
 		$cnt++;
-		if ($orow[openid] == $_SESSION[openid_identifier]) { $bool = true; $ocnt++; if ($obool) $obool = 0; 
+		if ($orow[openid] == $_SESSION[openid_identifier]) { $bool = true;
+				if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] ))
+					$ocnt++;
+				elseif ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] ))
+					$icnt++;
+				if ($obool) $obool = 0; 
 			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; continue; }
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
 			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
