@@ -61,12 +61,17 @@ function getTrustRoot() {
 function getOpenIDURL() {
     // Render a default page if we got a submission without an openid
 	// value.
+
 	if (substr($_POST[ssoInpUsername], 0, 4) == "http") {
 		$tmpuri = $_POST[ssoInpUsername];
 	} else {
-		$tmpuri = $GLOBALS[cfg][openid_identifier_base].$_POST[ssoInpUsername];
+		if (in_array(strtolower(trim($_POST[ssoInpUsername])), $GLOBALS[oldusers])) {
+			sysmsg ("User with old OpenID logged in: ".$_POST[ssoInpUsername], 1);
+			$tmpuri = $GLOBALS[cfg][old_openid_identifier_base].$_POST[ssoInpUsername];
+		} else {
+			$tmpuri = $GLOBALS[cfg][openid_identifier_base].$_POST[ssoInpUsername];
+		}
 	}
-
 	$_SESSION[openid_identifier] = $tmpuri;
 
 	if (empty($tmpuri)) {

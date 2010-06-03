@@ -33,11 +33,12 @@ if ($_SESSION[loggedin] == 1) {
 			#change openid in db function
 			function changeOpenidUrl ($db, $field) {
 				$GLOBALS[html] .= "<h3>=&gt; Changing OpenID in DB ".$db."</h3>";
-				$sql = mysql_query("UPDATE ".$db." SET ".$field."='".$new."' WHERE ".$field."='".$old."';");
+				$sql = mysql_query("UPDATE ".$db." SET ".$field."='".$_POST[newurl]."' WHERE ".$field."='".$_POST[user]."';");
+#				echo "UPDATE ".$db." SET ".$field."='".$_POST[newurl]."' WHERE ".$field."='".$_POST[user]."';\n";
 				if ($sql)
-					sysmsg ("OpenID Change OK", 1);
+					sysmsg ("OpenID Change OK on: ".$db, 1);
 				else
-					sysmsg ("OpenID Change Not OK", 1);
+					sysmsg ("OpenID Change Not OK on: ".$db, 1);
 			}
 
 			#kicking user offline -> forcing logout in browser
@@ -55,16 +56,20 @@ if ($_SESSION[loggedin] == 1) {
 			changeOpenidUrl ($GLOBALS[cfg][msg][msgtable], "sender");
 			changeOpenidUrl ($GLOBALS[cfg][msg][msgtable], "receiver");
 			changeOpenidUrl ($GLOBALS[cfg][msg][xmpptable], "openid");
+      changeOpenidUrl ($GLOBALS[cfg][admintablename], "openid");
+      changeOpenidUrl ($GLOBALS[cfg][systemmsgsdb], "user");
+      changeOpenidUrl ($GLOBALS[cfg][frontendsafetable], "openid");
+      changeOpenidUrl ($GLOBALS[cfg][userprofiletable], "openid");
 
 			#smf
-			changeOpenidUrl (smf_members, "openid_uri");
+			changeOpenidUrl ("smf_members", "openid_uri");
 			
 			#wiki
-			changeOpenidUrl (WIKI_user_openid, "uoi_openid");
+			changeOpenidUrl ("WIKI_user_openid", "uoi_openid");
 
 			#wordpress
-			changeOpenidUrl (wp_openid_identities, "url");
-			changeOpenidUrl (wp_users, "user_url");
+			changeOpenidUrl ("wp_openid_identities", "url");
+			changeOpenidUrl ("wp_users", "user_url");
 
 		#enablereqdebug
 		} elseif ($_POST[myjob] == "enablereqdebug") {
