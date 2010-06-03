@@ -42,8 +42,14 @@ if (empty($_POST)) $_POST = $_GET;
 if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
 	checkSession();
 
-#set systemdebug to user session variable
+#get system defaults from settings table
+$sql = mysql_query("SELECT name,value FROM ".$GLOBALS[cfg][settingstable]." WHERE 1;");
+while ($row = mysql_fetch_array($sql))
+	$GLOBALS[$row[name]] = $row[value];
+
+#set systemdebug to user session variable and set javascript version to default
 $GLOBALS[debug] = $_SESSION[phpdebug];
+$GLOBALS[myreturn][v] = $_SESSION[jsversion];
 
 #is this user admin?
 $_SESSION[isadmin] = 0;

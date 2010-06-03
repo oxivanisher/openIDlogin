@@ -323,8 +323,9 @@ function createSession () {
 	else
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][sessiontable]." (openid,hash) VALUES ('".$_SESSION[openid_identifier]."', '".$_SESSION[hash]."');");
 
-	$_SESSION[phpdebug] = 0;
+	$_SESSION[phpdebug] = $GLOBALS[debug];
 	$_SESSION[jsdebug] = 0;
+	$_SESSION[jsversion] = $GLOBALS[version];
 	$_SESSION[reqdebug] = 0;
 	$_SESSION[freshlogin] = 0;
 }

@@ -77,15 +77,28 @@ if ($_SESSION[loggedin] == 1) {
 		#disablereqdebug
 		} elseif ($_POST[myjob] == "disablereqdebug") {
 			$_SESSION[reqdebug] = 0;
-		#enablejsdebug
+		#setjsdebug
 		} elseif ($_POST[myjob] == "setjsdebug") {
 			$_SESSION[jsdebug] = $_POST[jsdebug];
-		#enablephpdebug
-		} elseif ($_POST[myjob] == "enablephpdebug") {
-			$_SESSION[phpdebug] = 1;
+		#setjsversion
+		} elseif ($_POST[myjob] == "setjsversion") {
+			$_SESSION[jsversion] = $_POST[jsversion];
+		#setsystemphpdebug
+		} elseif ($_POST[myjob] == "setsystemphpdebug") {
+			$_SESSION[jsversion] = $_POST[jsversion];
+		#setsystemversion
+		} elseif ($_POST[myjob] == "setsystemversion") {
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][settingstable]." SET value='".$_POST[version]."' WHERE name='jsversion';");
+			sysmsg ("Changed Systemversion to: ".$_POST[version], 1);
+		#setsystemphpdebug
+		} elseif ($_POST[myjob] == "setsysmsglvl") {
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][settingstable]." SET value='".$_POST[level]."' WHERE name='sysmsglvl';");
+			sysmsg ("Changed System PHP Message Level to: ".$_POST[phpdebug], 1);
 		#disablephpdebug
 		} elseif ($_POST[myjob] == "disablephpdebug") {
 			$_SESSION[phpdebug] = 0;
+		} elseif ($_POST[myjob] == "enablephpdebug") {
+			$_SESSION[phpdebug] = 1;
 		}
 
 		#init stuff
@@ -93,8 +106,6 @@ if ($_SESSION[loggedin] == 1) {
 		$uDropdown = drawUsersDropdown();
 		$pDropdown = drawProfileDropdown();
 		$smfuDropdown = drawSmfUsersDropdown();
-
-		$GLOBALS[html] .= "<h3>Current PHP System Debug Level: ".$GLOBALS[sysmsglvl]."</h3><br />";
 
 		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
@@ -122,9 +133,33 @@ if ($_SESSION[loggedin] == 1) {
 
 		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='setjsversion' />";
+		$GLOBALS[html] .= "<td><h3>Set YOUR JavaScript Version (curr: ".$_SESSION[jsversion]."):</h3></td>";
+		$GLOBALS[html] .= "<td><input type='text' name='jsversion' value='".$_SESSION[jsversion]."' size='2' /></td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='setjsdebug' />";
-		$GLOBALS[html] .= "<td><h3>Set your JavaScript Debug (curr: ".$_SESSION[jsdebug]."):</h3></td>";
+		$GLOBALS[html] .= "<td><h3>Set YOUR JavaScript Debug (curr: ".$_SESSION[jsdebug]."):</h3></td>";
 		$GLOBALS[html] .= "<td><input type='text' name='jsdebug' value='".$_SESSION[jsdebug]."' size='2' /></td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='setsystemversion' />";
+		$GLOBALS[html] .= "<td><h3>Set SYSTEM Version (curr: ".$GLOBALS[jsversion]."):</h3></td>";
+		$GLOBALS[html] .= "<td><input type='text' name='version' value='".$GLOBALS[jsversion]."' size='2' /></td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='setsysmsglvl' />";
+		$GLOBALS[html] .= "<td><h3>Set SYSTEM PHP Log Level (curr: ".$GLOBALS[sysmsglvl]."):</h3></td>";
+		$GLOBALS[html] .= "<td><input type='text' name='level' value='".$GLOBALS[sysmsglvl]."' size='2' /></td>";
 		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
 		$GLOBALS[html] .= "</tr></form></table><br />";
 
