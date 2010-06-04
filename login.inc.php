@@ -193,12 +193,36 @@ switch ($_POST[job]) {
 							if (($file != ".") AND ($file != "..") AND ($file != "Auth"))
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
-										if (($MODULE[admin] AND $_SESSION[isadmin]) OR (! $MODULE[admin]))
-											if (($MODULE[dev] AND $_SESSION[isdev]) OR (! $MODULE[dev]))
-					        			$GLOBALS[html] .= "<li><h3><a href='?module=".$file."'>".$MODULE[name]."</a></h3>".$MODULE[comment]."<br /><br /></li>";
+										if ($MODULE[dev]) {
+											$nav[dev][$file][module] = $file;
+											$nav[dev][$file][name] = $MODULE[name];
+											$nav[dev][$file][comment] = $MODULE[comment];
+										} elseif ($MODULE[admin]) {
+											$nav[admin][$file][module] = $file;
+											$nav[admin][$file][name] = $MODULE[name];
+											$nav[admin][$file][comment] = $MODULE[comment];
+										} else {
+											$nav[user][$file][module] = $file;
+											$nav[user][$file][name] = $MODULE[name];
+											$nav[user][$file][comment] = $MODULE[comment];
+										}
 									}
 						}
 			      closedir($dh);
+				}
+				#write navigation
+				foreach ($nav[user] as $mylink)
+					$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
+
+				if ($_SESSION[isadmin]) {
+					$GLOBALS[html] .= "<hr />";
+					foreach ($nav[admin] as $mylink)
+						$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
+				}
+				if ($_SESSION[isdev]) {
+					$GLOBALS[html] .= "<hr />";
+					foreach ($nav[dev] as $mylink)
+						$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
 				}
 				$GLOBALS[html] .= "</ul>";
 			} 

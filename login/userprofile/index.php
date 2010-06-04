@@ -68,9 +68,9 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<tr><td>Date of Birth</td><td><input type='text' name='dob' value='".$row[dob]."' size='10' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td colspan='2'>&nbsp;</td></tr>";
 
-			$sqla = mysql_query("SELECT name FROM ".$GLOBALS[cfg][profiletable]." WHERE role='".$row[role]."';");
+			$sqla = mysql_query("SELECT name,icon FROM ".$GLOBALS[cfg][profiletable]." WHERE role='".$row[role]."';");
 			while ($rowa = mysql_fetch_array($sqla))
-				$GLOBALS[html] .= "<tr><td>Rolle</td><td>".$rowa[name]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Rolle</td><td><img src='".$rowa[icon]."' /> (".$rowa[name].")</td></tr>";
 		}
 		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /> <input type='reset' name='reset' value='reset' /></td></tr>";
 		$GLOBALS[html] .= "</table>";
