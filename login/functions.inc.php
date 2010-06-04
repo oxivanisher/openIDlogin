@@ -368,9 +368,11 @@ function getOnlineUsers () {
 function updateLastOnline () {
 	#magic
 	if ($GLOBALS[online][isintable])
-		mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
+		mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".
+								time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	else if ((! empty($_SESSION[openid_identifier]) AND (! empty($_SESSION[myname]))))
-		mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (openid,timestamp,name) VALUES ('".$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
+		mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (openid,timestamp,name) VALUES ('".
+								$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
 }
 
 function jasonOut () {
@@ -378,57 +380,70 @@ function jasonOut () {
 	if (($_POST[job] == "update") OR ($_POST[job] == "status") OR
 			($_POST[myjob] == "update") OR ($_POST[myjob] == "status") OR
 			($_POST[ajax] == 1)) {
+
+		#always send possible openid
 		$GLOBALS[myreturn][openid_identifier] = $_SESSION[openid_identifier];
 
+		#send debug to js
 		$GLOBALS[myreturn][debug] = $_SESSION[jsdebug];
 
-		if ($GLOBALS[forcelogout] AND (! $_SESSION[freshlogin])) {
+		#did we fell offline?
+		if ($GLOBALS[forcelogout] AND (! $_SESSION[freshlogin]))
 			$GLOBALS[myreturn][felloffline] = 1;
 
-		}
-
-		$GLOBALS[myreturn][newmsgs] = 0;
-		if ($_SESSION[loggedin] AND (! $_POST[ajax])) {
-			$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
-			$GLOBALS[myreturn][idlenames] = $GLOBALS[idlenames];
-			$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
-			$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
-
-			$tmppa = array();
-			$sql = mysql_query("SELECT id,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
-			while ($row = mysql_fetch_array($sql)) {
-				$GLOBALS[myreturn][newmsgs]++;
-				$GLOBALS[myreturn][newmsgid] = $row[id];
-				array_push($tmppa, $GLOBALS[users][byuri][$row[sender]][name]);
-			}
-			array_unique($tmppa);
-			$GLOBALS[myreturn][newmsgsfrom] = $tmppa;
-		}
-
+		#default update and status requests from js
 		if (! $_POST[ajax]) {
 			$GLOBALS[myreturn][onlineusers] = $GLOBALS[onlineusers];
 			$GLOBALS[myreturn][idleusers] = $GLOBALS[idleusers];
-			if ($GLOBALS[debug]) {
-				$GLOBALS[myreturn][maxusers] = "X".rand(0, 9);
-			} else
-				$GLOBALS[myreturn][maxusers] = $GLOBALS[maxusers];
+
+			#if we are logged in, we have to send messaging informations and detailes online informations also
+			if ($_SESSION[loggedin]) {
+				$GLOBALS[myreturn][newmsgs] = 0;
+				$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
+				$GLOBALS[myreturn][idlenames] = $GLOBALS[idlenames];
+				$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
+				$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
+
+				$tmppa = array();
+				$sql = mysql_query("SELECT id,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
+														$_SESSION[openid_identifier]."' AND new='1' ORDER BY timestamp DESC;");
+				while ($row = mysql_fetch_array($sql)) {
+					$GLOBALS[myreturn][newmsgs]++;
+					$GLOBALS[myreturn][newmsgid] = $row[id];
+					array_push($tmppa, $GLOBALS[users][byuri][$row[sender]][name]);
+				}
+				array_unique($tmppa);
+				$GLOBALS[myreturn][newmsgsfrom] = $tmppa;
+			}
 		}
 
-
+		#do we have a fresh session
 		if ($_SESSION[freshlogin]) {
 			$GLOBALS[myreturn][freshlogin] = 1;
 			$_SESSION[freshlogin] = 0;
 		}	else $GLOBALS[myreturn][freshlogin] = 0;
 
-		$m_time = explode(" ",microtime());
-		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
-		$GLOBALS[myreturn][rutime][round($totaltime,3)];
+		#debug output
+		if ($GLOBALS[debug]) {
+			$GLOBALS[myreturn][maxusers] = "X".rand(0, 9);
+			$m_time = explode(" ",microtime());
+			$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
+			$GLOBALS[myreturn][runtime] = round($totaltime,3);
+		} else {
+			$GLOBALS[myreturn][maxusers] = $GLOBALS[maxusers];
+		}
+
+		#request log update of json output
 		if ($GLOBALS[reqdebugid])
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][requestlogtable]." SET output='".json_encode($GLOBALS[myreturn])."' WHERE id='".$GLOBALS[reqdebugid]."';");
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][requestlogtable]." SET output='".
+							json_encode($GLOBALS[myreturn])."' WHERE id='".$GLOBALS[reqdebugid]."';");
+
+		#should we force send a json object?
 		if ($GLOBALS[jsonobject])
 			header('X-JSON: '.json_encode($GLOBALS[myreturn], JSON_FORCE_OBJECT));
 		else
 			header('X-JSON: '.json_encode($GLOBALS[myreturn]));
+
 		#javascript exit :D
 		exit;
 	}
@@ -501,7 +516,8 @@ function getMyChatChannels () {
 	}
 
 	if (! $bool) {
-	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search." WHERE ".$wsearch.";");
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".
+							$GLOBALS[cfg][chat][channeltable].$search." WHERE ".$wsearch.";");
 	while ($row = mysql_fetch_array($sql)) {
 		if ($row[owner] == 0) {
 			$owner = "Willhelm";
@@ -527,7 +543,8 @@ function getChatChannel ($myid) {
 	$tret = array();
 	$count = 0;
 
-	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable]." WHERE id='".$myid."';");
+	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".
+							$GLOBALS[cfg][chat][channeltable]." WHERE id='".$myid."';");
 	while ($row = mysql_fetch_array($sql)) {
 		if ($row[owner] == 0) {
 			$owner = "Willhelm";
@@ -620,11 +637,6 @@ function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
 			$rmsg = "UNSET: ";
 	}
 
-	#bot implement
-	#hash -> ressource
-	#module -> daemon
-	#user -> senderopenid
-
 	if ($GLOBALS[bot]) {
 		$thash = $subject;
 		$tmodule = "daemon";
@@ -649,12 +661,10 @@ function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
 }
 
 function alert ($msg, $from) {
-	#fixme
-	#sendmessage to admins with "ERROR: ".$msg
 	$alertsql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE dev='1';");
 	while ($alertrow = mysql_fetch_array($alertsql)) {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ".
-						"('".$from."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT: ".$msg."', 1, 1);");
+						"('".$from."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT:\n".$msg."', 1, 1);");
 	}
 }
 

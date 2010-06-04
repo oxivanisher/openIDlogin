@@ -154,9 +154,6 @@ switch ($_POST[job]) {
 		$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
 		setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 
-#		#tell json, we are logged in
-#		$GLOBALS[myreturn][loggedin] = 1;
-
 		#we should load a module
 		if (! empty($_POST[module])) {
 
@@ -298,7 +295,7 @@ if ($_POST[job] == "logout")
 	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout] - 1)."' WHERE openid='".$myoldid."';");
 
 #generate final html output (this is dirty .. i know)
-echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Administration</title>";
+echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Control Center</title>";
 echo '<meta http-equiv="Content-Type" content="text/html; charset=utf8" />';
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css1]."' type='text/css' />\n";
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css2]."' type='text/css' />\n";
@@ -350,10 +347,11 @@ if ($GLOBALS[redirect]) {
 
 #show our html output
 if (! empty($GLOBALS[html])) {
+	if (! empty($_SESSION[openid_identifier])) $tmp = "[ you are logged in as: ".$_SESSION[openid_identifier]." ]";
+	else $tmp = "Not logged in!";
 	echo "<div style='background-color:transparent; background-image:url(/img/transparent.png); padding:10px; height:100%;'><h1><center> "
-				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='40' height='40'> OpenID </center></h1>";
-	if (! empty($_SESSION[openid_identifier]))
-		echo "<center>[ you are logged in as: ".$_SESSION[openid_identifier]." ]</center>";
+				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='40' height='40' title='".
+				$tmp."'> <abbr title='Control Center'>CC</abbr></center></h1>";
 	echo "<hr /><br />";
 
 	#this is pure cosmetic!!
@@ -363,10 +361,9 @@ if (! empty($GLOBALS[html])) {
 		echo $GLOBALS[html]."<br />";
 
 	#generate runtime output
-	$round = 3;// The number of decimal places to round the micro time to.
 	$m_time = explode(" ",microtime());
 	$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
-	echo "<hr /><center>Page loading took:". round($totaltime,$round) ." seconds</center><br /><br /></div>";
+	echo "<hr /><center>Page loading took:". round($totaltime,3) ." seconds</center><br /><br /></div>";
 	echo "</body>\n</html>";
 }
 
