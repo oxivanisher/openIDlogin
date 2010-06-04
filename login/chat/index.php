@@ -55,8 +55,13 @@ if ($_SESSION[loggedin] == 1) {
 		case "createchannel":
 			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][channeltable]." SET owner='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat].
 							"', name='".encodeme($_POST[name])."', allowed='".serialize($_POST[allowed])."', created='".time()."';");
-			$GLOBALS[html] .= "<h3>Channel ".$_POST[name]." created!</h3>";
-			$GLOBALS[myreturn][msg] = "created"; #FIXME ok check (error/sent)
+			if ($sql) {
+				sysmsg ("Channel ".$_POST[name]." created!");
+				$GLOBALS[myreturn][msg] = "created";
+			} else {
+				sysmsg ("Channel ".$_POST[name]." NOT created!");
+				$GLOBALS[myreturn][msg] = "notcreated";
+			}
 		break;
 
 		#delete channel -> functions

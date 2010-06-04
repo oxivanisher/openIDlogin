@@ -75,13 +75,13 @@ switch ($_POST[myjob]) {
 	#delete all message -> functions
 	case "deleteallmessage":
 		$sql = mysql_query("DELETE FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".$_SESSION[openid_identifier]."';");
-#		if ($sql) {
+		if ($sql) {
 			sysmsg ("All your messages where deleted!", 1);
 			$GLOBALS[myreturn][msg] = "alldeleted";
-#		} else {
-#			$GLOBALS[html] .= "<h3>All your messages where NOT deleted!</h3>";
-#			$GLOBALS[myreturn][msg] = "allnotdeleted";
-#		}
+		} else {
+			sysmsg ("All your messages where NOT deleted!", 1);
+			$GLOBALS[myreturn][msg] = "allnotdeleted";
+		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
@@ -89,8 +89,15 @@ switch ($_POST[myjob]) {
 	case "allviewed":
 		$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE receiver='".$_SESSION[openid_identifier]."';");
 
-		sysmsg ("All your messages are now read!", 1);
-		$GLOBALS[myreturn][msg] = "allviewed"; #FIXME ok check (error/sent)
+		if ($sql) {
+			sysmsg ("All your messages are now read!", 1);
+			$GLOBALS[myreturn][msg] = "allviewed";
+		} else {
+			sysmsg ("Your messages are NOT marked read!", 1);
+			$GLOBALS[myreturn][msg] = "notallviewed";
+		}
+
+
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
@@ -220,9 +227,13 @@ switch ($_POST[myjob]) {
 
 	case "readmessages":
 		fetchUsers();
+#		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
+#					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$GLOBALS[users][byname][strtolower($_POST[name])].
+#					"') OR (receiver='".$GLOBALS[users][byname][strtolower($_POST[name])]."' AND sender='".$_SESSION[openid_identifier].
+#					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
-					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$GLOBALS[users][byname][strtolower($_POST[name])].
-					"') OR (receiver='".$GLOBALS[users][byname][strtolower($_POST[name])]."' AND sender='".$_SESSION[openid_identifier].
+					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$_POST[name].
+					"') OR (receiver='".$_POST[name]."' AND sender='".$_SESSION[openid_identifier].
 					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$cnt = 0; $bool = 0;
 		while ($row = mysql_fetch_array($sql)) {

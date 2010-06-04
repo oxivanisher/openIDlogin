@@ -330,35 +330,107 @@ function createSession () {
 
 function getOnlineUsers () {
 	#last online implementation
+	#unset users array (because this function could be called multiple times)
+	unset ($GLOBALS[aryNames], $GLOBALS[aryOpenID], $GLOBALS[aryStatus]);
+	$GLOBALS[ajaxuserreturnname] = array();
+	$GLOBALS[ajaxuserreturnopenid] = array();
+	$GLOBALS[ajaxuserreturnstatus] = array();
 	$bool = false; $cnt = 0;
-	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = ""; $onlineusersarray = array();
-	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = ""; $idleusersarray = array();
-	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = "";
+#	$onlineusersarray = array();
+	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = "";
+# $idleusersarray = array();
+	$fcnt = 0; $fbool = 1;
+	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1 ORDER BY timestamp DESC;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
+		#catch some eventually problems
 		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
+
+		#yes, this is a user whom is ok
 		$cnt++;
-		if ($orow[openid] == $_SESSION[openid_identifier]) { $bool = true;
-				if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] ))
-					$ocnt++;
-				elseif ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] ))
-					$icnt++;
-				if ($obool) $obool = 0; 
-			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; continue; }
-		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) { $ocnt++; if ($obool) $obool = 0;
-			else $otmp = ", "; $ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
-		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) { $icnt++; if ($ibool) $ibool = 0;
-			else $itmp = ", "; $iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name]; array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]); continue; }
+
+		#fill the new "fancy" array for js frontend
+#		$GLOBALS[aryNames][$cnt] = $GLOBALS[users][byuri][$orow[openid]][name];
+#		$GLOBALS[aryOpenID][$cnt] = $orow[openid];
+#		$GLOBALS[ajaxuserreturnname][$cnt][aryNames] = $GLOBALS[users][byuri][$orow[openid]][name];
+#		$GLOBALS[ajaxuserreturnopenid][$cnt][aryOpenID] = $orow[openid];
+
+
+		#am i this user here?
+		if ($orow[openid] == $_SESSION[openid_identifier]) {
+			$bool = true;
+			if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) {				
+				$ocnt++;
+#				$GLOBALS[aryStatus][$cnt] = 1;
+#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 1;
+#				array_push($GLOBALS[ajaxuserreturnstatus], "1");
+			} elseif ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) {
+				$icnt++;
+#				$GLOBALS[aryStatus][$cnt] = 0;
+#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 0;
+#				array_push($GLOBALS[ajaxuserreturnstatus], "0");
+			} else {
+				$fcnt++;
+#				$GLOBALS[aryStatus][$cnt] = -1;
+#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = -1;
+#				array_push($GLOBALS[ajaxuserreturnstatus], "-1");
+			}
+			if ($obool)	$obool = 0;
+			else				$otmp = ", ";
+			$ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name];
+			continue;
+		}
+
+		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name]);
+		array_push($GLOBALS[ajaxuserreturnopenid], $orow[openid]);
+
+		#is the user online?
+		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) {
+			$ocnt++;
+			if ($obool)	$obool = 0;
+			else				$otmp = ", ";
+			$ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name];
+#			array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]);
+#			$GLOBALS[aryStatus][$cnt] = 1;
+#			$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 1;
+			array_push($GLOBALS[ajaxuserreturnstatus], "1");
+			continue;
+		}
+
+		#is the user idle?
+		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) {
+			$icnt++;
+			if ($ibool)	$ibool = 0;
+			else				$itmp = ", ";
+			$iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name];
+#			array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]);
+#			$GLOBALS[aryStatus][$cnt] = 0;
+#			$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 0;
+			array_push($GLOBALS[ajaxuserreturnstatus], "0");
+			continue;
+		}
+
+		#so, the user is offline then (to infinity and beyond!)
+		$fcnt++;
+#		$GLOBALS[aryStatus][$cnt] = -1;
+#		$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = -1;
+		array_push($GLOBALS[ajaxuserreturnstatus], "-1");
+		continue;
+
 	}
 
 	$GLOBALS[onlineusers] = $ocnt;
 	$GLOBALS[idleusers] = $icnt;
+	$GLOBALS[offlineusers] = $fcnt;
 	$GLOBALS[maxusers] = $cnt;
 
 	$GLOBALS[onlinenames] = $ousers;
 	$GLOBALS[idlenames] = $iusers;
-	$GLOBALS[onlinearray] = $onlineusersarray;
-	$GLOBALS[idlearray] = $idleusersarray;
+	$GLOBALS[offlinenames] = $fusers;
+#	$GLOBALS[onlinearray] = $onlineusersarray;
+#	$GLOBALS[idlearray] = $idleusersarray;
+#	$GLOBALS[offlinearray] = $offlineusersarray;
 
 	$GLOBALS[online][isintable] = $bool;
 
@@ -401,8 +473,15 @@ function jasonOut () {
 				$GLOBALS[myreturn][newmsgs] = 0;
 				$GLOBALS[myreturn][onlinenames] = $GLOBALS[onlinenames];
 				$GLOBALS[myreturn][idlenames] = $GLOBALS[idlenames];
-				$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
-				$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
+#				$GLOBALS[myreturn][offlinenames] = $GLOBALS[offlinenames];
+
+#				$GLOBALS[myreturn][onlinearray] = $GLOBALS[onlinearray];
+#				$GLOBALS[myreturn][idlearray] = $GLOBALS[idlearray];
+#				$GLOBALS[myreturn][offlinearray] = $GLOBALS[offlinearray];
+
+				$GLOBALS[myreturn][aryNames] = $GLOBALS[ajaxuserreturnname];
+				$GLOBALS[myreturn][aryOpenID] = $GLOBALS[ajaxuserreturnopenid];
+				$GLOBALS[myreturn][aryStatus] = $GLOBALS[ajaxuserreturnstatus];
 
 				$tmppa = array();
 				$sql = mysql_query("SELECT id,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".
