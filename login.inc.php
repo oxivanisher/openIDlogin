@@ -32,6 +32,7 @@ if ($_SESSION[reqdebug]) {
 	$GLOBALS[reqdebugid] = mysql_insert_id();
 }
 
+
 #define vars with default values
 $GLOBALS[redirect] = 0;						#don't redirect per default
 $GLOBALS[bot] = 0;								#we are not the daemon/bot
@@ -85,6 +86,13 @@ if ($_POST[ssoInpLogout] == 1) {
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } else {
 	$_POST[job] = "nix zu tun";
+}
+#did we fell offline? then force logout :)
+if ($_POST[job] == "update") {
+	$sqla = mysql_query("SELECT timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	while ($rowa = mysql_fetch_array($sqla))
+		if ($rowa[timestamp] < (time() - $GLOBALS[cfg][lastidletimeout]))
+			$GLOBALS[forcelogout] = 1;
 }
 
 #and then do it
@@ -278,6 +286,7 @@ switch ($_POST[job]) {
 			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 7 * 24 * 3600 )));
 
 			$GLOBALS[myreturn][loggedin] = 1;
+
 		} 
 		$GLOBALS[myreturn][msg] = "status";
 		jasonOut();
