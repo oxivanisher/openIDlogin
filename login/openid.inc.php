@@ -88,7 +88,6 @@ function openid_auth() {
     $consumer = getConsumer();
 
 	if (!isValidURL($openid)) {
-		$_SESSION[error] = "ssoInpUsername_no_valid_url";
 		$GLOBALS[refresh] = 1;
 		return;
 	}

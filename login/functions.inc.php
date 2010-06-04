@@ -298,10 +298,8 @@ function checkSession () {
 		if ($_SESSION[hash] == $row[hash])
 			$bool = 0;
 
-	if ($bool) {
-		$_POST[ssoInpLogout] = 1;
-		$GLOBALS[forcelogout] = 1;
-	} else $GLOBALS[forcelogout] = 0;
+	if ($bool)	$GLOBALS[forcelogout] = 1;
+	else				$GLOBALS[forcelogout] = 0;
 }
 
 function generateHash () {
@@ -382,17 +380,10 @@ function jasonOut () {
 			($_POST[ajax] == 1)) {
 		$GLOBALS[myreturn][openid_identifier] = $_SESSION[openid_identifier];
 
-		if ($GLOBALS[debug]) {
-			$GLOBALS[myreturn][error] = $_SESSION[error];
-			$GLOBALS[myreturn][sites] = $_SESSION[sites];
-		}
-
 		$GLOBALS[myreturn][debug] = $_SESSION[jsdebug];
 
-
-		if ($GLOBALS[myreturn][felloffline] AND (! $_SESSION[freshlogin])) {
+		if ($GLOBALS[forcelogout] AND (! $_SESSION[freshlogin])) {
 			$GLOBALS[myreturn][felloffline] = 1;
-#			$GLOBALS[myreturn][felloffline] = $GLOBALS[forcelogout];
 
 		}
 
@@ -432,10 +423,12 @@ function jasonOut () {
 		$m_time = explode(" ",microtime());
 		$totaltime = (($m_time[0] + $m_time[1]) - $starttime);
 		$GLOBALS[myreturn][rutime][round($totaltime,3)];
+		if ($GLOBALS[reqdebugid])
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][requestlogtable]." SET output='".json_encode($GLOBALS[myreturn])."' WHERE id='".$GLOBALS[reqdebugid]."';");
 		if ($GLOBALS[jsonobject])
-			header('X-JSON: '.json_encode($GLOBALS[myreturn], JSON_FORCE_OBJECT).'');
+			header('X-JSON: '.json_encode($GLOBALS[myreturn], JSON_FORCE_OBJECT));
 		else
-			header('X-JSON: '.json_encode($GLOBALS[myreturn]).'');
+			header('X-JSON: '.json_encode($GLOBALS[myreturn]));
 		#javascript exit :D
 		exit;
 	}

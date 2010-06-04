@@ -25,10 +25,12 @@ require_once($GLOBALS[cfg][moduledir].'/functions.inc.php');
 require_once($GLOBALS[cfg][moduledir].'/openid.inc.php');
 
 #request logger if activated (dev function only)
-if ($_SESSION[reqdebug])
-	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][requestlogtable]." (ts,req,que,scr,ref,post,get,ip) VALUES ('".time().
+if ($_SESSION[reqdebug]) {
+	$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][requestlogtable]." (ts,req,que,scr,ref,input,ip) VALUES ('".time().
 					"', '".$_SERVER[REQUEST_URI]."', '".$_SERVER[QUERY_STRING]."', '".$_SERVER[SCRIPT_NAME].
-					"', '".$_SERVER[HTTP_REFERER]."', '".json_encode($_POST)."', '".json_encode($_GET)."', '".getIP()."');");
+					"', '".$_SERVER[HTTP_REFERER]."', '".json_encode(array("POST" => $_POST, "GET" => $_GET))."', '".getIP()."');");
+	$GLOBALS[reqdebugid] = mysql_insert_id();
+}
 
 #define vars with default values
 $GLOBALS[redirect] = 0;						#don't redirect per default
@@ -105,7 +107,6 @@ switch ($_POST[job]) {
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
 				sysmsg("Checking Identity for:\n".$_POST[ssoInpUsername], 1);
 			$GLOBALS[html] .= "</center></h2>";
-			$_SESSION[error] = "";
 			#call openid auth function
 			openid_auth();
 		}
@@ -122,6 +123,7 @@ switch ($_POST[job]) {
 			checkSites();
 			setCookies();
 			createSession();
+			updateLastOnline();
 
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
@@ -129,14 +131,12 @@ switch ($_POST[job]) {
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
 				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
 			$GLOBALS[html] .= "</center></h2><br /><br /><br />";
-			$_SESSION[error] = "";
 			$_SESSION[freshlogin] = 1;
 		} else {
 
 			#nope
 			$tmp = $GLOBALS[html];
 			$GLOBALS[myreturn][msg] = "auth error";
-			$_SESSION[error] = "auth_error";
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
 				sysmsg("Authentification Error!", 1);
 			$GLOBALS[html] .= "</center></h2><br /><h3><center>".$tmp."</center></h3><br /><br />";
@@ -181,9 +181,7 @@ switch ($_POST[job]) {
 			#nope, show module index
 			$GLOBALS[myreturn][msg] = "refreshing";
 			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
-			if (! empty($_SESSION[error]))
-				$GLOBALS[html] .= "ERROR: ".$_SESSION[error];
-				$GLOBALS[html] .= "<ul>";
+			$GLOBALS[html] .= "<ul>";
 			
 			#have fun reading this code :P
 			if (is_dir($GLOBALS[cfg][moduledir])) {
@@ -230,7 +228,6 @@ switch ($_POST[job]) {
 	
 		}
 		$GLOBALS[html] .= "<br />";	
-		$_SESSION[error] = "";
 		break;
 
 	#ajax request means, a request from the javascript gui for a module
@@ -249,7 +246,6 @@ switch ($_POST[job]) {
 		setcookie (session_id(), "", time() - 3600);
 		session_destroy();
 		session_write_close();
-		$_SESSION[error] = "";
 		$GLOBALS[html] = "<br /><br /><br /><h2><center>";
 			sysmsg("Logging out...", 1);
 		$GLOBALS[html] .= "</center></h2><br /><br /><br />";
@@ -293,11 +289,8 @@ switch ($_POST[job]) {
 
 	#this is for not logged in users
 	default:
-		if (! empty($_SESSION[error])) {
-			$_SESSION[error] = "";
-		}
 		$GLOBALS[myreturn][msg] = "nothing";
-		sysmsg ("You are not logged in! ".$_SESSION[error]);
+		sysmsg ("You are not logged in!");
 }
 
 #last online implementation (online timestamp)

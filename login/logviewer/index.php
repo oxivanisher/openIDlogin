@@ -24,22 +24,19 @@ if ($_SESSION[loggedin] == 1) {
 
 		#view request log
 		if ($_POST[myjob] == "viewreqlog") {
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewreqlog'>= Refresh Request Log</a></h3>";
 			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=clearreqlog'>&gt; Clear Request Log</a></h3><br />";
 
 			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><th>Timestamp</th><th>Request</th><th>Query</th><th>Script</th><th>IP</th><th>Referer</th><th>Post</th><th>Get</th></tr>";
+			$GLOBALS[html] .= "<tr><th>Timestamp</th><th>Referer</th><th>Input</th><th>Output</th></tr>";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][requestlogtable]." WHERE 1 ORDER BY ts DESC;");
 			while ($row = mysql_fetch_array($sql)) {
 
 				$GLOBALS[html] .= "<tr>";
-				$GLOBALS[html] .= "<td>".getNiceAge($row[ts])."</td>";
-				$GLOBALS[html] .= "<td>".$row[req]."</td>";
-				$GLOBALS[html] .= "<td>".$row[que]."</td>";
-				$GLOBALS[html] .= "<td>".$row[scr]."</td>";
-				$GLOBALS[html] .= "<td>".$row[ip]."</td>";
-				$GLOBALS[html] .= "<td>".$row[ref]."</td>";
-				$GLOBALS[html] .= "<td>".$row[post]."</td>";
-				$GLOBALS[html] .= "<td>".$row[get]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align: top;'>".getNiceAge($row[ts])."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align: top;'>".$row[ref]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align: top;'>".str_replace(",", ", ", $row[input])."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align: top;'>".str_replace(",", ", ", $row[output])."</td>";
 				$GLOBALS[html] .= "</tr>";
 
 			}
@@ -48,6 +45,7 @@ if ($_SESSION[loggedin] == 1) {
 		#view system messages
 		} elseif ($_POST[myjob] == "viewsysmsgs") {
 
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewsysmsgs'>= Refresh System Messages</a></h3>";
 			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=clearmsgs'>&gt; Clear System Messages</a></h3><br />";
 			$GLOBALS[html] .= "<table>";
 			$GLOBALS[html] .= "<tr><th>LVL</th><th>User</th><th>Module</th><th>Message</th><th>IP</th></tr>";
