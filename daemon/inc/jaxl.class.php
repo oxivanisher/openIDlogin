@@ -49,6 +49,7 @@
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
 						$help .= "!exit | exit daemon (will restart)\n";
+						$help .= "!resetstatus | set the xmpp status of everyone to offline\n";
 						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
 						$help .= "!sysmsgs | show the latest 20 system messages\n";
 						$help .= "!clearcache | clears the fucking eqdkp cache\n";
@@ -90,6 +91,14 @@
 								}
 								$this->sendMessage($fromJid, "Showing system messages:\n".$tmpret);
 								sysmsg ("Showing system messages", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								$tmpskip = 1;
+
+							#reset everyone in the database to xmpp offline
+							} elseif ($content == "!resetstatus") {
+								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='0' WHERE 1;");
+								msg ("\tSetting everyone to xmpp offline...");
+								$this->sendMessage($fromJid, "Everyone is now offline!");
+								sysmsg ("Setting everyone offline in XMPP", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 								$tmpskip = 1;
 
 							#clear fucking eqdkp cache heavy dirty oxi workaround
