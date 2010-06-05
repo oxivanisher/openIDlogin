@@ -508,6 +508,10 @@
           case "subscribe":
             $this->subscribe($arr["presence"]["@"]["from"]);
             break;
+
+					case "unavailable":
+						$this->eventPresence($arr["presence"]["@"]["from"],"unavailable", NULL);
+						break;
         }
       }
       else if(isset($arr["presence"]["#"]["status"])) {
@@ -525,7 +529,10 @@
         }
         
         $this->eventPresence($fromJid,$status,$photo);
-      }
+      } else if(isset($arr["presence"]["@"]["from"])) {
+				$this->eventPresence($arr["presence"]["@"]["from"],"online", NULL);
+			}
+				
     }
     
     /*

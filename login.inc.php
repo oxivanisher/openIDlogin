@@ -196,7 +196,9 @@ switch ($_POST[job]) {
 							if (($file != ".") AND ($file != "..") AND ($file != "Auth"))
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
-										if ($MODULE[dev]) {
+										if (! $MODULE[show])
+											continue;
+										elseif ($MODULE[dev]) {
 											$nav[dev][$file][module] = $file;
 											$nav[dev][$file][name] = $MODULE[name];
 											$nav[dev][$file][comment] = $MODULE[comment];
@@ -237,10 +239,9 @@ switch ($_POST[job]) {
 
 	#ajax request means, a request from the javascript gui for a module
 	case "ajax":
-#		setCookies();
 		$GLOBALS[myreturn][loggedin] = 1;
 		if (file_exists('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php'))
-			include('/srv/www/instances/alptroeim.ch/htdocs/'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
+			require('/srv/www/instances/alptroeim.ch/htdocs/'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
 		jasonOut();
 	break;
 

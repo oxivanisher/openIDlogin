@@ -4,7 +4,7 @@
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 
-### Functions! ###
+### Functions! ###
 
 #send message -> functions
 switch ($_POST[myjob]) {
@@ -17,17 +17,24 @@ switch ($_POST[myjob]) {
 				$_POST[subject] = "AJAX GUI";
 			} else {
 				$_POST[subject] = "Unknown Source!";
+				sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
+									$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
 			}
 		}
-		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-						$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
-						"', '".encodeme($_POST[message])."', '1', '1');");
-		if ($sql) {
-			sysmsg ("Message to ".$_POST[user]." sent!");
-			$GLOBALS[myreturn][msg] = "sent";
+		if (! empty($_POST[message])) {
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+							$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
+							"', '".encodeme($_POST[message])."', '1', '1');");
+			if ($sql) {
+				sysmsg ("Message to ".$_POST[user]." sent!");
+				$GLOBALS[myreturn][msg] = "sent";
+			} else {
+				sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
+				$GLOBALS[myreturn][msg] = "error";
+			}
 		} else {
-			sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
-			$GLOBALS[myreturn][msg] = "notsent";
+				sysmsg ("Empty message to ".$_POST[user]." NOT sent!", 1);
+				$GLOBALS[myreturn][msg] = "error";
 		}
 		updateTimestamp($_SESSION[openid_identifier]);
 	break;
@@ -227,51 +234,40 @@ switch ($_POST[myjob]) {
 
 	case "readmessages":
 		fetchUsers();
-#		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
-#					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$GLOBALS[users][byname][strtolower($_POST[name])].
-#					"') OR (receiver='".$GLOBALS[users][byname][strtolower($_POST[name])]."' AND sender='".$_SESSION[openid_identifier].
-#					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$_POST[name].
 					"') OR (receiver='".$_POST[name]."' AND sender='".$_SESSION[openid_identifier].
 					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$cnt = 0; $bool = 0;
 		while ($row = mysql_fetch_array($sql)) {
-	#			$GLOBALS[myreturn][message][$cnt][sender] = $row[sender];
-	#			$GLOBALS[myreturn][message][$cnt][receiver] = $row[receiver];
-	#			$GLOBALS[myreturn][message][$cnt][sendername] = $GLOBALS[users][byuri][$row[sender]][name];
-	#			$GLOBALS[myreturn][message][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
-	#			$GLOBALS[myreturn][message][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
-	#			$GLOBALS[myreturn][message][$cnt][subject] = $row[subject];
-
 				if ($row['new'] == 1) {
 					if (($row[receiver] == $_SESSION[openid_identifier]) AND ($row[timestamp] < (time() - 10)))
 						$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE id='".$row[id]."';");
 					$new = 1;
-				} else
-					$new = 0;
+				} else $new = 0;
 
+				if ($new)	$mynewreturn  = "<b>"; else $mynewreturn  = "";
 
-				if ($new)	$mynewreturn  = "<b>";
-				else			$mynewreturn  = "";
+				$mynewreturn .= $GLOBALS[users][byuri][$row[sender]][name]." ".getNiceAge($row[timestamp]);
 
-				$mynewreturn .= 						$GLOBALS[users][byuri][$row[sender]][name]." ".getNiceAge($row[timestamp]);
+				if ($new)	$mynewreturn .= ":</b> "; else $mynewreturn .= ": <i>";
 
-				if ($new)	$mynewreturn .= ":</b> ";
-				else			$mynewreturn .= ": <i>";
+				$mynewreturn .= str_replace("\n", "<br />", $row[message]);
 
-				$mynewreturn .= 						str_replace("\n", "<br />", $row[message]);
+				if ($new)	$mynewreturn .= ""; else $mynewreturn .= "</i>";
 
-				if ($new)	$mynewreturn .= "";
-				else			$mynewreturn .= "</i>";
-
-
+				#fill the array for ajax
 				$GLOBALS[myreturn][message][$cnt][id] = $row[id];
 				$GLOBALS[myreturn][message][$cnt][msg] = $mynewreturn;
 
 				$cnt++;
 				$bool = 1;
 		}
+
+		#if there are no messages, we need to send a blank array to ajax
+		if ($cnt == 0) $GLOBALS[myreturn][message] = array();
+
+
 		if ($bool) {
 			$GLOBALS[myreturn][msg] = "ok";
 		} else {

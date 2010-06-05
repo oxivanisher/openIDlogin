@@ -331,15 +331,24 @@ function createSession () {
 function getOnlineUsers () {
 	#last online implementation
 	#unset users array (because this function could be called multiple times)
-	unset ($GLOBALS[aryNames], $GLOBALS[aryOpenID], $GLOBALS[aryStatus]);
+	unset ($GLOBALS[aryNames], $GLOBALS[aryOpenID], $GLOBALS[aryStatus], $GLOBALS[aryTimes], $GLOBALS[aryNewMessage]);
 	$GLOBALS[ajaxuserreturnname] = array();
 	$GLOBALS[ajaxuserreturnopenid] = array();
 	$GLOBALS[ajaxuserreturnstatus] = array();
+	$GLOBALS[ajaxuserreturntimes] = array();
+	$GLOBALS[ajaxuserreturnnewmessage] = array(); $newmsgopenid = array();
 	$bool = false; $cnt = 0;
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = "";
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = "";
 	$fcnt = 0; $fbool = 1;
-	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1 ORDER BY timestamp DESC;");
+
+	#get the new messages informations
+	$newmsgsql = mysql_query("SELECT receiver,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE new='1';");
+	while ($nrow = mysql_fetch_array($newmsgsql))
+		array_push($newmsgopenid, array($nrow[receiver], $nrow[sender]));
+
+	#get the users from last online table and go trough them
+	$onlinesql = mysql_query("SELECT openid,timestamp,xmppstatus FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1 ORDER BY timestamp DESC;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
 		#catch some eventually problems
 		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
@@ -364,12 +373,17 @@ function getOnlineUsers () {
 			continue;
 		}
 
-		#add last login on logged out users
-		if ($orow[timestamp] < ( time() - $GLOBALS[cfg][lastidletimeout] ))	$otmp = " ".getAge($orow[timestamp]);
-		else 																																$otmp = "";
-
-		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name].$otmp);
+		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name]);
 		array_push($GLOBALS[ajaxuserreturnopenid], $orow[openid]);
+		array_push($GLOBALS[ajaxuserreturntimes], getNiceAge($orow[timestamp]));
+
+		#count new mwssages
+		$mcount = 0;
+		foreach ($newmsgopenid as $mymsg) {
+			if (($mymsg[0] == $_SESSION[openid_identifier]) AND ($mymsg[1]  == $orow[openid]))
+				$mcount++;
+		}
+		array_push($GLOBALS[ajaxuserreturnnewmessage], $mcount);
 
 		#is the user online?
 		if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) {
@@ -391,11 +405,18 @@ function getOnlineUsers () {
 			continue;
 		}
 
+		#is the user remote online (xmpp jabber daemon)
+		if ($orow[xmppstatus])
+			array_push($GLOBALS[ajaxuserreturnstatus], "2");
+
 		#so, the user is offline then (to infinity and beyond!)
+		else
+			array_push($GLOBALS[ajaxuserreturnstatus], "-1");
+
 		$fcnt++;
-		array_push($GLOBALS[ajaxuserreturnstatus], "-1");
 		continue;
 
+		#we shall never reach this point
 	}
 
 	$GLOBALS[onlineusers] = $ocnt;
@@ -455,6 +476,8 @@ function jasonOut () {
 				$GLOBALS[myreturn][aryNames] = $GLOBALS[ajaxuserreturnname];
 				$GLOBALS[myreturn][aryOpenID] = $GLOBALS[ajaxuserreturnopenid];
 				$GLOBALS[myreturn][aryStatus] = $GLOBALS[ajaxuserreturnstatus];
+				$GLOBALS[myreturn][aryTimes] = $GLOBALS[ajaxuserreturntimes];
+				$GLOBALS[myreturn][aryNewMessage] = $GLOBALS[ajaxuserreturnnewmessage];
 
 				$tmppa = array();
 				$sql = mysql_query("SELECT id,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE receiver='".

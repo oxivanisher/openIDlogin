@@ -274,6 +274,8 @@
 						#is there content?
 						} else {
 							if ($cont) {
+								if (count($cont) > 1000)
+									$cont = substr($cont, 0, 1000);
 								msg ("->\tMessage to ".$rec." delivered.");
 								$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
 												$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."', '".$rec."', '".time()."', 'XMPP/".$jid[1]."', '".
@@ -334,9 +336,16 @@
     }
     
     function eventPresence($fromJid, $status, $photo) {
+			$jid = explode("/", $fromJid);
+		echo "status: ".$status." from ".$jid[0]."\n";
+
+			if ($status == "unavailable")
+				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='0' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+			else
+				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='1',status='".$status."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+
       // Change your status message to your friend's status
 //      $this->sendStatus($status);
-      
       if($this->logDB) {
         // Save the presence in the database
         $timestamp = date('Y-m-d H:i:s');
