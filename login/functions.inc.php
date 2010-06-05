@@ -337,9 +337,7 @@ function getOnlineUsers () {
 	$GLOBALS[ajaxuserreturnstatus] = array();
 	$bool = false; $cnt = 0;
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = "";
-#	$onlineusersarray = array();
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = "";
-# $idleusersarray = array();
 	$fcnt = 0; $fbool = 1;
 	$onlinesql = mysql_query("SELECT openid,timestamp FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1 ORDER BY timestamp DESC;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
@@ -347,34 +345,18 @@ function getOnlineUsers () {
 		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
 
-		#yes, this is a user whom is ok
+		#yes, this is a ok user 
 		$cnt++;
-
-		#fill the new "fancy" array for js frontend
-#		$GLOBALS[aryNames][$cnt] = $GLOBALS[users][byuri][$orow[openid]][name];
-#		$GLOBALS[aryOpenID][$cnt] = $orow[openid];
-#		$GLOBALS[ajaxuserreturnname][$cnt][aryNames] = $GLOBALS[users][byuri][$orow[openid]][name];
-#		$GLOBALS[ajaxuserreturnopenid][$cnt][aryOpenID] = $orow[openid];
-
 
 		#am i this user here?
 		if ($orow[openid] == $_SESSION[openid_identifier]) {
 			$bool = true;
 			if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) {				
 				$ocnt++;
-#				$GLOBALS[aryStatus][$cnt] = 1;
-#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 1;
-#				array_push($GLOBALS[ajaxuserreturnstatus], "1");
 			} elseif ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastidletimeout] )) {
 				$icnt++;
-#				$GLOBALS[aryStatus][$cnt] = 0;
-#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 0;
-#				array_push($GLOBALS[ajaxuserreturnstatus], "0");
 			} else {
 				$fcnt++;
-#				$GLOBALS[aryStatus][$cnt] = -1;
-#				$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = -1;
-#				array_push($GLOBALS[ajaxuserreturnstatus], "-1");
 			}
 			if ($obool)	$obool = 0;
 			else				$otmp = ", ";
@@ -382,7 +364,11 @@ function getOnlineUsers () {
 			continue;
 		}
 
-		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name]);
+		#add last login on logged out users
+		if ($orow[timestamp] < ( time() - $GLOBALS[cfg][lastidletimeout] ))	$otmp = " ".getAge($orow[timestamp]);
+		else 																																$otmp = "";
+
+		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name].$otmp);
 		array_push($GLOBALS[ajaxuserreturnopenid], $orow[openid]);
 
 		#is the user online?
@@ -391,9 +377,6 @@ function getOnlineUsers () {
 			if ($obool)	$obool = 0;
 			else				$otmp = ", ";
 			$ousers .= $otmp.$GLOBALS[users][byuri][$orow[openid]][name];
-#			array_push($onlineusersarray, $GLOBALS[users][byuri][$orow[openid]][name]);
-#			$GLOBALS[aryStatus][$cnt] = 1;
-#			$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 1;
 			array_push($GLOBALS[ajaxuserreturnstatus], "1");
 			continue;
 		}
@@ -404,17 +387,12 @@ function getOnlineUsers () {
 			if ($ibool)	$ibool = 0;
 			else				$itmp = ", ";
 			$iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name];
-#			array_push($idleusersarray, $GLOBALS[users][byuri][$orow[openid]][name]);
-#			$GLOBALS[aryStatus][$cnt] = 0;
-#			$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = 0;
 			array_push($GLOBALS[ajaxuserreturnstatus], "0");
 			continue;
 		}
 
 		#so, the user is offline then (to infinity and beyond!)
 		$fcnt++;
-#		$GLOBALS[aryStatus][$cnt] = -1;
-#		$GLOBALS[ajaxuserreturnstatus][$cnt][aryStatus] = -1;
 		array_push($GLOBALS[ajaxuserreturnstatus], "-1");
 		continue;
 
@@ -428,13 +406,8 @@ function getOnlineUsers () {
 	$GLOBALS[onlinenames] = $ousers;
 	$GLOBALS[idlenames] = $iusers;
 	$GLOBALS[offlinenames] = $fusers;
-#	$GLOBALS[onlinearray] = $onlineusersarray;
-#	$GLOBALS[idlearray] = $idleusersarray;
-#	$GLOBALS[offlinearray] = $offlineusersarray;
 
 	$GLOBALS[online][isintable] = $bool;
-
-
 }
 
 function updateLastOnline () {
