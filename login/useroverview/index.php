@@ -32,18 +32,38 @@ if ($_SESSION[loggedin] == 1) {
 
 	#show user table
 	$GLOBALS[html] .= "<hr>";
-	$GLOBALS[html] .= "<h2>Registred users</h2>";
+	$GLOBALS[html] .= "<h3><a href='http://www.ubuntu-forum.de/post/117871/jabber-eine-kurze-erkl%C3%A4rung.html#post117871'>&gt; Was ist Jabber?</a>";
+#	$GLOBALS[html] .= "<div style='color: lime;'>online</div><div style='color: yellow;'>afk</div><div style='color: orange;'>jabber</div>offline";
+	$GLOBALS[html] .= "</h3>";
 	$GLOBALS[html] .= "<table>";
-	$GLOBALS[html] .= "<tr><th>Forum</th><th>Blog</th><th>Wiki</th><th>Last online</th>";
+	$GLOBALS[html] .= "<tr><th>Forum</th><th>Blog</th><th>Wiki</th><th>Last online</th><th>Jabber</th>";
 	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
 	$GLOBALS[html] .= "</tr>";
 	foreach ($GLOBALS[users][byuri] as $myuri) {
 		if (! empty($myuri[name])) {
 			if ( $myuri[online] > ( time() - $GLOBALS[cfg][lastonlinetimeout])) $tmp = "color: lime;";
-			elseif ( $myuri[online] > ( time() - $GLOBALS[cfg][lastidletimeout])) $tmp = "color: orange;";
+			elseif ( $myuri[online] > ( time() - $GLOBALS[cfg][lastidletimeout])) $tmp = "color: yellow;";
+			elseif ($myuri[xmppstatus]) $tmp = "color: orange;";
 			else $tmp = "";
+
+			$xmpptmp = "Ressourcen online: "; $xmpptmp2 = ""; $xmppbool = 1; $xmppcnt = 0;
+			if (! empty($myuri[status])) {
+				$tres = unserialize($myuri[status]);
+				foreach ($tres as $myres) {
+					$xmppcnt++;
+					if ($xmppbool) $xmppbool = 0;
+					else $xmpptmp2 = ", ";
+					$xmpptmp .= $xmpptmp2.$myres;
+				}
+			} else $xmpptmp = "Keine Ressource online";
+
+			if ($myuri[xmpp])
+				$xmpptmpf = "<abbr title='".$xmpptmp."'>Ja</abbr>";
+			else
+				$xmpptmpf = "Nein";
+
 			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[uri])."</td><td>".$tmpwp[$myuri[uri]]."</td><td>".
-												$tmpwi[$myuri[uri]]."</td><td>".getAge($myuri[online])."</td>";
+												$tmpwi[$myuri[uri]]."</td><td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
 			if ($_SESSION[isadmin]) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
 			$GLOBALS[html] .= "</tr>";
 		}

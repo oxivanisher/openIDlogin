@@ -139,11 +139,12 @@ function fetchUsers () {
 	getXmppUsers();
 
 	#fetching users from openid lastonline db
-	$sqls = mysql_query("SELECT openid,timestamp,status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	$sqls = mysql_query("SELECT openid,timestamp,status,xmppstatus FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($rows = mysql_fetch_array($sqls)) {
 		if (! empty($GLOBALS[users][byuri][$rows[openid]][name])) {
 			$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
 			$GLOBALS[users][byuri][$rows[openid]][status] = $rows[status];
+			$GLOBALS[users][byuri][$rows[openid]][xmppstatus] = $rows[xmppstatus];
 		}
 	}
 
@@ -406,14 +407,14 @@ function getOnlineUsers () {
 		}
 
 		#is the user remote online (xmpp jabber daemon)
-		if ($orow[xmppstatus])
+		if ($orow[xmppstatus]) {
 			array_push($GLOBALS[ajaxuserreturnstatus], "2");
-
+			$icnt++;
 		#so, the user is offline then (to infinity and beyond!)
-		else
+		} else { 
 			array_push($GLOBALS[ajaxuserreturnstatus], "-1");
-
-		$fcnt++;
+			$fcnt++;
+		}
 		continue;
 
 		#we shall never reach this point

@@ -128,6 +128,7 @@ switch ($_POST[job]) {
 		if ($_SESSION[loggedin]) {
 
 			#yes! hurray!
+			getOnlineUsers();
 			checkSites();
 			setCookies();
 			createSession();
@@ -302,7 +303,7 @@ switch ($_POST[job]) {
 
 #last online implementation (online timestamp)
 if ($_POST[job] == "logout")
-	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout] - 1)."' WHERE openid='".$myoldid."';");
+	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout])."' WHERE openid='".$myoldid."';");
 
 #generate final html output (this is dirty .. i know)
 echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Control Center</title>";
@@ -361,7 +362,7 @@ if (! empty($GLOBALS[html])) {
 	else $tmp = "Not logged in!";
 	echo "<div style='background-color:transparent; background-image:url(/img/transparent.png); padding:10px; height:100%;'><h1><center> "
 				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='40' height='40' title='".
-				$tmp."'> <abbr title='Control Center'>CC</abbr></center></h1>";
+				$tmp."'> <abbr title='User Control Center'>IMBA Admin</abbr></center></h1>";
 	echo "<hr /><br />";
 
 	#this is pure cosmetic!!

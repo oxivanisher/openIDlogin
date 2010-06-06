@@ -95,7 +95,7 @@
 
 							#reset everyone in the database to xmpp offline
 							} elseif ($content == "!resetstatus") {
-								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='0' WHERE 1;");
+								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='',xmppstatus='0' WHERE 1;");
 								msg ("\tSetting everyone to xmpp offline...");
 								$this->sendMessage($fromJid, "Everyone is now offline!");
 								sysmsg ("Setting everyone offline in XMPP", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
@@ -346,15 +346,60 @@
     
     function eventPresence($fromJid, $status, $photo) {
 			$jid = explode("/", $fromJid);
-		echo "status: ".$status." from ".$jid[0]."\n";
+			$tmpres = $jid[1];
+			echo "status: ".$status." from ".$fromJid."\n";
 
-			if ($status == "unavailable")
-				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='0' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
-			else
-				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='1',status='".$status."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+			#the user went offline
+			if ($status == "unavailable") {
+				$newdata = array();
+				$xsql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+				while ($xrow = mysql_fetch_array($xsql))
+					$data = unserialize($xrow[status]);
 
-      // Change your status message to your friend's status
-//      $this->sendStatus($status);
+				if (empty($data)) {
+					$newdata = array();
+				} else {
+					foreach ($data as $myres)
+						if ($myres != $tmpres)
+							array_push($newdata, $myres);
+				}
+
+				if (count($newdata) > 0)
+					$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".serialize($newdata).
+															"',xmppstatus='1' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+				else
+					$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".serialize($newdata).
+															"',xmppstatus='0' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+
+			#the user came online / changed status
+			} else {  #if ($status == "online") {
+				$newdata = array();
+				$xsql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+				while ($xrow = mysql_fetch_array($xsql))
+					$data = unserialize($xrow[status]);
+
+				if (! empty($data)) {
+					foreach ($data as $myres) {
+						if ($myres != $tmpres) {
+							array_push($newdata, $myres);
+						}
+					}
+					array_push($newdata, $tmpres);
+				} else {
+					array_push($newdata, $tmpres);
+				}
+			
+				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='1',status='".serialize($newdata).
+														"' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
+
+			#the user updated his status
+#			} else {
+#				true;
+			}
+
+
+				// Change your status message to your friend's status
+				//      $this->sendStatus($status);
       if($this->logDB) {
         // Save the presence in the database
         $timestamp = date('Y-m-d H:i:s');
