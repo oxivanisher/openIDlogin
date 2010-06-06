@@ -744,4 +744,16 @@ function alert ($msg, $from) {
 	}
 }
 
+function makeClickableURL($url){
+	$in=array(
+		'`((?:https?|ftp)://\S+[[:alnum:]]/?)`si',
+		'`((?<!//)(www\.\S+[[:alnum:]]/?))`si'
+	);
+	$out=array(
+		'<a href="$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a> ',
+		'<a href="http://$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a>'
+	);
+	return preg_replace($in,$out,$url);
+}
+
 ?>

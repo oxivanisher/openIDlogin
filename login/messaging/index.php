@@ -224,7 +224,7 @@ switch ($_POST[myjob]) {
 		$GLOBALS[html] .= "Date: ".$GLOBALS[myreturn][message][date]."<br />";
 		$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br />";
 		$GLOBALS[html] .= "Source: ".$GLOBALS[myreturn][message][subject]."<br />";
-		$GLOBALS[html] .= "<big><pre>".$GLOBALS[myreturn][message][message]."</pre></big>";
+		$GLOBALS[html] .= "<big><pre>".makeClickableURL($GLOBALS[myreturn][message][message])."</pre></big>";
 		$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&myjob=deletemessage&id=".
 											$GLOBALS[myreturn][message][id]."'>Delete this message</a>";
 		updateTimestamp($_SESSION[openid_identifier]);
@@ -252,7 +252,7 @@ switch ($_POST[myjob]) {
 
 				if ($new)	$mynewreturn .= ":</b> "; else $mynewreturn .= ": <i>";
 
-				$mynewreturn .= str_replace("\n", "<br />", $row[message]);
+				$mynewreturn .= str_replace("\n", "<br />", makeClickableURL($row[message]));
 
 				if ($new)	$mynewreturn .= ""; else $mynewreturn .= "</i>";
 
