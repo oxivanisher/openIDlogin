@@ -342,6 +342,7 @@ function getOnlineUsers () {
 	$ocnt = 0; $ousers = ""; $obool = 1; $otmp = "";
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = "";
 	$fcnt = 0; $fbool = 1;
+	$firstremote = 1;
 
 	#get the new messages informations
 	$newmsgsql = mysql_query("SELECT receiver,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE new='1';");
@@ -404,12 +405,22 @@ function getOnlineUsers () {
 			$iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name];
 			array_push($GLOBALS[ajaxuserreturnstatus], "0");
 			continue;
-		}
 
-		#is the user remote online (xmpp jabber daemon)
-		if ($orow[xmppstatus]) {
+		#or is the user remote online (xmpp jabber daemon)
+		} elseif ($orow[xmppstatus]) {
+			if ($ibool)	$ibool = 0;
+			else				$itmp = ", ";
+
+			if ($firstremote)	{
+				$itmp = " | ";
+				$firstremote = 0;
+			} else $itmp = ", ";
+
+			$iusers .= $itmp.$GLOBALS[users][byuri][$orow[openid]][name];
+
 			array_push($GLOBALS[ajaxuserreturnstatus], "2");
 			$icnt++;
+
 		#so, the user is offline then (to infinity and beyond!)
 		} else { 
 			array_push($GLOBALS[ajaxuserreturnstatus], "-1");

@@ -363,8 +363,9 @@
 					$newdata = array();
 				} else {
 					foreach ($data as $myres)
-						if ($myres != $tmpres)
-							array_push($newdata, $myres);
+						if (! empty($myres))
+							if ($myres != $tmpres)
+								array_push($newdata, $myres);
 				}
 
 				if (count($newdata) > 0)
@@ -385,8 +386,9 @@
 
 				if (! empty($data)) {
 					foreach ($data as $myres) {
-						if ($myres != $tmpres) {
-							array_push($newdata, $myres);
+						if (! empty($myres))
+							if ($myres != $tmpres) {
+								array_push($newdata, $myres);
 						}
 					}
 					array_push($newdata, $tmpres);
