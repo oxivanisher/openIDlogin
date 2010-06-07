@@ -25,7 +25,12 @@ mysql_query('set character set utf8;');
 
 /* Include JAXL Class */
 include_once("inc/jaxl.class.php");
- 
+
+
+/* Clearing MySql Table status informations */
+$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='0',status='' WHERE 1;");
+
+
 /* Create an instance of XMPP Class */
 $jaxl = new JAXL(
 	$GLOBALS[cfg][daemon][xmpp][host],
@@ -61,10 +66,15 @@ try {
 			if ($GLOBALS[updateroster]) {
 				$xsql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
 				while ($xrow = mysql_fetch_array($xsql)) {
-					msg ("Initial subscribe to: ".$xrow[xmpp]);
-					$jaxl->subscribe($xrow[xmpp]);
+					$tmpjid = explode('@', $xrow[xmpp], 2);
+					if ($GLOBALS[cfg][daemon][xmpp][domain] != $tmpjid[1]) {
+						msg ("Roster add: ".$xrow[xmpp]);
+						$jaxl->roster('add', $xrow[xmpp]);
+					} else {
+						msg ("NO Roster add for: ".$xrow[xmpp]." (same domain)");	
+					}
 				}
-				$GLOBALS[timer] = time();
+				$jaxl->roster('get');
 				$GLOBALS[updateroster] = 0;
 			}
 

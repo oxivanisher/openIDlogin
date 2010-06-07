@@ -424,23 +424,31 @@
               foreach($rosters as $roster) {
                 $roster = $roster["@"];
                 if($roster["subscription"] == "none") {
-									msg ("->\tsubscribing: ".$roster["jid"]);
-                  $this->subscribe($roster["jid"]);
+									if (! $GLOBALS[reqsentn][$roster["jid"]]) {
+										msg ("->\tsubscribing (none): ".$roster["jid"]." (sending subscription request)");
+										$xml = "<presence from='".$this->jid."' to='".$roster["jid"]."' type='subscribe'/>";
+										$this->sendXML($xml);
+										$GLOBALS[reqsentn][$roster["jid"]] = 1;
+									}
                 }
                 else if($roster["subscription"] == "both") {
- 									msg ("->\talready subscripted: ".$roster["jid"]);
-
+ 									msg ("->\talready subscripted (both): ".$roster["jid"]);
 								}
+                else if($roster["subscription"] == "to") {
+ 									msg ("->\talready subscripted (to): ".$roster["jid"]);
+ 								}
 								else if($roster["subscription"] == "from") {
- 									msg ("->\tfrom subscription: ".$roster["jid"]." (sending subscription request)");
-									$xml = "<presence from='".$GLOBALS[cfg][daemon][xmpp][user]."@".$GLOBALS[cfg][daemon][xmpp][domain].
-													"' to='".$roster["jid"]."' type='subscribe'/>";
-									$this->sendXML($xml);
-                 
+									if (! $GLOBALS[reqsentf][$roster["jid"]]) {
+										msg ("->\tsubscribing (from): ".$roster["jid"]." (sending subscription request)");
+ 										$xml = "<presence from='".$this->jid."' to='".$roster["jid"]."' type='subscribe'/>";
+										$this->sendXML($xml);
+										$GLOBALS[reqsentf][$roster["jid"]] = 1;
+									}
                 } else {
  									msg ("->\tstrange subscription state: ".$roster["subscription"]."; from: ".$roster["jid"]);
-
 								}
+								$this->sendPresence("subscribed", $roster["jid"]);
+         	      $this->subscribe($roster["jid"]);
               }
             }
             if(!$this->done) {
@@ -522,9 +530,9 @@
             $this->subscribe($arr["presence"]["@"]["from"]);
             break;
 
-					case "unavailable":
-						$this->eventPresence($arr["presence"]["@"]["from"],"unavailable", NULL);
-						break;
+#					case "unavailable":
+#						$this->eventPresence($arr["presence"]["@"]["from"],"unavailable", NULL);
+#						break;
 
 					default:
 #						$this->subscribe($arr["presence"]["@"]["from"]);
@@ -569,6 +577,7 @@
         return FALSE;
       }
       $xml = '<presence from="'.$this->jid.'" to="'.$tojid.'" type="'.$type.'"/>';
+#      $xml = '<presence to="'.$tojid.'" type="'.$type.'"/>';
       $this->sendXML($xml);
     }
     

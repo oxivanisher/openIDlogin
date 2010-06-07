@@ -49,7 +49,7 @@
 					if ($isadmin) {
 						$help .= "\nAdmin Commands:\n";
 						$help .= "!exit | exit daemon (will restart)\n";
-						$help .= "!resetstatus | set the xmpp status of everyone to offline\n";
+						$help .= "!roster | refresh the roster (do some magic)\n";
 						$help .= "!mass | send a massmailer message (all users will receive it!)\n";
 						$help .= "!sysmsgs | show the latest 20 system messages\n";
 						$help .= "!clearcache | clears the fucking eqdkp cache\n";
@@ -94,12 +94,13 @@
 								$tmpskip = 1;
 
 							#reset everyone in the database to xmpp offline
-							} elseif ($content == "!resetstatus") {
+							} elseif ($content == "!roster") {
 								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='',xmppstatus='0' WHERE 1;");
-								msg ("\tSetting everyone to xmpp offline...");
-								$this->sendMessage($fromJid, "Everyone is now offline!");
-								sysmsg ("Setting everyone offline in XMPP", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+								msg ("\tUpdating roster...");
+								$this->sendMessage($fromJid, "Roster update in progress...");
+								sysmsg ("Updating roster", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
 								$tmpskip = 1;
+								$GLOBALS[updateroster] = 1;
 
 							#clear fucking eqdkp cache heavy dirty oxi workaround
 							} elseif ($content == "!clearcache") {
@@ -347,10 +348,12 @@
     function eventPresence($fromJid, $status, $photo) {
 			$jid = explode("/", $fromJid);
 			$tmpres = $jid[1];
-			msg ("->\teventPresence: ".$fromJid.", ".$status);
+			if ($fromJid == $this->jid) return true;
+			msg ("->\teventPresence from: ".$fromJid);
 
 			#the user went offline
 			if ($status == "unavailable") {
+				msg ("->\t\tUser went offline.");
 				$newdata = array();
 				$xsql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
 				while ($xrow = mysql_fetch_array($xsql))
@@ -373,7 +376,8 @@
 
 			#the user came online / changed status
 			} else {  #if ($status == "online") {
-				$this->sendPresence("subscribed", $fromJid);
+				msg ("->\t\tgot status: ".$status);
+#				$this->sendPresence("subscribed", $fromJid);
 				$newdata = array();
 				$xsql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
 				while ($xrow = mysql_fetch_array($xsql))
@@ -392,10 +396,6 @@
 			
 				$xsql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET xmppstatus='1',status='".serialize($newdata).
 														"' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
-
-			#the user updated his status
-#			} else {
-#				true;
 			}
 
 
