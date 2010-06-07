@@ -347,7 +347,7 @@
     function eventPresence($fromJid, $status, $photo) {
 			$jid = explode("/", $fromJid);
 			$tmpres = $jid[1];
-			echo "status: ".$status." from ".$fromJid."\n";
+			msg ("->\teventPresence: ".$fromJid.", ".$status);
 
 			#the user went offline
 			if ($status == "unavailable") {
@@ -373,6 +373,7 @@
 
 			#the user came online / changed status
 			} else {  #if ($status == "online") {
+				$this->sendPresence("subscribed", $fromJid);
 				$newdata = array();
 				$xsql = mysql_query("SELECT status FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
 				while ($xrow = mysql_fetch_array($xsql))
@@ -417,8 +418,8 @@
       if(!$this->bot_status) {  
         $this->logger->logger('Starting Cycles');  
         $this->init();  
-        $this->bot_status = TRUE;  
-      }  
+        $this->bot_status = TRUE;
+			}
 	}
 
 	function init() {

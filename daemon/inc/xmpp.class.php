@@ -424,11 +424,23 @@
               foreach($rosters as $roster) {
                 $roster = $roster["@"];
                 if($roster["subscription"] == "none") {
+									msg ("->\tsubscribing: ".$roster["jid"]);
                   $this->subscribe($roster["jid"]);
                 }
                 else if($roster["subscription"] == "both") {
-                  
-                }
+ 									msg ("->\talready subscripted: ".$roster["jid"]);
+
+								}
+								else if($roster["subscription"] == "from") {
+ 									msg ("->\tfrom subscription: ".$roster["jid"]." (sending subscription request)");
+									$xml = "<presence from='".$GLOBALS[cfg][daemon][xmpp][user]."@".$GLOBALS[cfg][daemon][xmpp][domain].
+													"' to='".$roster["jid"]."' type='subscribe'/>";
+									$this->sendXML($xml);
+                 
+                } else {
+ 									msg ("->\tstrange subscription state: ".$roster["subscription"]."; from: ".$roster["jid"]);
+
+								}
               }
             }
             if(!$this->done) {
@@ -503,6 +515,7 @@
      * parsePresence() method handles any incoming presence
     */
     function parsePresence($arr) {
+#			echo "got presence: ".$arr["presence"]["@"]["type"].";".$arr["presence"]["#"]["status"]."\n";
       if(isset($arr["presence"]["@"]["type"])) {
         switch($arr["presence"]["@"]["type"]) {
           case "subscribe":
@@ -512,6 +525,10 @@
 					case "unavailable":
 						$this->eventPresence($arr["presence"]["@"]["from"],"unavailable", NULL);
 						break;
+
+					default:
+#						$this->subscribe($arr["presence"]["@"]["from"]);
+						$this->eventPresence($arr["presence"]["@"]["from"],$arr["presence"]["@"]["type"], NULL);
         }
       }
       else if(isset($arr["presence"]["#"]["status"])) {

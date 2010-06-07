@@ -11,6 +11,7 @@ require_once($GLOBALS[cfg][logindir].'/functions.inc.php');
 
 $GLOBALS[debug] = 1;
 $GLOBALS[bot] = 1;
+$GLOBALS[updateroster] = 1;
 
 echo "\n";
 msg ("connecting to mysql server");
@@ -53,12 +54,19 @@ try {
   /* Communicate with Jabber Server */
   msg (":Start communicating with Server");
   while($jaxl->isConnected) {
-  	if ($GLOBALS[timer] < (time() - $GLOBALS[cfg][daemon][sleeptime]) ) {
+		if ($GLOBALS[timer] < (time() - $GLOBALS[cfg][daemon][sleeptime]) ) {
 			$GLOBALS[timer] = time();
 			fetchUsers();
-#			msg ("Yippie! I'm triggered :D");
 
-
+			if ($GLOBALS[updateroster]) {
+				$xsql = mysql_query("SELECT xmpp FROM ".$GLOBALS[cfg][msg][xmpptable]." WHERE 1;");
+				while ($xrow = mysql_fetch_array($xsql)) {
+					msg ("Initial subscribe to: ".$xrow[xmpp]);
+					$jaxl->subscribe($xrow[xmpp]);
+				}
+				$GLOBALS[timer] = time();
+				$GLOBALS[updateroster] = 0;
+			}
 
 			$cnt = 0;
 			unset($GLOBALS[message]);
