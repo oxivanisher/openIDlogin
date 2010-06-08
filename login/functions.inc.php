@@ -590,7 +590,7 @@ function getAllChatChannels ($owner = NULL) {
 		if ($row[owner] == 0)
 			$owner = "Willhelm";
 		else
-			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
+			$owner = genMsgUrl($GLOBALS[users][byname][strtolower($GLOBALS[users][bychat][$row[owner]])]);  #
 
 		$tret[$count][id] = $row[id];
 		$tret[$count][owner] = $row[owner];

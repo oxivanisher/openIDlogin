@@ -14,7 +14,7 @@ switch ($_POST[myjob]) {
 		#chat oder pm?
 
 		#pm
-		if (substr($_POST[name], 0, 4) == "http") {
+		if (substr($_POST[user], 0, 4) == "http") {
 			if (empty($_POST[subject])) {
 				if ($_POST[ajax]) {
 					$_POST[subject] = "AJAX GUI";
