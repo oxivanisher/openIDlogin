@@ -11,32 +11,54 @@ switch ($_POST[myjob]) {
 
 	#send message function
 	case "sendmessage":
-//		print_r($GLOBALS); exit;
-		if (empty($_POST[subject])) {
-			if ($_POST[ajax]) {
-				$_POST[subject] = "AJAX GUI";
-			} else {
-				$_POST[subject] = "Unknown Source!";
-				sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
-									$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
+		#chat oder pm?
+
+		#pm
+		if (substr($_POST[name], 0, 4) == "http") {
+			if (empty($_POST[subject])) {
+				if ($_POST[ajax]) {
+					$_POST[subject] = "AJAX GUI";
+				} else {
+					$_POST[subject] = "Unknown Source!";
+					sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
+										$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
+				}
 			}
-		}
-		if (! empty($_POST[message])) {
-			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-							$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
-							"', '".encodeme($_POST[message])."', '1', '1');");
-			if ($sql) {
-				sysmsg ("Message to ".$_POST[user]." sent!");
-				$GLOBALS[myreturn][msg] = "sent";
+			if (! empty($_POST[message])) {
+				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+								$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
+								"', '".encodeme($_POST[message])."', '1', '1');");
+				if ($sql) {
+					sysmsg ("Message to ".$_POST[user]." sent!");
+					$GLOBALS[myreturn][msg] = "sent";
+				} else {
+					sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
+					$GLOBALS[myreturn][msg] = "error";
+				}
 			} else {
-				sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
-				$GLOBALS[myreturn][msg] = "error";
-			}
-		} else {
 				sysmsg ("Empty message to ".$_POST[user]." NOT sent!", 1);
 				$GLOBALS[myreturn][msg] = "error";
+			}
+			updateTimestamp($_SESSION[openid_identifier]);
+
+		#chat
+		} else {
+			fetchUsers();
+			$data = getChatChannel($_POST[user]);
+			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
+														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
+				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
+								$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[message])."');");
+
+				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[user]."';");
+				sysmsg ("Chat to channel ".$_POST[user]." sent!");
+				$GLOBALS[myreturn][msg] = "sent";
+			} else {
+				sysmsg ("Chat Message NOT sent!", 1);
+				$GLOBALS[myreturn][msg] = "notsent";
+			}
+
 		}
-		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 
 	#admin mass mailer
@@ -231,15 +253,20 @@ switch ($_POST[myjob]) {
 	break;
 
 
-
+	#ajax functions
 	case "readmessages":
 		fetchUsers();
-		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
-					" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$_POST[name].
-					"') OR (receiver='".$_POST[name]."' AND sender='".$_SESSION[openid_identifier].
-					"') ORDER BY timestamp DESC LIMIT 0,15;");
 		$cnt = 0; $bool = 0;
-		while ($row = mysql_fetch_array($sql)) {
+
+		#chat or private messaging?
+		#pm
+		if (substr($_POST[name], 0, 4) == "http") {
+			$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
+						" WHERE (receiver='".$_SESSION[openid_identifier]."' AND sender='".$_POST[name].
+						"') OR (receiver='".$_POST[name]."' AND sender='".$_SESSION[openid_identifier].
+						"') ORDER BY timestamp DESC LIMIT 0,15;");
+			$cnt = 0; $bool = 0;
+			while ($row = mysql_fetch_array($sql)) {
 				if ($row['new'] == 1) {
 					if (($row[receiver] == $_SESSION[openid_identifier]) AND ($row[timestamp] < (time() - 10)))
 						$sql = mysql_query("UPDATE ".$GLOBALS[cfg][msg][msgtable]." SET new='0' WHERE id='".$row[id]."';");
@@ -262,6 +289,20 @@ switch ($_POST[myjob]) {
 
 				$cnt++;
 				$bool = 1;
+			}
+
+		#chat
+		} else {
+			foreach (getMyChatMessagesFrom($_POST[name]) as $mymsg) {
+				$mynewreturn = "<b>".$mymsg[sender]."</b> <i>".$mymsg[timestamp]."</i>: ".makeClickableURL($mymsg[msg]);
+
+				#fill the array for ajax
+				$GLOBALS[myreturn][message][$cnt][id] = $mymsg[id];
+				$GLOBALS[myreturn][message][$cnt][msg] = $mynewreturn;
+
+				$cnt++;
+				$bool = 1;
+			}
 		}
 
 		#if there are no messages, we need to send a blank array to ajax
@@ -281,26 +322,6 @@ switch ($_POST[myjob]) {
 
 	#list messages for ajax
 	case "list":
-	#		$GLOBALS[myreturn][messages][$cnt][id] = $row[id];
-#			$GLOBALS[myreturn][messages][$cnt][sender] = $row[sender];
-#			$GLOBALS[myreturn][messages][$cnt][receiver] = $row[receiver];
-	#		$GLOBALS[myreturn][messages][$cnt][sendername] = $GLOBALS[users][byuri][$row[sender]][name];
-#			$GLOBALS[myreturn][messages][$cnt][receivername] = $GLOBALS[users][byuri][$row[receiver]][name];
-#			$GLOBALS[myreturn][messages][$cnt][age] = getAge($row[timestamp]);
-#			$GLOBALS[myreturn][messages][$cnt][date] = strftime($GLOBALS[cfg][strftime], $row[timestamp]);
-#			$GLOBALS[myreturn][messages][$cnt][subject] = $row[subject];
-	#		$GLOBALS[myreturn][messages][$cnt][message] = $row[message];
-	#		$GLOBALS[myreturn][messages][$cnt]['new'] = $row['new'];
-
-#			$tcnt = count($GLOBALS[myreturn][$GLOBALS[users][byuri][$row[sender]][name]]);
-#			if (! is_array($GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]]))
-#				$GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]] = array();
-#			array_push($GLOBALS[myreturn][messages][$GLOBALS[users][byuri][$row[sender]][name]], $row[message]);
-#			$tcnt = count($tmparr[$tmpname]);
-#				$tmparr[count($tmparr)][name][$tmpname][count($tmparr[name][$tmpname])] = array("msg", $row[message]));
-#				array_push($tmparr[count($tmparr)][name][$tmpname][count($tmparr[name][$tmpname])], array("msg", $row[message]));
-#				$tmparr[name][count($tmparr)][$tmpname][count($tmparr[name][$tmpname])][count($tmparr[name][$tmpname][msg])][msg] = $row[message];
-
 		fetchUsers();
 		$tmpuser = ""; $tcnt = 0; $ncnt = 0; $bool = 0;	$tarray = array(); $farray = array();
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
@@ -312,27 +333,11 @@ switch ($_POST[myjob]) {
 
 			if ($tmpuser != $tmpname) {
 				$tcnt++;
-//				$tmparr[$tcnt][namea] = $tmpname;
 				$tmpuser = $tmpname;
 			}
-/*			if ($tmpuser != $tmpname) {
-				$tmpuser = $tmpname;
 
-				if ($bool) {
-					array_push($farray, $tarray);
-					unset($tarray);
-					$tarray = array();
-				}
-				$bool = 1;
-			}
-			array_push($tarray, array("msg", $row[message]));
-*/
 			$tmparr[$tcnt][namea][$tmpname][count($tmparr[$tcnt][$tmpname])][msg] = $row[message];
-//			$tmparr[count($tmparr)][$tmpname][count($tmparr[$tmpname][msg])][msg] = $row[message];
 
-//				$tmparr[name][count($tmparr)][$tmpname][count($tmparr[name][$tmpname])][msg] = $tmpname;
-
-#				$tmparr[name][$tmpname][count($tmparr[name][$tmpname])] = $row[message];
 	}
 	$GLOBALS[myreturn][messages] = $tmparr;
 	$GLOBALS[myreturn][newmsgs] = $ncnt;
@@ -417,7 +422,6 @@ switch ($_POST[myjob]) {
 			$GLOBALS[html] .= "</form>";			
 		}
 
-//		updateTimestamp($_SESSION[openid_identifier]);
 	break;
 }
 } else {

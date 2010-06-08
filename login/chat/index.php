@@ -1,27 +1,30 @@
 <?php
 
+#FIXME: on each serialized array, i should also check for not longer existent chat channels!
+
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	#make sure the user has a chat id. if not, create one at once (before fetchUsers();)
+	/*#make sure the user has a chat id. if not, create one at once (before fetchUsers();)
 	$bool = 1;
-	$sql = mysql_query("SELECT id,subscr FROM ".$GLOBALS[cfg][chat][usertable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$sql = mysql_query("SELECT chatid,chatsubscr FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_SESSION[openid_identifier]."';");
 	while ($row = mysql_fetch_array($sql)) {
 		unset ($GLOBALS[chat][subscr]);
-		$GLOBALS[chat][subscr] = unserialize($row[subscr]);
+		$GLOBALS[chat][subscr] = unserialize($row[chatsubscr]);
 		$bool = 0;
 	}
 	if ($bool) {
-		$sql2 = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][usertable]." (openid,lastonline,subscr) VALUES ('".$_SESSION[openid_identifier].
-						"', '".time()."', '".serialize(array())."');");
+		$sql2 = mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (chatid,chatsubscr) VALUES ('".$_SESSION[openid_identifier].
+						"', '".serialize(array())."');");
 		unset ($GLOBALS[chat][subscr]);
 		$GLOBALS[chat][subscr] = array();
-	}
+	} */
 
 	if ($_POST[myjob] != "update") fetchUsers();
 
 	#send chat -> functions
 	switch($_POST[myjob]) {
-		case "chat":
+/*		disabled because only ajax will chat
+			case "chat":
 
 			$data = getChatChannel($_POST[channel]);
 			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
@@ -36,7 +39,7 @@ if ($_SESSION[loggedin] == 1) {
 				sysmsg ("Message NOT sent!", 1);
 				$GLOBALS[myreturn][msg] = "notsent";
 			}
-		break;
+		break; */
 
 		#edit channel -> functions
 		case "editchannel":
@@ -83,7 +86,7 @@ if ($_SESSION[loggedin] == 1) {
 			$data = getChatChannel($_POST[id]);
 			if ((in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) OR ($_SESSION[isadmin])) {
 				array_push($GLOBALS[chat][subscr], $_POST[id]);
-				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][usertable]." SET subscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
+				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET chatsubscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
 				sysmsg ("Channel ".$_POST[id]." joined!");
 				$GLOBALS[myreturn][msg] = "joined";
 			} else {
@@ -101,11 +104,79 @@ if ($_SESSION[loggedin] == 1) {
 			}
 			unset ($GLOBALS[chat][subscr]);
 			$GLOBALS[chat][subscr] = $tmpsub;
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][usertable]." SET subscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET chatsubscr='".serialize($GLOBALS[chat][subscr])."' WHERE openid='".$_SESSION[openid_identifier]."';");
 			sysmsg ("Channel ".$_POST[id]." left!");
 			$GLOBALS[myreturn][msg] = "leaved"; #FIXME ok check (error/sent)
 		break;
 
+/*
+	#ajax functions!
+	case "readmessages":
+		fetchUsers();
+		$myreturn = "";
+		$cnt = 0; $bool = 0;
+
+		foreach (getMyChatMessagesFrom($_POST[name]) as $mymsg) {
+			$myreturn = "<b>".$mychan[name]."</b>";
+			$myreturn .= $mymsg[sender].": ".$mymsg[msg]."<br />";
+
+			$mynewreturn .= "<b>".$sender[name]."</b> <i>".getNiceAge($mymsg[ts]);
+
+			$mynewreturn .= str_replace("</i>:\n", "<br />", makeClickableURL($mymsg[msg]));
+
+			#fill the array for ajax
+			$GLOBALS[myreturn][message][$cnt][id] = $mymsg[id];
+			$GLOBALS[myreturn][message][$cnt][msg] = $mynewreturn;
+
+			$cnt++;
+			$bool = 1;
+		}
+
+		#if there are no messages, we need to send a blank array to ajax
+		if ($cnt == 0) $GLOBALS[myreturn][message] = array();
+
+		if ($bool) {
+			$GLOBALS[myreturn][msg] = "ok";
+		} else {
+			$GLOBALS[myreturn][msg] = "nok";
+		}
+		$GLOBALS[myreturn][message] = array_reverse($GLOBALS[myreturn][message]);
+
+		updateTimestamp($_SESSION[openid_identifier]);
+	break;
+
+	case "sendmessage":
+//		print_r($GLOBALS); exit;
+		if (empty($_POST[subject])) {
+			if ($_POST[ajax]) {
+				$_POST[subject] = "AJAX GUI";
+			} else {
+				$_POST[subject] = "Unknown Source!";
+				sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
+									$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
+			}
+		}
+		if (! empty($_POST[message])) {
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
+							$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
+							"', '".encodeme($_POST[message])."', '1', '1');");
+			if ($sql) {
+				sysmsg ("Message to ".$_POST[user]." sent!");
+				$GLOBALS[myreturn][msg] = "sent";
+			} else {
+				sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
+				$GLOBALS[myreturn][msg] = "error";
+			}
+		} else {
+				sysmsg ("Empty message to ".$_POST[user]." NOT sent!", 1);
+				$GLOBALS[myreturn][msg] = "error";
+		}
+		updateTimestamp($_SESSION[openid_identifier]);
+	break;
+
+*/
+
+/*	probably never needed
 		#get chat status -> functions (site refresh ajax request)
 		case "status":
 		
@@ -127,12 +198,13 @@ if ($_SESSION[loggedin] == 1) {
 				$cnt++;
 			}
 		break;
+*/
 	}
 
 	switch($_POST[myjob]) {
 		case "vieweditchannel":
 			$data = getChatChannel($_POST[id]);
-			$GLOBALS[html] .= "<h3>Edit Channel</h3>";
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
 			$GLOBALS[html] .= "<form action='?' method='POST'>";
 			$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 			$GLOBALS[html] .= "<input type='hidden' name='myjob' value='editchannel' />";
@@ -147,7 +219,7 @@ if ($_SESSION[loggedin] == 1) {
 
 		case "viewcreatechannel":
 			$data = getChatChannel($_POST[id]);
-			$GLOBALS[html] .= "<h3>New Channel</h3>";
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
 			$GLOBALS[html] .= "<form action='?' method='POST'>";
 			$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 			$GLOBALS[html] .= "<input type='hidden' name='myjob' value='createchannel' />";
@@ -157,9 +229,9 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "</form>";
 		break;
 
-		case "viewchannellist":
+		default:				#case "viewchannellist":
 			#list channels
-			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>View Messages</a> | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
+			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module]."&myjob=viewcreatechannel'>Create Channel</a></h3>";
 			$GLOBALS[html] .= "<table width='100%' class='tablesorter'>";
 			$cnt = 0; $ncnt = 0;
 			$GLOBALS[html] .= "<tr><th>Name</th><th>Owner</th><th>Created</th><th>Last message</th><th>Join / Leave</th></tr>";
@@ -181,12 +253,13 @@ if ($_SESSION[loggedin] == 1) {
 						$GLOBALS[html] .= "<td>Not authorized</td>";
 				}
 
-
 				$GLOBALS[html] .= "</tr>";
 			}
 			$GLOBALS[html] .= "</table>";
+
 		break;
 
+/* old default view: vie messages
 		default:
 			$mymsgs = getMyChatMessages();
 			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>View Messages</a> | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module].
@@ -212,7 +285,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "</form>";
 			}
 			$GLOBALS[html] .= "</tr></table>";
-
+*/
 
 	}
 } else {

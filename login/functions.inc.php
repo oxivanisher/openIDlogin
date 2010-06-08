@@ -139,12 +139,17 @@ function fetchUsers () {
 	getXmppUsers();
 
 	#fetching users from openid lastonline db
-	$sqls = mysql_query("SELECT openid,timestamp,status,xmppstatus FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
+	$sqls = mysql_query("SELECT openid,timestamp,status,xmppstatus,chatid,chatsubscr FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1;");
 	while ($rows = mysql_fetch_array($sqls)) {
 		if (! empty($GLOBALS[users][byuri][$rows[openid]][name])) {
 			$GLOBALS[users][byuri][$rows[openid]][online] = $rows[timestamp];
 			$GLOBALS[users][byuri][$rows[openid]][status] = $rows[status];
 			$GLOBALS[users][byuri][$rows[openid]][xmppstatus] = $rows[xmppstatus];
+			$GLOBALS[users][byuri][$rows[openid]][chat] = $rows[chatid];
+			$GLOBALS[users][bychat][$rows[chatid]] = $GLOBALS[users][byuri][$rows[openid]][name];
+			if ($_SESSION[openid_identifier] == $rows[openid]) {
+				$GLOBALS[chat][subscr] = unserialize($rows[chatsubscr]);
+			}
 		}
 	}
 
@@ -187,6 +192,7 @@ function fetchUsers () {
 		}
 	$GLOBALS[users][count][wordpress] = $count;
 
+/*	this is now done with the lastonline db
 	#get chat users from db
 	$count = 0;
 	$sql = mysql_query("SELECT id,openid FROM ".$GLOBALS[cfg][chat][usertable]." WHERE 1;");
@@ -196,7 +202,7 @@ function fetchUsers () {
 			$GLOBALS[users][bychat][$row[id]] = $row[openid];
 		}
 	}
-	$GLOBALS[users][count][chat] = $count;
+	$GLOBALS[users][count][chat] = $count; */
 }
 
 #draw users dropdown
@@ -268,21 +274,21 @@ function getAge($timestamp) {
 function getNiceAge($timestamp) {
 	$ageOfMsg = time() - $timestamp;
 	if ($timestamp == 0) {
-		$ageOfMsgReturn = "";
+		$ageOfMsgReturn = "noch nie";
 	} elseif ($ageOfMsg < '60') {
 		$ageOfMsgReturn = "vor ".$ageOfMsg." Sek";
 	} elseif ($ageOfMsg < '3600') {
 		$ageOfMsg = round(($ageOfMsg/60),1);
 		$ageOfMsgReturn = "vor ".$ageOfMsg." Min";
 	} elseif ($ageOfMsg <= '86400') {
-		$ageOfMsgReturn = strftime("um %H:%M Uhr", $ageOfMsg);
+		$ageOfMsgReturn = strftime("um %H:%M Uhr", $timestamp);
 	} elseif ($ageOfMsg <= '604800') {
-		$ageOfMsgReturn = strftime("am %A", $ageOfMsg);
+		$ageOfMsgReturn = strftime("am %A", $timestamp);
 	} elseif ($ageOfMsg <= '2419200') {
-		$ageOfMsgReturn = strftime("im %B", $ageOfMsg);
+		$ageOfMsgReturn = strftime("im %B", $timestamp);
 	} else  {
 		$ageOfMsg = round(($ageOfMsg/31449600),1);
-		$ageOfMsgReturn = strftime("anno %Y", $ageOfMsg);
+		$ageOfMsgReturn = strftime("anno %Y", $timestamp);
 	}
 	return $ageOfMsgReturn;
 }
@@ -343,6 +349,15 @@ function getOnlineUsers () {
 	$icnt = 0; $iusers = ""; $ibool = 1; $itmp = "";
 	$fcnt = 0; $fbool = 1;
 	$firstremote = 1;
+
+ 	#create chat channel output.
+	foreach (getMyChatChannels() as $mychan) {
+		array_push($GLOBALS[ajaxuserreturnname], $mychan[name]);
+		array_push($GLOBALS[ajaxuserreturnopenid], $mychan[id]);
+		array_push($GLOBALS[ajaxuserreturntimes], $mychan[lastmessage]);
+		array_push($GLOBALS[ajaxuserreturnnewmessage], "0");
+		array_push($GLOBALS[ajaxuserreturnstatus], "3");
+	}
 
 	#get the new messages informations
 	$newmsgsql = mysql_query("SELECT receiver,sender FROM ".$GLOBALS[cfg][msg][msgtable]." WHERE new='1';");
@@ -449,8 +464,8 @@ function updateLastOnline () {
 		mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".
 								time()."' WHERE openid='".$_SESSION[openid_identifier]."';");
 	else if ((! empty($_SESSION[openid_identifier]) AND (! empty($_SESSION[myname]))))
-		mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (openid,timestamp,name) VALUES ('".
-								$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."');");
+		mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (openid,timestamp,name,chatsubscr) VALUES ('".
+								$_SESSION[openid_identifier]."', '".time()."', '".$_SESSION[myname]."', 'a:1:{i:0;s:1:\"3\";}');");
 }
 
 function jasonOut () {
@@ -572,20 +587,18 @@ function getAllChatChannels ($owner = NULL) {
 
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".$GLOBALS[cfg][chat][channeltable].$search.";");
 	while ($row = mysql_fetch_array($sql)) {
-		if ($row[owner] == 0) {
+		if ($row[owner] == 0)
 			$owner = "Willhelm";
-		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
-			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 		else
-			$owner = $row[owner];
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 
 		$tret[$count][id] = $row[id];
 		$tret[$count][owner] = $row[owner];
 		$tret[$count][ownername] = $owner;
 		$tret[$count][name] = $row[name];
 		$tret[$count][allowed] = $row[allowed];
-		$tret[$count][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
-		$tret[$count][lastmessage] = getAge($row[lastmessage]);
+		$tret[$count][created] = getNiceAge($row[created]);
+		$tret[$count][lastmessage] = getNiceAge($row[lastmessage]);
 		$count++;
 	}
 	return $tret;
@@ -606,23 +619,21 @@ function getMyChatChannels () {
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".
 							$GLOBALS[cfg][chat][channeltable].$search." WHERE ".$wsearch.";");
 	while ($row = mysql_fetch_array($sql)) {
-		if ($row[owner] == 0) {
+		if ($row[owner] == 0)
 			$owner = "Willhelm";
-		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
-			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 		else
-			$owner = $row[owner];
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 
 		$tret[$count][id] = $row[id];
 		$tret[$count][owner] = $row[owner];
 		$tret[$count][ownername] = $owner;
 		$tret[$count][name] = $row[name];
 		$tret[$count][allowed] = $row[allowed];
-		$tret[$count][created] = strftime($GLOBALS[cfg][strftime], $row[created]);
-		$tret[$count][lastmessage] = getAge($row[lastmessage]);
+		$tret[$count][created] = getNiceAge($row[created]);
+		$tret[$count][lastmessage] = getNiceAge($row[lastmessage]);
 		$count++;
 	}
-	}
+	} 
 	return $tret;
 }
 
@@ -633,12 +644,10 @@ function getChatChannel ($myid) {
 	$sql = mysql_query("SELECT id,owner,name,allowed,created,lastmessage FROM ".
 							$GLOBALS[cfg][chat][channeltable]." WHERE id='".$myid."';");
 	while ($row = mysql_fetch_array($sql)) {
-		if ($row[owner] == 0) {
+		if ($row[owner] == 0)
 			$owner = "Willhelm";
-		} elseif (! empty($GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name]))
-			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 		else
-			$owner = $row[owner];
+			$owner = $GLOBALS[users][byuri][$GLOBALS[users][bychat][$row[owner]]][name];
 
 		$tret[id] = $row[id];
 		$tret[owner] = $row[owner];
@@ -646,7 +655,7 @@ function getChatChannel ($myid) {
 		$tret[name] = $row[name];
 		$tret[allowed] = $row[allowed];
 		$tret[created] = strftime($GLOBALS[cfg][strftime], $row[created]);
-		$tret[lastmessage] = getAge($row[lastmessage]);
+		$tret[lastmessage] = getNiceAge($row[lastmessage]);
 	}
 	return $tret;
 }
@@ -680,6 +689,23 @@ function getMyChatMessages ($since = NULL) {
 	}
 	}
 	$tret[chan] = $data;
+	return $tret;
+}
+
+function getMyChatMessagesFrom ($channel) {
+	$tret = array();
+	$count = 0;
+
+	$sql = mysql_query("SELECT id,sender,channel,timestamp,message FROM ".$GLOBALS[cfg][chat][msgtable].
+					" WHERE channel='".$channel."' ORDER BY timestamp DESC LIMIT 20;");
+	while ($row = mysql_fetch_array($sql)) {
+		$tret[$count][id] = $row[id];
+		$tret[$count][channel] = $row[channel];
+		$tret[$count][sender] = $GLOBALS[users][bychat][$row[sender]];
+		$tret[$count][timestamp] = getNiceAge($row[timestamp]);
+		$tret[$count][msg] = $row[message];
+		$count++;
+	}
 	return $tret;
 }
 
