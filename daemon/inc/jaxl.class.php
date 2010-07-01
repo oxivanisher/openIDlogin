@@ -43,7 +43,6 @@
 					$help .= "\nAvailable Commands:\n";
 					$help .= "!help | show this help\n";
 					$help .= "!users | show a list of all users\n";
-					$help .= "!status <your status> | set your web status (currently you cant use : )\n";
 					$help .= "!recent | show recent messages (max 10)\n";
 					$help .= "!lastseen | shows when which users where last online\n";
 					if ($isadmin) {
@@ -195,23 +194,6 @@
 							msg ("\tShowing recent messages");
 							$this->sendMessage($fromJid, "Showing recent ".$count." messages:\n".xmppencode($out));
 							sysmsg ("Showing recent messages", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
-
-						#set status
-						} elseif (substr($content, 0, 7) == "!status") {
-							$mywebstatus = str_replace("'", '"', trim( str_replace("!status", "", $content) ) );
-
-							if (! empty($mywebstatus)) {
-								$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET status='".
-												$mywebstatus."' WHERE openid='".$GLOBALS[users][bylowxmpp][strtolower($jid[0])]."';");
-
-								msg ("\tWebsite status set.");
-								$this->sendMessage($fromJid, "Status set to: ".trim( str_replace("!status", "", xmppencode($content)) ));
-								sysmsg ("Website status set", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
-								} else {
-								msg ("\tNo status found.");
-								$this->sendMessage($fromJid, "No status set!");
-								sysmsg ("No website status found to set", 2, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
-							}
 
 						#get last seen users
 						} elseif (substr($content, 0, 9) == "!lastseen") {

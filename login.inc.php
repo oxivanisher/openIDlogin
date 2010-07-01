@@ -123,6 +123,7 @@ switch ($_POST[job]) {
 	#verify the returned user (2nd stage)
 	case "verify":
 		openid_verify();
+		fetchUsers();
 
 		#are we verified and so logged in?
 		if ($_SESSION[loggedin]) {
@@ -141,6 +142,10 @@ switch ($_POST[job]) {
 				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
 			$GLOBALS[html] .= "</center></h2><br /><br /><br />";
 			$_SESSION[freshlogin] = 1;
+
+			#set the cookie for the "logged out" - "login box"
+			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
+			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 		} else {
 
 			#nope
@@ -158,10 +163,6 @@ switch ($_POST[job]) {
 		#fetch all users and set the cookies
 		fetchUsers();
 		setCookies();
-
-		#set the cookie for the "logged out" - "login box"
-		$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
-		setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 
 		#we should load a module
 		if (! empty($_POST[module])) {
@@ -267,7 +268,7 @@ switch ($_POST[job]) {
 			setCookies();
 
 			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
-			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 7 * 24 * 3600 )));
+			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 
 			$GLOBALS[myreturn][loggedin] = 1;
 			updateLastOnline();
@@ -285,7 +286,7 @@ switch ($_POST[job]) {
 			setCookies();
 
 			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
-			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 7 * 24 * 3600 )));
+			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 
 			$GLOBALS[myreturn][loggedin] = 1;
 

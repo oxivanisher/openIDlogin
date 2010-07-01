@@ -15,14 +15,16 @@ switch ($_POST[myjob]) {
 
 		#pm
 		if (substr($_POST[user], 0, 4) == "http") {
-			if (empty($_POST[subject])) {
-				if ($_POST[ajax]) {
-					$_POST[subject] = "AJAX GUI";
-				} else {
-					$_POST[subject] = "Unknown Source!";
-					sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
+			if (! empty($_POST[message])) {
+				if (empty($_POST[subject])) {
+					if ($_POST[ajax]) {
+						$_POST[subject] = "AJAX GUI";
+					} else {
+						$_POST[subject] = "Unknown Source!";
+						sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
 										$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
-				}
+					}
+				}	
 			}
 			if (! empty($_POST[message])) {
 				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
