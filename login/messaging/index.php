@@ -45,16 +45,18 @@ switch ($_POST[myjob]) {
 
 		#chat
 		} else {
-			fetchUsers();
-			$data = getChatChannel($_POST[user]);
-			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
-														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
-				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
-								$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[message])."');");
+			if (! empty($_POST[message])) {
+				fetchUsers();
+				$data = getChatChannel($_POST[user]);
+				if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
+															in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
+					$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
+									$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[message])."');");
 
-				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[user]."';");
-				sysmsg ("Chat to channel ".$_POST[user]." sent!");
-				$GLOBALS[myreturn][msg] = "sent";
+					$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[user]."';");
+					sysmsg ("Chat to channel ".$_POST[user]." sent!");
+					$GLOBALS[myreturn][msg] = "sent";
+				}
 			} else {
 				sysmsg ("Chat Message NOT sent!", 1);
 				$GLOBALS[myreturn][msg] = "notsent";
