@@ -28,6 +28,13 @@ if ($_SESSION[loggedin] == 1) {
 						"', lngfile='german-utf8', additional_groups='' WHERE id_member='".$GLOBALS[users][byuri][$_POST[user]][smf]."';");
 			}
 
+			#phpraider
+			if (! empty($GLOBALS[users][byuri][$_POST[user]][phpraider])) {
+				$GLOBALS[html] .= "- modifying phpraider user ".$GLOBALS[users][byuri][$_POST[user]][phpraider]." :)<br />";
+				$sql = mysql_query("UPDATE phpraider_profile SET group_id='".$GLOBALS[cfg][profile][$_POST[profile]][phpraider].
+						"' WHERE profile_id='".$GLOBALS[users][byuri][$_POST[user]][phpraider]."';");
+			}
+
 			#eqdkp
 			if (! empty($GLOBALS[users][byuri][$_POST[user]][eqdkp])) {
 				$GLOBALS[html] .= "- modifying eqdkp user ".$GLOBALS[users][byuri][$_POST[user]][eqdkp]." :)<br />";

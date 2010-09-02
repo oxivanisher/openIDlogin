@@ -192,17 +192,21 @@ function fetchUsers () {
 		}
 	$GLOBALS[users][count][wordpress] = $count;
 
-/*	this is now done with the lastonline db
-	#get chat users from db
+	#phpraider
 	$count = 0;
-	$sql = mysql_query("SELECT id,openid FROM ".$GLOBALS[cfg][chat][usertable]." WHERE 1;");
+	$sql = mysql_query("SELECT profile_id,username FROM phpraider_profile WHERE 1;");
 	while ($row = mysql_fetch_array($sql)) {
-		if (! empty($GLOBALS[users][byuri][$row[openid]][name])) {
-			$GLOBALS[users][byuri][$row[openid]][chat] = $row[id];
-			$GLOBALS[users][bychat][$row[id]] = $row[openid];
+		foreach ($GLOBALS[users][byuri] as $myurl) {
+			if (strtolower($myurl[name]) == strtolower($row[username])) {
+				if (! empty($GLOBALS[users][byuri][$myurl[uri]][name])) {
+					$GLOBALS[users][byuri][$myurl[uri]][phpraider] = $row[profile_id];
+					$count++;
+				}
+			}
 		}
 	}
-	$GLOBALS[users][count][chat] = $count; */
+	$GLOBALS[users][count][phpraider] = $count;
+
 }
 
 #draw users dropdown
