@@ -4,16 +4,6 @@
 if ($_SESSION[loggedin] == 1) {
 		#init stuff
 
-
-		#check for existing entry in table
-		$bool = 1;
-		$sql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
-		while ($row = mysql_fetch_array($sql))
-			$bool = 0;
-		if ($bool)
-			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][userprofiletable]." (openid) VALUES ('".$_SESSION[openid_identifier]."');");
-
-
 		#function for js frontent to store data
 		if ($_POST[myjob] == "safedata") {
 			$bool = 0;

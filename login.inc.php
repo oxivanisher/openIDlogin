@@ -169,6 +169,27 @@ switch ($_POST[job]) {
 		fetchUsers();
 		setCookies();
 
+		#do we have to update our user profile?
+		/*
+		$tmpRegistred = 0;
+		$tmpNeedUpdate = 0;
+		$sql = mysql_query("SELECT accurate,openid FROM ".$GLOBALS[cfg][userprofiletable].
+						" WHERE openid='".$_SESSION[openid_identifier]."';");
+		while ($row = mysql_fetch_array($sql)) {
+			$tmpRegistred = 1;
+			if ($row[accurate] != 1)
+				$tmpNeedUpdate = 1;
+		}
+		if ($tmpRegistred == 0) {
+			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][userprofiletable]." (openid,nickname) VALUES ".
+						"('".$_SESSION[openid_identifier]."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."')");
+			#sql insert
+			$tmpNeedUpdate = 1;
+		}
+		if ($tmpNeedUpdate = 1)
+				$_POST[module] = "userprofile";
+		*/
+
 		#we should load a module
 		if (! empty($_POST[module])) {
 
