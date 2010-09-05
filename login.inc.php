@@ -42,7 +42,8 @@ $GLOBALS[myreturn][loggedin] = 0;	#default the loggedin json return to 0
 if (empty($_POST)) $_POST = $_GET;
 
 #one session only magic!
-if ((($_POST[job] != "login") OR ($_POST[job] != "verify")) AND ($_SESSION[hash]))
+if ((($_POST[job] != "login") OR ($_POST[job] != "verify") OR ($_SESSION[registering] == 1)
+	OR ($_POST[mydo] != "registerme")) AND ($_SESSION[hash]))
 	checkSession();
 
 #get system defaults from settings table
@@ -68,6 +69,9 @@ while ($rowa = mysql_fetch_array($sqla)) {
 if ($_POST[ssoInpLogout] == 1) {
 	$_POST[job] = "logout";
 	$_SESSION[user][nickname] = "";
+} elseif ($_POST[mydo] == "registerme") {
+	$_POST[job] = "refresh";
+	$_POST[module] = "register";
 } elseif ($_POST[job] == "login") {
 	$_POST[job] = "auth";
 	$_SESSION[user][nickname] = $_POST[ssoInpUsername];
@@ -85,7 +89,8 @@ if ($_POST[ssoInpLogout] == 1) {
 	$_POST[job] = "refresh";
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } else {
-	$_POST[job] = "nix zu tun";
+	$_POST[job] = "refresh";
+	$_POST[module] = "register";
 }
 #did we fell offline? then force logout :)
 if ($_POST[job] == "update") {
@@ -339,6 +344,8 @@ if ($GLOBALS[redirect]) {
 } elseif ($GLOBALS[submitform]) {
 	$GLOBALS[html] .= "<br /><br /><br /><br /><h2><center>-&gt; Submitting</center></h2><br /><br /><br />";
 	echo "<body onLoad='ssoRefresh();' style='".$GLOBALS[cfg][standalonebodystlye]."'>\n";
+} elseif ($GLOBALS[standalonedesign]) {
+	echo "<body style='".$GLOBALS[cfg][standalonebodystlye]."'>\n";
 } else {	
 	echo "<script type='text/javascript' src='tablesort.js'></script>";
 	echo "<script type='text/javascript' src='login.js'></script>";

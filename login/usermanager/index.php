@@ -91,6 +91,13 @@ if ($_SESSION[loggedin] == 1) {
 				
 
 			}
+
+
+			# set openid profile
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userprofiletable]." SET role='".$GLOBALS[cfg][profile][$_POST[profile]][role]."' WHERE openid='".$_POST[user]."';");
+#			$GLOBALS[cfg][userprofiletable]
+
+
 			$GLOBALS[html] .= "<h3>=&gt; Changes done</h3>";
 
 
@@ -118,19 +125,19 @@ if ($_SESSION[loggedin] == 1) {
 
 		#change user rights form
 		$GLOBALS[html] .= "<hr />";
-		$GLOBALS[html] .= "<h2>Register User with Portal System</h2>";
-		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
-		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='registeruser' />";
-		$GLOBALS[html] .= "<td>".$smfuDropdown." to <input type='text' name='newurl' value='' size='40' /></td>";
-		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
-		$GLOBALS[html] .= "</tr></form></table><br />";
-
 		$GLOBALS[html] .= "<h2>Change User Rights</h2>";
 		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='applyprofile' />";
 		$GLOBALS[html] .= "<td>".$uDropdown." to ".$pDropdown."</td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<h2>Register User with Portal System</h2>";
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='registeruser' />";
+		$GLOBALS[html] .= "<td>".$smfuDropdown." to <input type='text' name='newurl' value='' size='40' /></td>";
 		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
 		$GLOBALS[html] .= "</tr></form></table><br />";
 

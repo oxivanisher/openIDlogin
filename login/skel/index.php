@@ -1,15 +1,5 @@
 <?php
 
-# $GLOBALS[cfg][mg][gamestable]:
-# id
-# name
-# url
-# comment
-
-# $GLOBALS[cfg][mg][namestable]:
-# openid
-# gameid
-# name
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {

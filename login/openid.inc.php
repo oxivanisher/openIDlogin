@@ -49,6 +49,8 @@ function getScheme() {
 function getReturnTo() {
 	if (! empty($_SESSION[tmp][referer]))
 		return $GLOBALS[cfg][returnto]."&ssoInpReferer=".$_SESSION[tmp][referer];
+	elseif ($_POST[mydo] == "registerme")
+		return $GLOBALS[cfg][trustroot]."login.inc.php?mydo=verifyme";
 	else
 		return $GLOBALS[cfg][returnto];
 }
@@ -101,10 +103,10 @@ function openid_auth() {
     }
 
     $sreg_request = Auth_OpenID_SRegRequest::build(
-                                     // Required
-                                     array('nickname', 'email', 'fullname'),
-                                     // Optional
-                                     array('dob', 'gender', 'postalcode', 'country'));
+                  // Required
+                  array('nickname', 'email', 'fullname'),
+                  // Optional
+                  array('dob', 'gender', 'postalcode', 'country'));
 
 		if ($sreg_request) {
         $auth_request->addExtension($sreg_request);
@@ -126,7 +128,6 @@ function openid_auth() {
     if ($auth_request->shouldSendRedirect()) {
         $redirect_url = $auth_request->redirectURL(getTrustRoot(),
                                                    getReturnTo());
-
         // If the redirect URL can't be built, display an error
         // message.
         if (Auth_OpenID::isFailure($redirect_url)) {
@@ -180,13 +181,16 @@ function openid_verify () {
         $openid = $response->getDisplayIdentifier();
         $esc_identity = escape($openid);
 
-		$_SESSION[loggedin] = 1;
-		$GLOBALS[myreturn][loggedin] = 1;
+				if ($_POST[mydo] == "verifyme") {
+					$_SESSION[registred] = 1;
+					$GLOBALS[newopenid] = $esc_identity;
+				} else {
+					$_SESSION[loggedin] = 1;
+				}
 
-        $GLOBALS[html] = sprintf('You have successfully verified ' .
-                           '<a href="%s">%s</a> as your identity.',
-                           $esc_identity, $esc_identity);
+				$GLOBALS[myreturn][loggedin] = 1;
 
+        sysmsg ('OpenID '.$esc_identity.' successfully verified.', 2);
         if ($response->endpoint->canonicalID) {
             $escaped_canonicalID = escape($response->endpoint->canonicalID);
             $GLOBALS[html] .= '  (XRI CanonicalID: '.$escaped_canonicalID.') ';
