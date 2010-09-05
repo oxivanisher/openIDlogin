@@ -10,9 +10,9 @@ if ($_SESSION[loggedin] == 1) {
 
 		#apply profile function
 		if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile]))) {
+			fetchUsers();
 			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$_POST[user]." to ".
 							$GLOBALS[cfg][profile][$_POST[profile]][name]."</h3>";
-			fetchUsers();
 	
 			#wordpress
 			if (! empty($GLOBALS[users][byuri][$_POST[user]][wordpress])) {
@@ -94,7 +94,8 @@ if ($_SESSION[loggedin] == 1) {
 
 
 			# set openid profile
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userprofiletable]." SET role='".$GLOBALS[cfg][profile][$_POST[profile]][role]."' WHERE openid='".$_POST[user]."';");
+			$GLOBALS[html] .= "- modifying openid user :)<br />";
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userprofiletable]." SET role='".$_POST[profile]."' WHERE openid='".$_POST[user]."';");
 #			$GLOBALS[cfg][userprofiletable]
 
 

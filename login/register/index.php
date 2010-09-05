@@ -2,9 +2,66 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	# this user is already logged in...
-	sysmsg ("You are already registred and logged in!", 1);
+	# this user is logged in
 	updateTimestamp($_SESSION[openid_identifier]);
+
+	#check for officer or higher
+	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 7) {
+		sysmsg ("You are allowed to use this Module", 2);
+		if ($_POST[mydo] == "approove") {
+			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			#do the db stuff
+			#show sucess message
+
+		} elseif ($_POST[mydo] == "deny") {
+			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			#show deny message
+
+		} elseif ($_POST[mydo] == "showapplicant") {
+			$GLOBALS[html] .= "- "; sysmsg ("Showing applicant details of ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			#showapplicant detail chart
+			$GLOBALS[html] .= "<table>";
+			while ($row = mysql_fetch_array($sql)) {
+			#display list of applicants
+				#$_POST[applicant]
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td></td><td>".$row[dob].".".$row[mob].".".$row[yob]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>OpenID:</td><td><textarea>".$row[openid]."</textarea></td></tr>";
+
+
+			}
+			$GLOBALS[html] .= "</table>";
+
+		} else {
+			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br />";
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE 1;");
+			$GLOBALS[html] .= "<table>";
+			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th></tr>";
+			while ($row = mysql_fetch_array($sql)) {
+			#display list of applicants
+				#$_POST[applicant]
+				$GLOBALS[html] .= "<tr>";
+				$GLOBALS[html] .= "<td><a href='?module=".$_POST[module]."&mydo=showapplicant&applicant=".
+													$row[openid]."'>".$row[nickname]."</a></td>";
+				$GLOBALS[html] .= "<td>".$row[email]."</td>";
+				$GLOBALS[html] .= "<td>".$row[openid]."</td>";
+				$GLOBALS[html] .= "<td>".$row[dob].".".$row[mob].".".$row[yob]."</td>";
+				$GLOBALS[html] .= "</tr>";
+			}
+			$GLOBALS[html] .= "</table>";
+		}
+	} else {
+		$GLOBALS[html] .= "- "; sysmsg ("You are not allowed to use this Module", 1); $GLOBALS[html] .= "<br />";
+	}
 
 } elseif (($_POST[mydo] == "save") AND ($_SESSION[registred] == 1)) {
 	$GLOBALS[standalonedesign] = 1;
