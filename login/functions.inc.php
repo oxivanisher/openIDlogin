@@ -131,6 +131,7 @@ function fetchUsers () {
 #			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
 			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
 			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
+			$GLOBALS[users][byuri][$tmpuri][role] = 0;
 			$count++;
 		}
 	$GLOBALS[users][count][all] = $count;
@@ -152,6 +153,15 @@ function fetchUsers () {
 			}
 		}
 	}
+
+	#fetching oom openid profile informations
+	$count = 0;
+	$sql = mysql_query("SELECT openid,role FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	while ($row = mysql_fetch_array($sql)) {
+		$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
+		$count++;
+	}
+	$GLOBALS[users][count][role] = $count;
 
 	#eqdkp
 	$count = 0;
@@ -207,6 +217,21 @@ function fetchUsers () {
 	}
 	$GLOBALS[users][count][phpraider] = $count;
 
+	#fetch profiles
+	$count = 0;
+	$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][profiletable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql)) {
+		$GLOBALS[cfg][profile][$row[role]][handle] = $row[handle];
+		$GLOBALS[cfg][profile][$row[role]][id] = $row[id];
+		$GLOBALS[cfg][profile][$row[role]][name] = $row[name];
+		$GLOBALS[cfg][profile][$row[role]][smf] = $row[smf];
+		$GLOBALS[cfg][profile][$row[role]][eqdkp] = $row[eqdkp];
+		$GLOBALS[cfg][profile][$row[role]][wordpress] = $row[wordpress];
+		$GLOBALS[cfg][profile][$row[role]][icon] = $row[icon];
+		$GLOBALS[cfg][profile][$row[role]][phpraider] = $row[phpraider];
+
+	}
+	$GLOBALS[cfg][count][profile] = $count;
 }
 
 #draw users dropdown

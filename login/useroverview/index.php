@@ -36,7 +36,7 @@ if ($_SESSION[loggedin] == 1) {
 #	$GLOBALS[html] .= "<div style='color: lime;'>online</div><div style='color: yellow;'>afk</div><div style='color: orange;'>jabber</div>offline";
 	$GLOBALS[html] .= "</h3>";
 	$GLOBALS[html] .= "<table>";
-	$GLOBALS[html] .= "<tr><th>Forum</th><th>Blog</th><th>Wiki</th><th>Last online</th><th>Jabber</th>";
+	$GLOBALS[html] .= "<tr><th>Name</th><th>Rolle</th><th>Last online</th><th>Jabber</th>";
 	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
 	$GLOBALS[html] .= "</tr>";
 	foreach ($GLOBALS[users][byuri] as $myuri) {
@@ -62,8 +62,10 @@ if ($_SESSION[loggedin] == 1) {
 			else
 				$xmpptmpf = "Nein";
 
-			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[uri])."</td><td>".$tmpwp[$myuri[uri]]."</td><td>".
-												$tmpwi[$myuri[uri]]."</td><td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
+			$GLOBALS[html] .= "<tr style='".$tmp."'><td>".genMsgUrl($myuri[uri])."</td><td>".
+												"<img src='".$GLOBALS[cfg][profile][$myuri[role]][icon]."' title='".
+												$GLOBALS[cfg][profile][$myuri[role]][name]."' /></td>".
+												"<td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
 			if ($_SESSION[isadmin]) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
 			$GLOBALS[html] .= "</tr>";
 		}

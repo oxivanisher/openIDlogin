@@ -170,25 +170,44 @@ switch ($_POST[job]) {
 		setCookies();
 
 		#do we have to update our user profile?
-		/*
 		$tmpRegistred = 0;
 		$tmpNeedUpdate = 0;
-		$sql = mysql_query("SELECT accurate,openid FROM ".$GLOBALS[cfg][userprofiletable].
+		$sql = mysql_query("SELECT accurate FROM ".$GLOBALS[cfg][userprofiletable].
 						" WHERE openid='".$_SESSION[openid_identifier]."';");
 		while ($row = mysql_fetch_array($sql)) {
 			$tmpRegistred = 1;
-			if ($row[accurate] != 1)
+			if ($row[accurate] == 1)
+				$tmpNeedUpdate = 0;
+			else
 				$tmpNeedUpdate = 1;
 		}
 		if ($tmpRegistred == 0) {
-			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][userprofiletable]." (openid,nickname) VALUES ".
-						"('".$_SESSION[openid_identifier]."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."')");
-			#sql insert
+			#get infos from smf
+			$sql = "SELECT email_address,icq,msn,usertitle,avatar,signature,website_url,personal_text ".
+							"FROM smf_members WHERE openid_uri='".$_SESSION[openid_identifier]."';";
+			$sqlq = mysql_query($sql);
+			while ($row = mysql_fetch_array($sqlq)) {
+				$temail = $row[email_address];
+				$ticq = $row[icq];
+				$tmsn = $row[msn];
+				$tusertitle = $row[usertitle];
+				$tavatar = $row[avatar];
+				$tsignature = $row[signature];
+				$twebsite = $row[website_url];
+				$tmotto = $row[personal_text];
+			}
+
+			$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
+						" (openid,nickname,email,icq,msn,usertitle,avatar,signature,website,motto,accurate,role) VALUES ".
+						"('".$_SESSION[openid_identifier]."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."', ".
+						"'".$temail."', '".$ticq."', '".$tmsn."', '".$tusertitle."', '".$tavatar."', '".$tsignature."', '".
+						$twebsite."', '".$tmotto."', '0', '3');";
+			$sqlq = mysql_query($sql);
+
 			$tmpNeedUpdate = 1;
 		}
-		if ($tmpNeedUpdate = 1)
+		if ($tmpNeedUpdate == 1)
 				$_POST[module] = "userprofile";
-		*/
 
 		#we should load a module
 		if (! empty($_POST[module])) {
