@@ -168,7 +168,38 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='updateprofile' />";
 		while ($row = mysql_fetch_array($sql)) {
-			$dobDropdown = "<input type='text' name='dob' value='".$row[dob]."' size='10' />";
+      $dobDropdown  = 'Tag ';
+      $dobDropdown .= '<select name="dob">';
+      for ($i = 1; $i <= 31; $i++) {
+				if ($row[dob] == $i)
+					$mytmp = " selected";
+				else
+					$mytmp = "";
+        $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
+			}
+      $dobDropdown .= '</select>';
+
+ 			$dobDropdown .= ' Monat ';
+      $dobDropdown .= '<select name="mob">';
+      for ($i = 1; $i <= 12; $i++) {
+ 				if ($row[mob] == $i)
+					$mytmp = " selected";
+				else
+					$mytmp = "";
+       $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
+			}
+      $dobDropdown .= '</select>';
+
+      $dobDropdown .= ' Jahr ';
+      $dobDropdown .= '<select name="yob">';
+      for ($i = 2000; $i >= 1950; $i--) {
+ 				if ($row[yob] == $i)
+					$mytmp = " selected";
+				else
+					$mytmp = "";
+       $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
+			}
+      $dobDropdown .= '</select>';
 
 
 			#render update form
