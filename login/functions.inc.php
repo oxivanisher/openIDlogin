@@ -131,7 +131,7 @@ function fetchUsers () {
 #			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
 			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
 			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
-			$GLOBALS[users][byuri][$tmpuri][role] = 0;
+			$GLOBALS[users][byuri][$tmpuri][role] = 1;
 			$count++;
 		}
 	$GLOBALS[users][count][all] = $count;
@@ -156,7 +156,7 @@ function fetchUsers () {
 
 	#fetching oom openid profile informations
 	$count = 0;
-	$sql = mysql_query("SELECT openid,role FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+	$sql = mysql_query("SELECT openid,role FROM ".$GLOBALS[cfg][userprofiletable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql)) {
 		$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
 		$count++;

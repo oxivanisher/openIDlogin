@@ -8,7 +8,7 @@ if ($_SESSION[loggedin] == 1) {
 	#check for officer or higher
 	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 7) {
 		sysmsg ("You are allowed to use this Module", 2);
-		if ($_POST[mydo] == "approove") {
+		if ($_POST[mydo] == "approve") {
 			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			#do the db stuff
 			#show sucess message
@@ -17,32 +17,45 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			#show deny message
 
-		} elseif ($_POST[mydo] == "showapplicant") {
-			$GLOBALS[html] .= "- "; sysmsg ("Showing applicant details of ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+		}
+
+		if ($_POST[mydo] == "showapplicant") {
+			$GLOBALS[html] .= "- "; sysmsg ("Showing applicant details of ".$_POST[applicant], 1); $GLOBALS[html] .= "<br /><br />";
 			#showapplicant detail chart
 			$GLOBALS[html] .= "<table>";
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$_POST[applicant]."';");
 			while ($row = mysql_fetch_array($sql)) {
 			#display list of applicants
 				#$_POST[applicant]
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td></td><td>".$row[dob].".".$row[mob].".".$row[yob]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td>".$row[openid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>OpenID:</td><td><textarea>".$row[openid]."</textarea></td></tr>";
-
+				$GLOBALS[html] .= "<form action='?' method='POST'>";
+				$GLOBALS[html] .= "<input type='hidden' name='applicant' value='".$_POST[applicant]."' />";
+				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+				$GLOBALS[html] .= "<tr><td>Nickname:</td><td>".$row[nickname]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Email:</td><td>".$row[email]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Surname:</td><td>".$row[surname]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Forename:</td><td>".$row[forename]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Sex:</td><td>".$row[sex]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Birthday:</td><td>".$row[dob].".".$row[mob].".".$row[yob]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>JabberID:</td><td>".$row[jid]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>ICQ#</td><td>".$row[icq]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>MSN:</td><td>".$row[msn]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td valign='top'>Application:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>WOW Chars:</td><td>".$row[wowchars]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>";
+				$GLOBALS[html] .= "<tr><td valign='top'>&nbsp;</td><td>";
+					$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' /> Approve<br />";
+					$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' / checked='checked'> Deny";
+					$GLOBALS[html] .= "</td></tr>";
+				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>";
+				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /></td></tr>";
+				$GLOBALS[html] .= "</form>";
 
 			}
 			$GLOBALS[html] .= "</table>";
 
 		} else {
-			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br />";
+			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br /><br />";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE 1;");
 			$GLOBALS[html] .= "<table>";
 			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th></tr>";
