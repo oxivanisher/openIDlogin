@@ -11,7 +11,8 @@ if ($_SESSION[loggedin] == 1) {
 		#apply profile function
 		if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile]))) {
 			fetchUsers();
-			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$_POST[user]." to ".
+			applyProfile($_POST[user], $_POST[profile]);
+/*			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$_POST[user]." to ".
 							$GLOBALS[cfg][profile][$_POST[profile]][name]."</h3>";
 	
 			#wordpress
@@ -101,7 +102,7 @@ if ($_SESSION[loggedin] == 1) {
 
 			$GLOBALS[html] .= "<h3>=&gt; Changes done</h3>";
 
-
+*/
 		#register opeinid to user
 		} elseif (($_POST[myjob] == "registeruser") and (! empty($_POST[newuser])) and (! empty($_POST[newurl]))) {
 			$GLOBALS[html] .= "<h3>=&gt; Registring SMF User ID ".$_POST[newuser]." to ".$_POST[newurl]."</h3>";

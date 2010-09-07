@@ -1,5 +1,4 @@
 <?php
-
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 	# this user is logged in
@@ -10,11 +9,45 @@ if ($_SESSION[loggedin] == 1) {
 		sysmsg ("You are allowed to use this Module", 2);
 		if ($_POST[mydo] == "approve") {
 			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='1' WHERE openid='".$_POST[applicant]."';");
+
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$_POST[applicant]."';");
+			while ($row = mysql_fetch_array($sql)) {
+				foreach ($row as $key => $value)
+					$tmp[$key] = $value;
+			}
+
 			#do the db stuff
+			#oom openid
+			$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
+				" (openid,nickname,email,surname,forename,dob,mob,yob,sex,icq,msn,accurate,role) VALUES".
+				" ('".$tmp[openid]."', '".$tmp[nickname]."', '".$tmp[email]."', '".$tmp[surname]."', '".$tmp[forename].
+				"', '".$tmp[dob]."', '".$tmp[mob]."', '".$tmp[yob]."', '".$tmp[sex]."', '".$tmp[icq]."', '".$tmp[msn].
+				"', '1', '5');";
+			$sqlq = mysql_query($sql);
+
+			#oom xmpp
+			if ($tmp[jid])
+				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][xmpptable]." SET openid='".$tmp[openid]."', xmpp='".$tmp[jid]."';");
+
+			#smf
+			$tmpsex = 0;
+			if ($tmp[sex] == "M")
+				$tmpsex = 1;
+			elseif ($tmp[sex] == "W")
+				$tmpsex = 2;
+			$sql = "INSERT INTO smf_members".
+				" (openid_uri,member_name,email_address,birthdate,gender,icq,msn,real_name,lngfile) VALUES".
+				" ('".$tmp[openid]."', '".$tmp[nickname]."', '".$tmp[email].
+				"', '".$tmp[yob]."-".$tmp[mob]."-".$tmp[dob]."', '".$tmpsex."', '".$tmp[icq]."', '".$tmp[msn].
+				"', '".$tmp[nickname]."', 'german-utf8');";
+			$sqlq = mysql_query($sql);
+
 			#show sucess message
 
 		} elseif ($_POST[mydo] == "deny") {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
 			#show deny message
 
 		}
@@ -42,12 +75,14 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<tr><td valign='top'>Application:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>WOW Chars:</td><td>".$row[wowchars]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>";
+				$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
+				$GLOBALS[html] .= "<tr><td valign='top'>Answer:</td><td>";
+				$GLOBALS[html] .= "<textarea name='answer' rows='4' cols='50'>Text for the User</textarea></td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>&nbsp;</td><td>";
-					$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' /> Approve<br />";
-					$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' / checked='checked'> Deny";
+					$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' />Approve&nbsp;&nbsp;";
+					$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' />Deny&nbsp;&nbsp;";
+					$GLOBALS[html] .= "<input type='radio' name='mydo' value='showapplicant' checked='checked' /> Nothing";
 					$GLOBALS[html] .= "</td></tr>";
-				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>";
 				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /></td></tr>";
 				$GLOBALS[html] .= "</form>";
 
@@ -56,7 +91,7 @@ if ($_SESSION[loggedin] == 1) {
 
 		} else {
 			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br /><br />";
-			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE 1;");
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state='0';");
 			$GLOBALS[html] .= "<table>";
 			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th></tr>";
 			while ($row = mysql_fetch_array($sql)) {

@@ -126,16 +126,13 @@ function fetchUsers () {
 			$tmpname = $row[member_name];
 			$tmpuri = $row[openid_uri];
 			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
-#			$GLOBALS[users][byutf8name][strtolower($row[member_name])] = $tmpuri;
 			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
-#			$GLOBALS[users][byuri][$row[openid_uri]][utf8name] = $row[member_name];
 			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
 			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
-			$GLOBALS[users][byuri][$tmpuri][role] = 1;
+			$GLOBALS[users][byuri][$tmpuri][role] = 0;
 			$count++;
 		}
 	$GLOBALS[users][count][all] = $count;
-//	$GLOBALS[html] .= "= ".$count." users found.<br />";
 
 	getXmppUsers();
 
@@ -822,4 +819,90 @@ function makeClickableURL($url){
 	return preg_replace($in,$out,$url);
 }
 
+function applyProfile ($myuser, $myprofile) {
+		#apply profile function
+			fetchUsers();
+			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$myuser." to ".
+							$GLOBALS[cfg][profile][$myprofile][name]."</h3>";
+	
+			#wordpress
+			if (! empty($GLOBALS[users][byuri][$myuser][wordpress])) {
+				$GLOBALS[html] .= "- modifying wordpress user ".$GLOBALS[users][byuri][$myuser][wordpress]." :)<br />";
+				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][profile][$myprofile][wordpress].
+						"'WHERE user_id='".$GLOBALS[users][byuri][$myuser][wordpress]."' AND meta_key='wp_user_level';");
+			}
+
+			#smf
+			if (! empty($GLOBALS[users][byuri][$myuser][smf])) {
+				$GLOBALS[html] .= "- modifying smf user ".$GLOBALS[users][byuri][$myuser][smf]." :)<br />";
+				$sql = mysql_query("UPDATE smf_members SET id_group='".$GLOBALS[cfg][profile][$myprofile][smf].
+						"', lngfile='german-utf8', additional_groups='' WHERE id_member='".$GLOBALS[users][byuri][$myuser][smf]."';");
+			}
+
+			#phpraider
+			if (! empty($GLOBALS[users][byuri][$myuser][phpraider])) {
+				$GLOBALS[html] .= "- modifying phpraider user ".$GLOBALS[users][byuri][$myuser][phpraider]." :)<br />";
+				$sql = mysql_query("UPDATE phpraider_profile SET group_id='".$GLOBALS[cfg][profile][$myprofile][phpraider].
+						"' WHERE profile_id='".$GLOBALS[users][byuri][$myuser][phpraider]."';");
+			}
+
+			#eqdkp
+			if (! empty($GLOBALS[users][byuri][$myuser][eqdkp])) {
+				$GLOBALS[html] .= "- modifying eqdkp user ".$GLOBALS[users][byuri][$myuser][eqdkp]." :)<br />";
+				$sql = mysql_query("SELECT auth_id,auth_value FROM eqdkp_auth_options WHERE 1 ORDER BY auth_id asc;");
+				while ($row = mysql_fetch_array($sql)) {
+					$GLOBALS[module][eqdkp][$row[auth_id]] = $row[auth_value];
+				}
+
+				$sql = mysql_query("SELECT user_id FROM eqdkp_users WHERE username='".
+							$GLOBALS[cfg][profile][$myprofile][eqdkp]."';");
+				while ($row = mysql_fetch_array($sql))
+					$tmpid = $row[user_id];
+
+				$sql = mysql_query("SELECT auth_id,auth_setting FROM eqdkp_auth_users WHERE user_id='".
+						$tmpid."' ORDER BY auth_id asc;");
+				while ($row = mysql_fetch_array($sql)) {
+					$GLOBALS[module][eqdkp2][$row[auth_id]] = $row[auth_setting];
+				}
+
+				$sql = mysql_query("SELECT auth_id,auth_setting FROM eqdkp_auth_users WHERE user_id='".
+						$GLOBALS[users][byuri][$_POST[user]][eqdkp]."' ORDER BY auth_id asc;");
+				while ($row = mysql_fetch_array($sql)) {
+					$GLOBALS[module][eqdkp3][$row[auth_id]] = $row[auth_setting];
+				}
+
+				#foreach auth_id
+				foreach (array_keys($GLOBALS[module][eqdkp]) as $myname) {
+					#is empty
+					if (empty($GLOBALS[module][eqdkp3][$myname])) {
+						$mode = 1;
+					} else {
+						$mode = 0;
+					}
+
+					if (empty($GLOBALS[module][eqdkp2][$myname])) {
+						$value = "N";
+					} else {
+						$value = $GLOBALS[module][eqdkp2][$myname];
+					}
+
+					if ($mode) {
+						$sql = mysql_query("INSERT INTO eqdkp_auth_users (user_id, auth_id, auth_setting) VALUES ('".
+								$GLOBALS[users][byuri][$myuser][eqdkp]."', '".$myname."', '".$value."');");
+					} else {
+						$sql2 = mysql_query("UPDATE eqdkp_auth_users SET auth_setting='".$value."' WHERE user_id='".
+								$GLOBALS[users][byuri][$myuser][eqdkp]."' AND auth_id='".$myname."';");
+					}
+
+					$sqlz = mysql_query("UPDATE eqdkp_users SET user_active='1', user_lang='german' WHERE user_id='".
+									$GLOBALS[users][byuri][$myuser][eqdkp]."';");
+				}
+			}
+
+			# set openid profile
+			$GLOBALS[html] .= "- modifying openid user :)<br />";
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userprofiletable]." SET role='".$myprofile."' WHERE openid='".$myuser."';");
+
+			$GLOBALS[html] .= "<h3>=&gt; Changes done</h3>";
+}
 ?>

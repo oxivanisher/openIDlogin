@@ -161,6 +161,8 @@ if ($_SESSION[loggedin] == 1) {
 			}
 
 		#end functions
+		} elseif ($_POST[mydo] == "reloadrole") {
+			applyProfile ($_SESSION[openid_identifier], $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]);
 		}
 		$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
 		$GLOBALS[html] .= "<table>";
@@ -226,6 +228,8 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /> ".
 											"<input type='reset' name='reset' value='reset' /></td></tr>";
 		$GLOBALS[html] .= "</table>";
+
+		$GLOBALS[html] .= "<br /><br /><a href='?mydo=reloadrole&module=userprofile'>&gt; Benutzerberechtigungen neu laden</a>";
 
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {

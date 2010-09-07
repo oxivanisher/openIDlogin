@@ -89,6 +89,7 @@ if ($_POST[ssoInpLogout] == 1) {
 	$_POST[job] = "refresh";
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } else {
+#	echo "bla"; exit;
 	$_POST[job] = "refresh";
 	$_POST[module] = "register";
 }
@@ -143,7 +144,7 @@ switch ($_POST[job]) {
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
 			$GLOBALS[redirect] = 1;
-			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
+			$GLOBALS[html] .= "<br /><br /><br /><h2><center>";
 				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
 			$GLOBALS[html] .= "</center></h2><br /><br /><br />";
 			$_SESSION[freshlogin] = 1;
@@ -151,12 +152,13 @@ switch ($_POST[job]) {
 			#set the cookie for the "logged out" - "login box"
 			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
 			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
+
 		} else {
 
 			#nope
 			$tmp = $GLOBALS[html];
 			$GLOBALS[myreturn][msg] = "auth error";
-			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
+			$GLOBALS[html] .= "<br /><br /><br /><h2><center>";
 				sysmsg("Authentification Error!", 1);
 			$GLOBALS[html] .= "</center></h2><br /><h3><center>".$tmp."</center></h3><br /><br />";
 		}
@@ -164,7 +166,6 @@ switch ($_POST[job]) {
 	
 	#default run mode for html requests (webgui, administration)
 	case "refresh":
-
 		#fetch all users and set the cookies
 		fetchUsers();
 		setCookies();
@@ -206,7 +207,7 @@ switch ($_POST[job]) {
 
 			$tmpNeedUpdate = 1;
 		}
-		if ($tmpNeedUpdate == 1)
+		if (($tmpNeedUpdate == 1) AND ($_SESSION[loggedin]))
 				$_POST[module] = "userprofile";
 
 		#we should load a module
