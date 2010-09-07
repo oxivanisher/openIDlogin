@@ -12,106 +12,13 @@ if ($_SESSION[loggedin] == 1) {
 		if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile]))) {
 			fetchUsers();
 			applyProfile($_POST[user], $_POST[profile]);
-/*			$GLOBALS[html] .= "<h3>=&gt; Changing User ".$_POST[user]." to ".
-							$GLOBALS[cfg][profile][$_POST[profile]][name]."</h3>";
-	
-			#wordpress
-			if (! empty($GLOBALS[users][byuri][$_POST[user]][wordpress])) {
-				$GLOBALS[html] .= "- modifying wordpress user ".$GLOBALS[users][byuri][$_POST[user]][wordpress]." :)<br />";
-				$sql = mysql_query("UPDATE wp_usermeta SET meta_key='".$GLOBALS[cfg][profile][$_POST[profile]][wordpress].
-						"'WHERE user_id='".$GLOBALS[users][byuri][$_POST[user]][wordpress]."' AND meta_key='wp_user_level';");
-			}
 
-			#smf
-			if (! empty($GLOBALS[users][byuri][$_POST[user]][smf])) {
-				$GLOBALS[html] .= "- modifying smf user ".$GLOBALS[users][byuri][$_POST[user]][smf]." :)<br />";
-				$sql = mysql_query("UPDATE smf_members SET id_group='".$GLOBALS[cfg][profile][$_POST[profile]][smf].
-						"', lngfile='german-utf8', additional_groups='' WHERE id_member='".$GLOBALS[users][byuri][$_POST[user]][smf]."';");
-			}
-
-			#phpraider
-			if (! empty($GLOBALS[users][byuri][$_POST[user]][phpraider])) {
-				$GLOBALS[html] .= "- modifying phpraider user ".$GLOBALS[users][byuri][$_POST[user]][phpraider]." :)<br />";
-				$sql = mysql_query("UPDATE phpraider_profile SET group_id='".$GLOBALS[cfg][profile][$_POST[profile]][phpraider].
-						"' WHERE profile_id='".$GLOBALS[users][byuri][$_POST[user]][phpraider]."';");
-			}
-
-			#eqdkp
-			if (! empty($GLOBALS[users][byuri][$_POST[user]][eqdkp])) {
-				$GLOBALS[html] .= "- modifying eqdkp user ".$GLOBALS[users][byuri][$_POST[user]][eqdkp]." :)<br />";
-				$sql = mysql_query("SELECT auth_id,auth_value FROM eqdkp_auth_options WHERE 1 ORDER BY auth_id asc;");
-				while ($row = mysql_fetch_array($sql)) {
-					$GLOBALS[module][eqdkp][$row[auth_id]] = $row[auth_value];
-				}
-
-				$sql = mysql_query("SELECT user_id FROM eqdkp_users WHERE username='".
-							$GLOBALS[cfg][profile][$_POST[profile]][eqdkp]."';");
-				while ($row = mysql_fetch_array($sql))
-					$tmpid = $row[user_id];
-
-				$sql = mysql_query("SELECT auth_id,auth_setting FROM eqdkp_auth_users WHERE user_id='".
-						$tmpid."' ORDER BY auth_id asc;");
-				while ($row = mysql_fetch_array($sql)) {
-					$GLOBALS[module][eqdkp2][$row[auth_id]] = $row[auth_setting];
-				}
-
-				$sql = mysql_query("SELECT auth_id,auth_setting FROM eqdkp_auth_users WHERE user_id='".
-						$GLOBALS[users][byuri][$_POST[user]][eqdkp]."' ORDER BY auth_id asc;");
-				while ($row = mysql_fetch_array($sql)) {
-					$GLOBALS[module][eqdkp3][$row[auth_id]] = $row[auth_setting];
-				}
-
-				#foreach auth_id
-				foreach (array_keys($GLOBALS[module][eqdkp]) as $myname) {
-					#is empty
-					if (empty($GLOBALS[module][eqdkp3][$myname])) {
-						$mode = 1;
-					} else {
-						$mode = 0;
-					}
-
-					if (empty($GLOBALS[module][eqdkp2][$myname])) {
-						$value = "N";
-					} else {
-						$value = $GLOBALS[module][eqdkp2][$myname];
-					}
-
-					if ($mode) {
-						$sql = mysql_query("INSERT INTO eqdkp_auth_users (user_id, auth_id, auth_setting) VALUES ('".
-								$GLOBALS[users][byuri][$_POST[user]][eqdkp]."', '".$myname."', '".$value."');");
-#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[cfg][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (new)<br />";
-					} else {
-						$sql2 = mysql_query("UPDATE eqdkp_auth_users SET auth_setting='".$value."' WHERE user_id='".
-								$GLOBALS[users][byuri][$_POST[user]][eqdkp]."' AND auth_id='".$myname."';");
-#						$GLOBALS[html] .= "&nbsp;- ".$GLOBALS[cfg][sites][eqdkp][$_POST[user]]." AuthID: ".$myname." to ".$value." (update)<br />";
-					}
-
-
-					$sqlz = mysql_query("UPDATE eqdkp_users SET user_active='1', user_lang='german' WHERE user_id='".$GLOBALS[users][byuri][$_POST[user]][eqdkp]."';");
-				}
-				
-
-			}
-
-
-			# set openid profile
-			$GLOBALS[html] .= "- modifying openid user :)<br />";
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userprofiletable]." SET role='".$_POST[profile]."' WHERE openid='".$_POST[user]."';");
-#			$GLOBALS[cfg][userprofiletable]
-
-
-			$GLOBALS[html] .= "<h3>=&gt; Changes done</h3>";
-
-*/
 		#register opeinid to user
 		} elseif (($_POST[myjob] == "registeruser") and (! empty($_POST[newuser])) and (! empty($_POST[newurl]))) {
 			$GLOBALS[html] .= "<h3>=&gt; Registring SMF User ID ".$_POST[newuser]." to ".$_POST[newurl]."</h3>";
-			
 			if (isValidURL($_POST[newurl])) {
 				$GLOBALS[html] .= "- ".$_POST[newurl]." is a valid URL<br />";
-
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][usernametable]." SET openid_uri='".$_POST[newurl]."' WHERE id_member='".$_POST[newuser]."';");
-
 				$GLOBALS[html] .= "<h3>=&gt; User registred!</h3>";
 			} else {
 				$GLOBALS[html] .= "<h3>=&gt; Not a valid URL!</h3>";
