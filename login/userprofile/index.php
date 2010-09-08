@@ -205,17 +205,17 @@ if ($_SESSION[loggedin] == 1) {
 
 
 			#render update form
-			$GLOBALS[html] .= "<tr><td>Nickname</td><td><input type='text' name='nickname' value='".$row[nickname]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Vorname</td><td><input type='text' name='forename' value='".$row[forename]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Zuname</td><td><input type='text' name='surname' value='".$row[surname]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Email</td><td><input type='text' name='email' value='".$row[email]."' size='20' /></td></tr>";
+			$GLOBALS[html] .= "<tr><td>Nickname *</td><td><input type='text' name='nickname' value='".$row[nickname]."' size='20' /></td></tr>";
+			$GLOBALS[html] .= "<tr><td>Vorname *</td><td><input type='text' name='forename' value='".$row[forename]."' size='20' /></td></tr>";
+			$GLOBALS[html] .= "<tr><td>Zuname *</td><td><input type='text' name='surname' value='".$row[surname]."' size='20' /></td></tr>";
+			$GLOBALS[html] .= "<tr><td>Email *</td><td><input type='text' name='email' value='".$row[email]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>ICQ#</td><td><input type='text' name='icq' value='".$row[icq]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>MSN</td><td><input type='text' name='msn' value='".$row[msn]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Usertitle</td><td><input type='text' name='usertitle' value='".$row[usertitle]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Avatar</td><td><input type='text' name='avatar' value='".$row[avatar]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Website</td><td><input type='text' name='website' value='".$row[website]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Motto</td><td><input type='text' name='motto' value='".$row[motto]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Geburtsdatum</td><td>".$dobDropdown."</td></tr>";
+			$GLOBALS[html] .= "<tr><td>Geburtsdatum *</td><td>".$dobDropdown."</td></tr>";
 			$GLOBALS[html] .= "<tr><td valign='top'>Signatur</td><td><textarea name='signature' cols='50' rows='5'>".
 												$row[signature]."</textarea></td></tr>";
 			#FIXME jid is missing
@@ -225,6 +225,9 @@ if ($_SESSION[loggedin] == 1) {
 												"' /> (".$GLOBALS[cfg][profile][$row[role]][name].")</td></tr>";
 
 		}
+		$GLOBALS[html] .= "<tr><td>&nbsp;</td></tr>";
+		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>Felder mit * m&uuml;ssen ausgef&uuml;llt werden.</td></tr>";
+		$GLOBALS[html] .= "<tr><td>&nbsp;</td></tr>";
 		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /> ".
 											"<input type='reset' name='reset' value='reset' /></td></tr>";
 		$GLOBALS[html] .= "</table>";
