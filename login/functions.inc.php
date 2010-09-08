@@ -924,10 +924,18 @@ function checkProfile ($myOpenID = '') {
 	#do we have to update our user profile?
 	$tmpRegistred = 0;
 	$tmpNeedUpdate = 0;
-	$sql = mysql_query("SELECT accurate FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$myOpenID."';");
+	$sql = mysql_query("SELECT accurate,nickname,email,surname,forename,dob,mob,yob,sex FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$myOpenID."';");
 	while ($row = mysql_fetch_array($sql)) {
 		$tmpRegistred = 1;
-		if ($row[accurate] == 1)
+
+		if ((! empty($row[nickname])) AND (! empty($row[email])) AND (! empty($row[surname])) AND
+				(! empty($row[forename])) AND $row[dob] AND $row[mob] AND	$row[yob]) // AND (! empty($row[sex])))
+			$tmpNeedUpdate = 0;
+		else
+			$tmpNeedUpdate = 1;
+
+
+		if (($tmpNeedUpdate == 0) AND ($row[accurate] == 1))
 			$tmpNeedUpdate = 0;
 		else
 			$tmpNeedUpdate = 1;
@@ -950,9 +958,9 @@ function checkProfile ($myOpenID = '') {
 
 		$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
 						" (openid,nickname,email,icq,msn,usertitle,avatar,signature,website,motto,accurate,role) VALUES ".
-						"('".$myOpenID."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."', ".
+						"('".$myOpenID."','".$GLOBALS[users][byuri][$myOpenID][name]."', ".
 						"'".$temail."', '".$ticq."', '".$tmsn."', '".$tusertitle."', '".$tavatar."', '".$tsignature."', '".
-						$twebsite."', '".$tmotto."', '0', '3');";
+						$twebsite."', '".$tmotto."', '0', '0');";
 		$sqlq = mysql_query($sql);
 
 		$tmpNeedUpdate = 1;
