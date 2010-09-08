@@ -1,9 +1,16 @@
 <?php
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
+	#apply profile function
+	if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile])) and ($_SESSION[isadmin])) {
+		fetchUsers();
+		applyProfile($_POST[user], $_POST[profile]);
+	}
+
 	#init stuff
 	fetchUsers();
 	updateTimestamp($_SESSION[openid_identifier]);
+	$pDropdown = drawProfileDropdown();
 
 	#draw user table
 	if ($_SESSION[isadmin]) {
@@ -15,7 +22,7 @@ if ($_SESSION[loggedin] == 1) {
 	#show user table
 	$GLOBALS[html] .= "<table>";
 	$GLOBALS[html] .= "<tr><th>Name</th><th>Last online</th><th>Jabber</th>";
-	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
+	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th><th>Change Role</th>";
 	$GLOBALS[html] .= "</tr>";
 	foreach ($GLOBALS[users][byuri] as $myuri) {
 		if (! empty($myuri[name])) {
@@ -43,8 +50,20 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<tr style='".$tmp."'><td><img src='".$GLOBALS[cfg][profile][$myuri[role]][icon]."' title='".
 												$GLOBALS[cfg][profile][$myuri[role]][name]."' width='16' height='16' />&nbsp;".
 												genMsgUrl($myuri[uri])."</td>"."<td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
-			if ($_SESSION[isadmin]) $GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
+			if ($_SESSION[isadmin]) {
+				$GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
+
+				$GLOBALS[html] .= "<form action='?' method='POST'>";
+				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='applyprofile' />";
+				$GLOBALS[html] .= "<input type='hidden' name='user' value='".$myuri[uri]."' />";
+				$GLOBALS[html] .= "<td>".$pDropdown."<input type='submit' name='change' value='change'></td>";
+				$GLOBALS[html] .= "</form>";
+
+				checkProfile ($myuri[uri]);
+			}
 			$GLOBALS[html] .= "</tr>";
+
 		}
 	}
 	$GLOBALS[html] .= "</table>";

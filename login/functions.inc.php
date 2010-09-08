@@ -803,7 +803,15 @@ function alert ($msg, $from) {
 	$alertsql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][admintablename]." WHERE dev='1';");
 	while ($alertrow = mysql_fetch_array($alertsql)) {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ".
-						"('".$from."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT:\n".$msg."', 1, 1);");
+						"('".$from."', '".$alertrow[openid]."', '".time()."', 'SYSTEM INFORMATION', '".$msg."', 1, 1);");
+	}
+}
+
+function informUsers ($msg, $role) {
+	$alertsql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][userprofiletable]." WHERE role>='".$role."';");
+	while ($alertrow = mysql_fetch_array($alertsql)) {
+		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ".
+						"('".$_SESSION[openid_identifier]."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT:\n".$msg."', 1, 1);");
 	}
 }
 
@@ -906,12 +914,17 @@ function applyProfile ($myuser, $myprofile) {
 			$GLOBALS[html] .= "<h3>=&gt; Changes done</h3>";
 }
 
-function checkProfile () {
+function checkProfile ($myOpenID = '') {
+	if (empty($myOpenID))
+		$myOpenID = $_SESSION[openid_identifier];
+	
+	if (empty($myOpenID))
+		return 0;
+	
 	#do we have to update our user profile?
 	$tmpRegistred = 0;
 	$tmpNeedUpdate = 0;
-	$sql = mysql_query("SELECT accurate FROM ".$GLOBALS[cfg][userprofiletable].
-	        " WHERE openid='".$_SESSION[openid_identifier]."';");
+	$sql = mysql_query("SELECT accurate FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$myOpenID."';");
 	while ($row = mysql_fetch_array($sql)) {
 		$tmpRegistred = 1;
 		if ($row[accurate] == 1)
@@ -922,7 +935,7 @@ function checkProfile () {
 	if ($tmpRegistred == 0) {
 		#get infos from smf
 		$sql = "SELECT email_address,icq,msn,usertitle,avatar,signature,website_url,personal_text ".
-						"FROM smf_members WHERE openid_uri='".$_SESSION[openid_identifier]."';";
+						"FROM smf_members WHERE openid_uri='".$myOpenID."';";
 		$sqlq = mysql_query($sql);
 		while ($row = mysql_fetch_array($sqlq)) {
 			$temail = $row[email_address];
@@ -937,14 +950,18 @@ function checkProfile () {
 
 		$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
 						" (openid,nickname,email,icq,msn,usertitle,avatar,signature,website,motto,accurate,role) VALUES ".
-						"('".$_SESSION[openid_identifier]."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."', ".
+						"('".$myOpenID."','".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."', ".
 						"'".$temail."', '".$ticq."', '".$tmsn."', '".$tusertitle."', '".$tavatar."', '".$tsignature."', '".
 						$twebsite."', '".$tmotto."', '0', '3');";
 		$sqlq = mysql_query($sql);
 
-		return 1;
+		$tmpNeedUpdate = 1;
 	}
-	return 0;
+
+	if ($tmpNeedUpdate)
+		return 1;
+	else
+		return 0;
 }
 
 
