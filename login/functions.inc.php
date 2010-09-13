@@ -153,9 +153,10 @@ function fetchUsers () {
 
 	#fetching oom openid profile informations
 	$count = 0;
-	$sql = mysql_query("SELECT openid,role FROM ".$GLOBALS[cfg][userprofiletable]." WHERE 1;");
+	$sql = mysql_query("SELECT openid,role,armorychars FROM ".$GLOBALS[cfg][userprofiletable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql)) {
 		$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
+		$GLOBALS[users][byuri][$row[openid]][armorychars] = unserialize($row[armorychars]);
 		$count++;
 	}
 	$GLOBALS[users][count][role] = $count;

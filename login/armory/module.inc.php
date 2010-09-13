@@ -1,9 +1,9 @@
 <?php
 
   $MODULE[show]     = 1;
-	$MODULE[admin]		= 1;
-	$MODULE[dev]			= 1;
-	$MODULE[name]			= "WOW Armory Modul";
-	$MODULE[comment]	= "Here goes the XML Magic.";
+	$MODULE[admin]		= 0;
+	$MODULE[dev]			= 0;
+	$MODULE[name]			= "WOW Armory";
+	$MODULE[comment]	= "TESTMODUL! Here goes the XML Magic.";
 
 ?>
