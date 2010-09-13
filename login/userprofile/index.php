@@ -36,7 +36,7 @@ if ($_SESSION[loggedin] == 1) {
 			$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET nickname='".$_POST[nickname]."', email='".$_POST[email].
 							"', surname='".$_POST[surname]."', forename='".$_POST[forename]."', dob='".$_POST[dob].
 							"', mob='".$_POST[mob]."', yob='".$_POST[yob]."', sex='".$_POST[sex]."', icq='".$_POST[icq].
-							"', msn='".$_POST[msn]."', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
+							"', msn='".$_POST[msn]."', skype='".$_POST[skype]."', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
 							"', signature='".$_POST[signature]."', website='".$_POST[website]."', motto='".$_POST[motto].
 							"', accurate='1' WHERE openid='".$_SESSION[openid_identifier]."';";
 			$sqlq = mysql_query($sql);
@@ -57,7 +57,8 @@ if ($_SESSION[loggedin] == 1) {
 				#date not working
 				$sql = "UPDATE smf_members SET member_name='".$_POST[nickname]."', real_name='".$_POST[nickname].
 								"', email_address='".$_POST[email]."', birthdate='".date($_POST[yob]."-".$_POST[mob]."-".$_POST[dob]).
-								"', gender='".$tmpGender."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', Jabber='".$_POST[jid].
+								"', gender='".$tmpGender."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', skype='".$_POST[skype]."', Jabber='".
+								$_POST[jid].
 								"', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
 								"', signature='".$_POST[signature]."', website_url='".$_POST[website]."', usertitle='".$_POST[motto].
 								"' WHERE openid_uri='".$_SESSION[openid_identifier]."';";
@@ -211,6 +212,7 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<tr><td>Email *</td><td><input type='text' name='email' value='".$row[email]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>ICQ#</td><td><input type='text' name='icq' value='".$row[icq]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>MSN</td><td><input type='text' name='msn' value='".$row[msn]."' size='20' /></td></tr>";
+			$GLOBALS[html] .= "<tr><td>Skype</td><td><input type='text' name='skype' value='".$row[skype]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Usertitle</td><td><input type='text' name='usertitle' value='".$row[usertitle]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Avatar</td><td><input type='text' name='avatar' value='".$row[avatar]."' size='20' /></td></tr>";
 			$GLOBALS[html] .= "<tr><td>Website</td><td><input type='text' name='website' value='".$row[website]."' size='20' /></td></tr>";

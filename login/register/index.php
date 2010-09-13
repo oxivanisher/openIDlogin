@@ -20,10 +20,10 @@ if ($_SESSION[loggedin] == 1) {
 			#do the db stuff
 			#oom openid
 			$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
-				" (openid,nickname,email,surname,forename,dob,mob,yob,sex,icq,msn,accurate,role) VALUES".
+				" (openid,nickname,email,surname,forename,dob,mob,yob,sex,icq,msn,skype,accurate,role) VALUES".
 				" ('".$tmp[openid]."', '".$tmp[nickname]."', '".$tmp[email]."', '".$tmp[surname]."', '".$tmp[forename].
 				"', '".$tmp[dob]."', '".$tmp[mob]."', '".$tmp[yob]."', '".$tmp[sex]."', '".$tmp[icq]."', '".$tmp[msn].
-				"', '1', '5');";
+				"', '".$tmp[skype]."', '1', '5');";
 			$sqlq = mysql_query($sql);
 
 			#oom xmpp
@@ -44,7 +44,7 @@ if ($_SESSION[loggedin] == 1) {
 			$sqlq = mysql_query($sql);
 
 			#show sucess message
-			informUsers ("User ".$tmp[nickname]." accepted to the gild.", "7");
+			informUsers ("Ein herzliches Willkommen unserem neuesten Mitstreiter: ".$tmp[nickname]." (".")", "5");
 		} elseif ($_POST[mydo] == "deny") {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
@@ -73,6 +73,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<tr><td>JabberID:</td><td>".$row[jid]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>ICQ#</td><td>".$row[icq]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>MSN:</td><td>".$row[msn]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Skype:</td><td>".$row[skype]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>Application:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>WOW Chars:</td><td>".$row[wowchars]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
@@ -120,10 +121,10 @@ if ($_SESSION[loggedin] == 1) {
 	$myWowChars = $_POST[wowchars];
 
 	$sql = "INSERT INTO ".$GLOBALS[cfg][userapplicationtable].
-		" (openid,nickname,email,surname,forename,dob,mob,yob,sex,jid,icq,msn,comment,wowchars,timestamp) VALUES ".
+		" (openid,nickname,email,surname,forename,dob,mob,yob,sex,jid,icq,msn,skype,comment,wowchars,timestamp) VALUES ".
 		"('".$_POST[openid]."','".$_POST[nickname]."','".$_POST[email]."','".$_POST[surname]."','".$_POST[forename].
 		"','".$_POST[dob]."','".$_POST[mob]."','".$_POST[yob]."','".$_POST[sex]."','".$_POST[jid]."','".$_POST[icq].
-		"','".$_POST[msn]."','".$_POST[comment]."','".$myWowChars."','".time()."');";
+		"','".$_POST[msn]."','".$_POST[skype]."','".$_POST[comment]."','".$myWowChars."','".time()."');";
 #	$GLOBALS[html] .= $sql;
 	$sqlr = mysql_query($sql);
 
@@ -162,10 +163,15 @@ if ($_SESSION[loggedin] == 1) {
 
 	if ($_SESSION[registred]) {
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." verification sucessful!", 2);
+		$tmpIncludeMe = 1;
+	
 		$_SESSION[toregister] = 0;
 		$_SESSION[tosave] = 1;
 		$_SESSION[newopenid] = $GLOBALS[newopenid];
 
+		include("join/register.php");
+
+/*
 		#need mydo: save
 
 		$GLOBALS[html] .= '<form method="get" action="/login.inc.php" name="login">';
@@ -222,7 +228,7 @@ Kennst du schon Leute von uns?
 
 		$GLOBALS[html] .= '<div><div class="regSpace">&nbsp;</div><input type="submit" name="submit" value="Bewerbung einsenden"></div><br>';
 		$GLOBALS[html] .= '</div></form>';
-
+*/
 	} else {
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." Verification failed on registration.", 1);
 		$GLOBALS[html] .= "<br /><h2><a href='".$GLOBALS[cfg][targetsite]."'>Zur&uuml;ck zur Homepage</a></h2>";
