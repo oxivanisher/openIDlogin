@@ -115,7 +115,7 @@ function fetchCharacter ($charname) {
 	$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
 	$mychar[classid]		= (string) $char->characterInfo->character['classId'];
 	$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
-	$mychar[ilevelavg]	= 0;
+	$mychar[ilevelavg]	= (string) $char->characterInfo->items->item[0]->item['level'];
 
 	if (empty($char->characterInfo->character['name'])) {
 		sysmsg ("ERROR fetching character info for ".$charname."!", 3);
@@ -182,7 +182,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<td>".showName("gender", $char[genderid])."</td>";
 				$GLOBALS[html] .= "<td>".showName("class", $char[classid])."</td>";
 				$GLOBALS[html] .= "<td>".showName("race", $char[raceid])."</td>";
-				$GLOBALS[html] .= "<td>&nbsp;</td>";
+				$GLOBALS[html] .= "<td>".$char[ilevelavg]."</td>";
 				$GLOBALS[html] .= "</tr>";
 			} else {
 				$GLOBALS[html] .= "Charakter ".$mycharname." wurde in der Armory nicht gefunden.<br />";
@@ -205,7 +205,8 @@ if ($_SESSION[loggedin] == 1) {
 						if ($bool) $bool = false;
 						else $tmp = ", ";
 
-						$GLOBALS[html] .= $tmp."<abbr title='".showName("race", $char[raceid])." ".showName("class", $char[classid])." "."'>".$char[name]." ".$char[level]."</abbr>";
+						$GLOBALS[html] .= $tmp."<abbr title='".showName("race", $char[raceid])." ".showName("class", $char[classid]).
+															" ".$char[ilevelavg]."'>".$char[name]." ".$char[level]."</abbr>";
 					}
 				}
 			} else $GLOBALS[html] .= "&nbsp;";
