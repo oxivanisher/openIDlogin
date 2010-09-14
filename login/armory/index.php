@@ -3,8 +3,6 @@
 #functions
 
 function fetchXML ($type, $target) {
-	#FIXME get charnames from db
-
 	$BASEURL = "http://eu.wowarmory.com/";
 	if ($type == "i")
 		$URL = $BASEURL."item-info.xml?i=".$target;
@@ -120,7 +118,7 @@ function fetchCharacter ($charname) {
 	$mychar[ilevelavg]	= 0;
 
 	if (empty($char->characterInfo->character['name'])) {
-		sysmsg ("ERROR fetching character info for ".$charname."!", 1);
+		sysmsg ("ERROR fetching character info for ".$charname."!", 3);
 		return null;
 	} else {
 		return $mychar;
@@ -131,58 +129,92 @@ function fetchCharacter ($charname) {
 if ($_SESSION[loggedin] == 1) {
 	# module functions
 	if ($_POST[mydo] == "savechars") {
-		$tnames = explode(",", $_POST[chars]);
-		$nnames = array();
-		foreach ($tnames as $tname) {
-			array_push($nnames, trim($tname));
-		}
+		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
+			$tnames = explode(",", $_POST[chars]);
+			$nnames = array();
+			foreach ($tnames as $tname) {
+				array_push($nnames, trim($tname));
+			}
 
-		$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET armorychars='".serialize($nnames).
-						"' WHERE openid='".$_SESSION[openid_identifier]."';";
-		$sqlr = mysql_query($sql);
+			$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET armorychars='".serialize($nnames).
+							"' WHERE openid='".$_POST[user]."';";
+			$sqlr = mysql_query($sql);
+		}
 	}
 
 	#init stuff
 	fetchUsers();
  
-	#change user rights form
-	$tmpnames = ""; $tbool = true;; $tmp = "";
-	if(is_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]));
-		array_unique($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]);
-	foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mychar) {
-		if ($tbool) $tbool = false;
-		else $tmp = ", ";
-		$tmpnames .= $tmp.$mychar;
-	}
+	#show character detail and on own profile input field for characters
+	if ($_POST[mydo] == "showdetail") {
+		$GLOBALS[html] .= "<hr />";
+		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
+			#change user rights form
+			$tmpnames = ""; $tbool = true;; $tmp = "";
+			if(! empty($GLOBALS[users][byuri][$_POST[user]][armorychars])) {
+				array_unique($GLOBALS[users][byuri][$_POST[user]][armorychars]);
+				foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mychar) {
+					if ($tbool) $tbool = false;
+					else $tmp = ", ";
+					$tmpnames .= $tmp.$mychar;
+				}
+			}
 
-	$GLOBALS[html] .= "<hr />";
-	$GLOBALS[html] .= "Deine Charakter (Kommagetrennt): ";
-	$GLOBALS[html] .= "<form action='?' method='POST'>";
-	$GLOBALS[html] .= "<input type='hidden' name='mydo' value='savechars' />";
-	$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-	$GLOBALS[html] .= "<input type='text' name='chars' value='".$tmpnames."' size='40' />";
-	$GLOBALS[html] .= "<input type='submit' name='save' value='save' />";
-	$GLOBALS[html] .= "</form><hr />";
-	$GLOBALS[html] .= "<br />";
-	
-	$GLOBALS[html] .= "<table>";
-	$GLOBALS[html] .= "<tr><th>Name</th><th>Level</th><th>Geschlecht</th><th>Klasse</th><th>Rasse</th><th>Itemlevel Durchschnitt</th></tr>";
-	foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mycharname) {
-		if ($char = fetchCharacter($mycharname)) {
-			$GLOBALS[html] .= "<tr>";
-			$GLOBALS[html] .= "<td>".$char[name]."</td>";
-			$GLOBALS[html] .= "<td>".$char[level]."</td>";
-			$GLOBALS[html] .= "<td>".showName("gender", $char[genderid])."</td>";
-			$GLOBALS[html] .= "<td>".showName("class", $char[classid])."</td>";
-			$GLOBALS[html] .= "<td>".showName("race", $char[raceid])."</td>";
-			$GLOBALS[html] .= "<td>&nbsp;</td>";
-			$GLOBALS[html] .= "</tr>";
-		} else {
-			$GLOBALS[html] .= "Charakter ".$mycharname." wurde in der Armory nicht gefunden.<br />";
+			$GLOBALS[html] .= "Deine Charakter (Kommagetrennt): ";
+			$GLOBALS[html] .= "<form action='?' method='POST'>";
+			$GLOBALS[html] .= "<input type='hidden' name='mydo' value='savechars' />";
+			$GLOBALS[html] .= "<input type='hidden' name='user' value='".$_POST[user]."' />";
+			$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+			$GLOBALS[html] .= "<input type='text' name='chars' value='".$tmpnames."' size='40' />";
+			$GLOBALS[html] .= "<input type='submit' name='save' value='save' />";
+			$GLOBALS[html] .= "</form><hr />";
+			$GLOBALS[html] .= "<br />";
 		}
-	}
-	$GLOBALS[html] .= "</table>";
+	
+		$GLOBALS[html] .= "<table>";
+		$GLOBALS[html] .= "<tr><th>Name</th><th>Level</th><th>Geschlecht</th><th>Klasse</th><th>Rasse</th><th>Itemlevel Durchschnitt</th></tr>";
+		if ($GLOBALS[users][byuri][$_POST[user]][armorychars])
+		foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mycharname) {
+			if ($char = fetchCharacter($mycharname)) {
+				$GLOBALS[html] .= "<tr>";
+				$GLOBALS[html] .= "<td>".$char[name]."</td>";
+				$GLOBALS[html] .= "<td>".$char[level]."</td>";
+				$GLOBALS[html] .= "<td>".showName("gender", $char[genderid])."</td>";
+				$GLOBALS[html] .= "<td>".showName("class", $char[classid])."</td>";
+				$GLOBALS[html] .= "<td>".showName("race", $char[raceid])."</td>";
+				$GLOBALS[html] .= "<td>&nbsp;</td>";
+				$GLOBALS[html] .= "</tr>";
+			} else {
+				$GLOBALS[html] .= "Charakter ".$mycharname." wurde in der Armory nicht gefunden.<br />";
+			}
+		}
+		$GLOBALS[html] .= "</table>";
+	
+	#show overview
+	} else {
+		$GLOBALS[html] .= "<table>";
+		$GLOBALS[html] .= "<tr><th>User</th><th>Charakter</th></tr>";
+		foreach ($GLOBALS[users][byuri] as $myuser) {
+			$GLOBALS[html] .= "<tr>";
+			$GLOBALS[html] .= "<td><a href='?module=".$_POST[module]."&mydo=showdetail&user=".$myuser[uri]."'>".$myuser[name]."</a></td>";
+			$GLOBALS[html] .= "<td>";
+			$bool = true; $tmp = "";
+			if (! empty($myuser[armorychars])) {
+				foreach ($myuser[armorychars] as $mycharname) {
+					if ($char = fetchCharacter($mycharname)) {
+						if ($bool) $bool = false;
+						else $tmp = ", ";
 
+						$GLOBALS[html] .= $tmp."<abbr title='".showName("race", $char[raceid])." ".showName("class", $char[classid])." "."'>".$char[name]." ".$char[level]."</abbr>";
+					}
+				}
+			} else $GLOBALS[html] .= "&nbsp;";
+
+			$GLOBALS[html] .= "</td>";
+			$GLOBALS[html] .= "</tr>";
+		}
+		$GLOBALS[html] .= "</table>";
+	}
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {
 	sysmsg ("You are not logged in!", 1);
