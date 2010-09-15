@@ -180,11 +180,22 @@ switch ($_POST[job]) {
 			#yes, load the module
 			$GLOBALS[myreturn][msg] = "load module ".$_POST[module];
 			$GLOBALS[html] = "";
+			$show = 1;
 			if (file_exists('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php')) {
-				$GLOBALS[html] .= "<h2><a href='?'>Modul &Uuml;bersicht</a> &gt;";
+				if (! $_SESSION[loggedin]) {
+					if (($_POST[module] == "register") AND ($_POST[mydo] == "verifyme"))
+						$show = 0;
+					if (($_POST[module] == "register") AND (empty($_POST[mydo])))
+						$show = 0;
+				}
+
+				if ($show)
+					$GLOBALS[html] .= "<h2><a href='?'>Modul &Uuml;bersicht</a> &gt;";
+
 				if (file_exists($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php')) {
 					include($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php');
-					$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2>";
+					if ($show)
+						$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2>";
 					include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
 				} else {
 					sysmsg ("No Module description found!", 1);
@@ -199,7 +210,7 @@ switch ($_POST[job]) {
 			$GLOBALS[myreturn][msg] = "refreshing";
 			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
 			$GLOBALS[html] .= "<ul>";
-			
+				
 			#have fun reading this code :P
 			if (is_dir($GLOBALS[cfg][moduledir])) {
 				if ($dh = opendir($GLOBALS[cfg][moduledir])) {
@@ -364,7 +375,7 @@ if ($GLOBALS[redirect]) {
 	);
 	</script><?php
 
-	echo "<body onload='javascript:ssoInit();' style='background-color:transparent;'>";
+	echo "<body onload='javascript:initCharacter();ssoInit();'  style='background-color:transparent;'>";
 	echo "<div id='ssologin'></div>";
 
 }

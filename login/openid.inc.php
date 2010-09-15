@@ -170,10 +170,12 @@ function openid_verify () {
     // Check the response status.
     if ($response->status == Auth_OpenID_CANCEL) {
         // This means the authentication was cancelled.
-        $GLOBALS[html] = 'Verification cancelled.';
+        sysmsg ('Verification cancelled.', 1);
+				return false;
     } else if ($response->status == Auth_OpenID_FAILURE) {
         // Authentication failed; display the error message.
-        $GLOBALS[html] = "OpenID authentication failed: " . $response->message;
+				sysmsg ("OpenID authentication failed: " . $response->message, 1);
+				return false;
     } else if ($response->status == Auth_OpenID_SUCCESS) {
         // This means the authentication succeeded; extract the
         // identity URL and Simple Registration data (if it was
@@ -260,6 +262,7 @@ function openid_verify () {
    	         $success .= "<p>No PAPE response was sent by the provider.</p>";
 		} */
 		$GLOBALS[myreturn][msg] .= $success;
+		return true;
     }
 }
 

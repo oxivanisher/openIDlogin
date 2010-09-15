@@ -124,7 +124,7 @@ function fetchCharacter ($charname) {
 		AND ($GLOBALS[armorycharupdatecount] <= $GLOBALS[armorycharmaxupdate])) {
 			$GLOBALS[armorycharupdatecount]++;
 			$mychar[content] = fetchXML ("n", $charname);
-			if (strlen($mychar[content]) > 250) {
+			if (strlen($mychar[content]) > 200) {
 				sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
 				$mychar[timestamp] = time();
 				$char = new SimpleXMLElement($mychar[content]);
