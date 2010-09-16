@@ -49,7 +49,7 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
 			#show deny message
-			informUsers ("User ".$tmp[nickname]." denied to the gild.", "7");
+			informUsers ("User ".$_POST[applicant]." denied to the guild.", "7");
 
 		}
 
@@ -75,7 +75,19 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<tr><td>MSN:</td><td>".$row[msn]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>Skype:</td><td>".$row[skype]."</td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>Application:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>WOW Chars:</td><td>".$row[wowchars]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>WOW Chars:</td>";
+				$GLOBALS[html] .= "<td>";
+				foreach (unserialize($row[wowchars]) as $mycharname) {
+					if ($char = fetchArmoryCharacter($mycharname)) {
+						$GLOBALS[html] .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
+															"<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
+															", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
+															"</span>";
+						} else {
+							$GLOBALS[html] .= genArmoryIlvlHtml(0,"00").$mycharname;
+						}
+				}
+				$GLOBALS[html] .= "</td></tr>";
 				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
 				$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>Answer:</td><td>";
@@ -95,7 +107,7 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br /><br />";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state='0';");
 			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th></tr>";
+			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th><th>Characters</th></tr>";
 			while ($row = mysql_fetch_array($sql)) {
 			#display list of applicants
 				#$_POST[applicant]
@@ -105,6 +117,19 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<td>".$row[email]."</td>";
 				$GLOBALS[html] .= "<td>".$row[openid]."</td>";
 				$GLOBALS[html] .= "<td>".$row[dob].".".$row[mob].".".$row[yob]."</td>";
+
+				$GLOBALS[html] .= "<td>";
+				foreach (unserialize($row[wowchars]) as $mycharname) {
+					if ($char = fetchArmoryCharacter($mycharname)) {
+						$GLOBALS[html] .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
+															"<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
+															", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
+															"</span>";
+						} else {
+							$GLOBALS[html] .= genArmoryIlvlHtml(0,"00").$mycharname;
+						}
+				}
+				$GLOBALS[html] .= "</td>";
 				$GLOBALS[html] .= "</tr>";
 			}
 			$GLOBALS[html] .= "</table>";
@@ -117,14 +142,20 @@ if ($_SESSION[loggedin] == 1) {
 #	$GLOBALS[standalonedesign] = 1;
 	# save profile informations
 
-	#generate WOW Character json
-	$myWowChars = $_POST[wowchars];
+	#generate WOW Character array
+	$myWowChars = array();
+	for ($i = 1; $i < 20; $i++) {
+		$myname = "char".$i."Name";
+		if (isset($_POST[$myname]))
+			if (! empty($_POST[$myname]))
+				array_push($myWowChars, $_POST[$myname]);
+	}
 
 	$sql = "INSERT INTO ".$GLOBALS[cfg][userapplicationtable].
 		" (openid,nickname,email,surname,forename,dob,mob,yob,sex,jid,icq,msn,skype,comment,wowchars,timestamp) VALUES ".
 		"('".$_POST[openid]."','".$_POST[nickname]."','".$_POST[email]."','".$_POST[surname]."','".$_POST[forename].
 		"','".$_POST[dob]."','".$_POST[mob]."','".$_POST[yob]."','".$_POST[sex]."','".$_POST[jid]."','".$_POST[icq].
-		"','".$_POST[msn]."','".$_POST[skype]."','".$_POST[comment]."','".$myWowChars."','".time()."');";
+		"','".$_POST[msn]."','".$_POST[skype]."','".$_POST[comment]."','".serialize($myWowChars)."','".time()."');";
 	$sqlr = mysql_query($sql);
 
 	# show "you will be accepted" text
@@ -136,7 +167,7 @@ if ($_SESSION[loggedin] == 1) {
 	session_destroy();
 	session_write_close();
 
-	$GLOBALS[html] .= "<br /><h2><a href='".$GLOBALS[cfg][targetsite]."'>Zur&uuml;ck zur Homepage</a></h2>";
+	$GLOBALS[html] .= file_get_contents("join/success.html");
 
 } elseif ($_SESSION[registerme] == 1) {
 	# stage 2 of openid register

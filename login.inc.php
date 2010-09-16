@@ -155,12 +155,12 @@ switch ($_POST[job]) {
 			setcookie ("ssoOldname", $cookieTarget, ( time() + ( 14 * 24 * 3600 )));
 
 		} else {
-
+			$GLOBALS[standalonedesign] = 1;
 			#nope
 			$tmp = $GLOBALS[html];
+			$GLOBALS[html] = "";
 			$GLOBALS[myreturn][msg] = "auth error";
-			$GLOBALS[html] .= "<br /><br /><br /><h2><center>";
-				sysmsg("Authentification Error!", 1);
+			$GLOBALS[html] .= "<br /><h3><center>Zugang zum System verweigert.<br />";
 			$GLOBALS[html] .= "</center></h2><br /><h3><center>".$tmp."</center></h3><br /><br />";
 		}
 		break;

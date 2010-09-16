@@ -973,5 +973,202 @@ function checkProfile ($myOpenID = '') {
 		return 0;
 }
 
+function fetchArmoryXML ($type, $target) {
+	$BASEURL = "http://eu.wowarmory.com/";
+	if ($type == "i")
+		$URL = $BASEURL."item-info.xml?i=".$target;
+	elseif ($type == "n")
+		$URL = $BASEURL."character-sheet.xml?r=".$GLOBALS[realm]."&n=".$target;
+	else return 0;
+	$URL .= "&rhtml=n";
+	$useragent = "Mozilla/5.0 (Windows; U; Windows NT 5.0; de-DE; rv:1.6) Gecko/20040206 Firefox/1.0.1";
+	ini_set('user_agent',$useragent);
+	$curl = curl_init();
+	curl_setopt ($curl, CURLOPT_URL, $URL);
+	curl_setopt($curl, CURLOPT_USERAGENT, $useragent);
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+	$load = curl_exec($curl);
+	curl_close($curl);
+	if (strpos($load, '<errorhtml type="503"/>')) {
+		$GLOBALS[armorycharupdatecount] = $GLOBALS[armorycharmaxupdate] + 1;
+		$GLOBALS[armorydown] = 1;
+		sysmsg ("WOW Armory down.", 3);
+	}
+	return $load;
+}
+
+function loadArmoryNames () {
+	#load names into memory $GLOBALS[armorynames]
+	#id, category, iid, name
+#		$GLOBALS[cfg][armory][names]
+	if (! $GLOBALS[armorynames][init]) {
+		$sql = mysql_query("SELECT category,iid,name FROM ".$GLOBALS[cfg][armory][names]." WHERE 1;");
+		while ($row = mysql_fetch_array($sql)) {
+			$GLOBALS[armorynames][$row[category]][$row[iid]] = $row[name];
+			$GLOBALS[armorynames][init] = true;
+		}
+	}
+}
+
+function showArmoryName ($category, $id) {
+	loadArmoryNames();
+	#show name, if nonexistant, value
+	$ret = $GLOBALS[armorynames][$category][$id];
+	if (empty($ret))
+		$ret = $id;
+	return $ret;
+}
+
+function genArmoryIlvl ($mychar) {
+	if (count($mychar->characterInfo->characterTab->items->item)) {
+		$count = 0; $total = 0;
+		foreach ($mychar->characterInfo->characterTab->items->item as $myitem) {
+			$count++;
+			$total += (integer) $myitem->attributes()->level;
+		}
+		return round($total/$count);
+	} else return 0;
+}
+
+function fetchArmoryCharacter ($charname) {
+	if (!isset($GLOBALS[armorycharupdatecount]))
+		$GLOBALS[armorycharupdatecount] = 0;
+
+	#name, timestamp, content, level, genderid, classid, raceid, ilevelavg
+	$mychar = "";
+	unset($char);
+	$sql = mysql_query("SELECT timestamp,ilevelavg,name,level,genderid,classid,raceid,factionid FROM ".
+					$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$charname."' ORDER BY timestamp ASC;");
+					#FIXME geht die suche noch?
+	$mychar[level] = null;
+	while ($row = mysql_fetch_array($sql)) {
+			$mychar[timestamp]	= $row[timestamp];
+			$mychar[ilevelavg]	= $row[ilevelavg];
+			$mychar[name]				= $row[name];
+			$mychar[level]			= $row[level];
+			$mychar[genderid]		= $row[genderid];
+			$mychar[classid]		= $row[classid];
+			$mychar[raceid]			= $row[raceid];
+			$mychar[factionid]	= $row[factionid];
+	}
+	#check if char is in db and accurate, if not, fetch online
+	if (! $mychar[level]) {
+		sysmsg ("Fetching nonexisting Char from Armory: ".$charname, 3);
+		$mychar[content] = fetchArmoryXML ("n", $charname);
+		$mychar[timestamp] = time();
+		$char = new SimpleXMLElement($mychar[content]);
+		$myilvl = genArmoryIlvl($char);
+		$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+					"name='".$char->characterInfo->character['name']."', ".
+					"timestamp='".$mychar[timestamp]."', ".
+					"content='".mysql_real_escape_string($mychar[content])."', ".
+					"level='".$char->characterInfo->character['level']."', ".
+					"genderid='".$char->characterInfo->character['genderId']."', ".
+					"classid='".$char->characterInfo->character['classId']."', ".
+					"raceid='".$char->characterInfo->character['raceId']."', ".
+					"factionid='".$char->characterInfo->character['factionId']."', ".
+					"ilevelavg='".$myilvl."';";
+		$mychar[ilevelavg] = $myilvl;
+		$mychar[name]				= (string) $char->characterInfo->character['name'];
+		$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
+		$mychar[level]			= (string) $char->characterInfo->character['level'];
+		$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
+		$mychar[classid]		= (string) $char->characterInfo->character['classId'];
+		$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
+		$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+		if (! empty($char->characterInfo->character['name']))
+			$sqlr = mysql_query($sql);
+	} else {
+		if ((($mychar[timestamp] + $GLOBALS[armorychartimeout])  < time()) 
+		AND ($GLOBALS[armorycharupdatecount] <= $GLOBALS[armorycharmaxupdate])) {
+			$GLOBALS[armorycharupdatecount]++;
+			$mychar[content] = fetchArmoryXML ("n", $charname);
+			if (strlen($mychar[content]) > 200) {
+				sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
+				$mychar[timestamp] = time();
+				$char = new SimpleXMLElement($mychar[content]);
+				$myilvl = genArmoryIlvl($char);
+				$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+							"timestamp='".$mychar[timestamp]."', ".
+							"content='".mysql_real_escape_string($mychar[content])."', ".
+							"level='".$char->characterInfo->character['level']."', ".
+							"genderid='".$char->characterInfo->character['genderId']."', ".
+							"classid='".$char->characterInfo->character['classId']."', ".
+							"raceid='".$char->characterInfo->character['raceId']."', ".
+							"factionid='".$char->characterInfo->character['factionId']."', ".
+							"ilevelavg='".$myilvl."' WHERE name='".$char->characterInfo->character['name']."';";
+				$sqlr = mysql_query($sql);
+				$mychar[ilevelavg] = $myilvl;
+				$mychar[name]				= (string) $char->characterInfo->character['name'];
+				$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
+				$mychar[level]			= (string) $char->characterInfo->character['level'];
+				$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
+				$mychar[classid]		= (string) $char->characterInfo->character['classId'];
+				$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
+				$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+			} else {
+				sysmsg ("Fetching data from Armory failed. Armory probably down. XML Length: ".strlen($mychar[content]), 3);
+			}
+		} else {
+			sysmsg ("Fetching data from Database for Char: ".$charname, 3);
+/*			$char = new SimpleXMLElement($mychar[content]);
+			$mychar[name]				= (string) $char->characterInfo->character['name'];
+			$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
+			$mychar[level]			= (string) $char->characterInfo->character['level'];
+			$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
+			$mychar[classid]		= (string) $char->characterInfo->character['classId'];
+			$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
+			$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+			*/
+		}
+	}
+
+	if (empty($mychar[level])) {
+		sysmsg ("ERROR fetching character info for ".$charname."!", 3);
+		return null;
+	} else {
+		return $mychar;
+	}
+}
+
+function genArmoryIlvlHtml ($ilvl, $text) {
+	$color = "";
+	if ($ilvl < 50)
+		$color = "#888888";
+	elseif ($ilvl < 100)
+		$color = "#998888";
+	elseif ($ilvl < 200)
+		$color = "#aa6666";
+	elseif ($ilvl < 220)
+		$color = "#cc4444";
+	elseif ($ilvl < 240)
+		$color = "#dd2222";
+	elseif ($ilvl < 250)
+		$color = "#ee1111";
+	elseif ($ilvl < 260)
+		$color = "#ff0000";
+	else
+		$color = "#48233e";
+	return "<span title='Itemlevel Durchschnitt: ".$ilvl."' style='color:".$color.
+					"; border-width:1px; border-style:solid; border-color:".$color.";'>".
+					$text."</span>";
+}
+
+function genArmoryClassClass ($ilvl) {
+	switch ($ilvl) {
+		case "1": $myclass = "inpWarrior"; break;
+		case "2": $myclass = "inpPaladin"; break;
+		case "3": $myclass = "inpHunter"; break;
+		case "4": $myclass = "inpRogue"; break;
+		case "5": $myclass = "inpPriest"; break;
+		case "6": $myclass = "inpDeathknight"; break;
+		case "7": $myclass = "inpShaman"; break;
+		case "8": $myclass = "inpMage"; break;
+		case "9": $myclass = "inpWarlock"; break;
+		case "11": $myclass = "inpDruid"; break;
+		default: $myclass = "";
+	}
+	return $myclass;
+}
 
 ?>

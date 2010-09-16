@@ -183,11 +183,44 @@ function openid_verify () {
         $openid = $response->getDisplayIdentifier();
         $esc_identity = escape($openid);
 
-				if ($_POST[mydo] == "verifyme") {
+				if (($_POST[mydo] == "verifyme") AND ($_POST[module] == "register")) {
 					$_SESSION[registred] = 1;
 					$GLOBALS[newopenid] = $esc_identity;
 				} else {
-					$_SESSION[loggedin] = 1;
+					$sql = "SELECT role FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$esc_identity."';";
+					$sqlr = mysql_query($sql);
+					$bool = false;
+					while ($row = mysql_fetch_array($sqlr))
+						if ($row[role] > 0)
+							$bool = true;
+
+					if ($bool)
+						$_SESSION[loggedin] = 1;
+					else {
+						$applicant = 0;
+						$sql = "SELECT nickname,timestamp,state,answer FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$esc_identity."';";
+						$sqlr = mysql_query($sql);
+						while ($row = mysql_fetch_array($sqlr)) {
+							$applicant = 1;
+							$appname = $row[nickname];
+							$appanswer = $row[answer];
+							$appstate = $row[state];
+							$appage = getNiceAge($row[timestamp]);
+						}
+
+						if ($applicant) {
+							$atmp = file_get_contents("join/waiting.html");
+							$atmp = str_replace("MYNICKREPLACE",$appname, $atmp);	
+							$atmp = str_replace("MYANSWERREPLACE",$appanswer, $atmp);	
+							$atmp = str_replace("MYSTATEREPLACE",$appstate, $atmp);	
+							$atmp = str_replace("MYAGEREPLACE",$appage, $atmp);	
+							$GLOBALS[html] .= $atmp;
+						} else {
+							sysmsg ("Unauthorized access / Banned! ".$esc_identity, 1);
+						}
+						return false;
+					}
+				
 				}
 
 				$GLOBALS[myreturn][loggedin] = 1;
