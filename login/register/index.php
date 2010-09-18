@@ -23,7 +23,7 @@ if ($_SESSION[loggedin] == 1) {
 				" (openid,nickname,email,surname,forename,dob,mob,yob,sex,icq,msn,skype,accurate,role) VALUES".
 				" ('".$tmp[openid]."', '".$tmp[nickname]."', '".$tmp[email]."', '".$tmp[surname]."', '".$tmp[forename].
 				"', '".$tmp[dob]."', '".$tmp[mob]."', '".$tmp[yob]."', '".$tmp[sex]."', '".$tmp[icq]."', '".$tmp[msn].
-				"', '".$tmp[skype]."', '1', '5');";
+				"', '".$tmp[skype]."', '0', '5');";
 			$sqlq = mysql_query($sql);
 
 			#oom xmpp
@@ -34,7 +34,7 @@ if ($_SESSION[loggedin] == 1) {
 			$tmpsex = 0;
 			if ($tmp[sex] == "M")
 				$tmpsex = 1;
-			elseif ($tmp[sex] == "W")
+			elseif ($tmp[sex] == "F")
 				$tmpsex = 2;
 			$sql = "INSERT INTO smf_members".
 				" (openid_uri,member_name,email_address,birthdate,gender,icq,msn,real_name,lngfile) VALUES".

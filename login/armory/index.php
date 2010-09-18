@@ -73,20 +73,42 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<br />";
 		}
 
-		$GLOBALS[html] .= "<h3>Charakter von ".$GLOBALS[users][byuri][$_POST[user]][name]."</h3>";
+		$GLOBALS[html] .= "<h3>Charakter von <a href='?module=".$_POST[module]."&mydo=showdetail&user=".
+											$_POST[user]."'>".$GLOBALS[users][byuri][$_POST[user]][name]."</a></h3>";
 		$GLOBALS[html] .= "<table>";
-		$GLOBALS[html] .= "<tr><th>Klasse</th><th>Name</th><th>Level</th><th>Geschlecht</th><th>Rasse</th><th>Itemlevel Durchschnitt</th></tr>";
+		$GLOBALS[html] .= "<tr><th style='width:16px;'>&nbsp;</th><th>Name</th><th>Level</th><th>Geschlecht</th>".
+											"<th>Rasse</th><th>Itemlevel</th><th>PVP Kills</th><th>Berufe</th><th>Achievments</th></tr>";
 		if ($GLOBALS[users][byuri][$_POST[user]][armorychars])
 		foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mycharname) {
 			if ($char = fetchArmoryCharacter($mycharname)) {
 				$GLOBALS[html] .= "<tr class='".genArmoryClassClass($char[classid])."'>";
 				$GLOBALS[html] .= "<td>&nbsp;</td>";
-				$GLOBALS[html] .= "<td>".$char[name]."</td>";
-				$GLOBALS[html] .= "<td>".$char[level]."</td>";
-				$GLOBALS[html] .= "<td>".showArmoryName("gender", $char[genderid])."</td>";
-#				$GLOBALS[html] .= "<td>".showArmoryName("class", $char[classid])."</td>";
-				$GLOBALS[html] .= "<td>".showArmoryName("race", $char[raceid])."</td>";
-				$GLOBALS[html] .= "<td>".$char[ilevelavg]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".$char[name]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".$char[level]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".showArmoryName("gender", $char[genderid])."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".showArmoryName("race", $char[raceid])."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".$char[ilevelavg]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>".$char[pvpkills]."</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>";
+					$bool = true; $btmp = "";
+					foreach ($char[skills] as $skill) {
+						foreach (array_keys($skill) as $id) {
+							if ($bool) $bool = false;
+							else $btmp = "<br />";
+							$GLOBALS[html] .= $btmp.showArmoryName("skill", $id).": ".$skill[$id];
+						}
+					}
+				$GLOBALS[html] .= "</td>";
+				$GLOBALS[html] .= "<td style='vertical-align:top;'>";
+					$bool = true; $btmp = "";
+					foreach ($char[achievments] as $achievments) {
+						foreach (array_keys($achievments) as $id) {
+							if ($bool) $bool = false;
+							else $btmp = ", ";
+							$GLOBALS[html] .= $btmp.showArmoryName("achievment", $id).": ".$achievments[$id];
+						}
+					}
+				$GLOBALS[html] .= "</td>";
 				$GLOBALS[html] .= "</tr>";
 			} else {
 				$GLOBALS[html] .= "Charakter ".$mycharname." wurde in der Armory nicht gefunden.<br />";

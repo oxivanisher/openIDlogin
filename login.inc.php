@@ -219,20 +219,22 @@ switch ($_POST[job]) {
 							if (($file != ".") AND ($file != "..") AND ($file != "Auth"))
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
-										if (! $MODULE[show])
-											continue;
-										elseif ($MODULE[dev]) {
-											$nav[dev][$file][module] = $file;
-											$nav[dev][$file][name] = $MODULE[name];
-											$nav[dev][$file][comment] = $MODULE[comment];
-										} elseif ($MODULE[admin]) {
-											$nav[admin][$file][module] = $file;
-											$nav[admin][$file][name] = $MODULE[name];
-											$nav[admin][$file][comment] = $MODULE[comment];
-										} else {
-											$nav[user][$file][module] = $file;
-											$nav[user][$file][name] = $MODULE[name];
-											$nav[user][$file][comment] = $MODULE[comment];
+										if ($MODULE[role] <= $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]) {
+											if (! $MODULE[show])
+												continue;
+											elseif ($MODULE[dev]) {
+												$nav[dev][$file][module] = $file;
+												$nav[dev][$file][name] = $MODULE[name];
+												$nav[dev][$file][comment] = $MODULE[comment];
+											} elseif ($MODULE[admin]) {
+												$nav[admin][$file][module] = $file;
+												$nav[admin][$file][name] = $MODULE[name];
+												$nav[admin][$file][comment] = $MODULE[comment];
+											} else {
+												$nav[user][$file][module] = $file;
+												$nav[user][$file][name] = $MODULE[name];
+												$nav[user][$file][comment] = $MODULE[comment];
+											}
 										}
 									}
 						}

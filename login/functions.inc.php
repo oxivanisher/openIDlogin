@@ -812,7 +812,7 @@ function informUsers ($msg, $role) {
 	$alertsql = mysql_query("SELECT openid FROM ".$GLOBALS[cfg][userprofiletable]." WHERE role>='".$role."';");
 	while ($alertrow = mysql_fetch_array($alertsql)) {
 		$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ".
-						"('".$_SESSION[openid_identifier]."', '".$alertrow[openid]."', '".time()."', 'SYSTEM ALERT', 'ALERT:\n".$msg."', 1, 1);");
+						"('".$_SESSION[openid_identifier]."', '".$alertrow[openid]."', '".time()."', 'SYSTEM MESSAGE', '".$msg."', 1, 1);");
 	}
 }
 
@@ -941,7 +941,8 @@ function checkProfile ($myOpenID = '') {
 		else
 			$tmpNeedUpdate = 1;
 	}
-	if ($tmpRegistred == 0) {
+	// this should never be needed again ... hopefully!
+/*	if ($tmpRegistred == 0) {
 		#get infos from smf
 		$sql = "SELECT email_address,icq,msn,usertitle,avatar,signature,website_url,personal_text ".
 						"FROM smf_members WHERE openid_uri='".$myOpenID."';";
@@ -965,7 +966,7 @@ function checkProfile ($myOpenID = '') {
 		$sqlq = mysql_query($sql);
 
 		$tmpNeedUpdate = 1;
-	}
+	} */
 
 	if ($tmpNeedUpdate)
 		return 1;
@@ -1030,6 +1031,27 @@ function genArmoryIlvl ($mychar) {
 	} else return 0;
 }
 
+function genArmorySkills ($mychar) {
+	if (count($mychar->characterInfo->characterTab->professions->skill)) {
+		$tmp = array();
+		foreach ($mychar->characterInfo->characterTab->professions->skill as $myskill) {
+			array_push($tmp, array((integer) $myskill->attributes()->id => (integer) $myskill->attributes()->value));
+		}
+		return $tmp;
+	} else return null;
+}
+
+function genArmoryAchievments ($mychar) {
+	if (count($mychar->characterInfo->summary->category)) {
+		$tmp = array();
+		foreach ($mychar->characterInfo->summary->category as $myachievment) {
+			array_push($tmp, array((integer) $myachievment->attributes()->id => (integer) $myachievment->c->attributes()->earnedPoints));
+		}
+		return $tmp;
+	} else return null;
+}
+
+
 function fetchArmoryCharacter ($charname) {
 	if (!isset($GLOBALS[armorycharupdatecount]))
 		$GLOBALS[armorycharupdatecount] = 0;
@@ -1037,7 +1059,7 @@ function fetchArmoryCharacter ($charname) {
 	#name, timestamp, content, level, genderid, classid, raceid, ilevelavg
 	$mychar = "";
 	unset($char);
-	$sql = mysql_query("SELECT timestamp,ilevelavg,name,level,genderid,classid,raceid,factionid FROM ".
+	$sql = mysql_query("SELECT timestamp,ilevelavg,name,level,genderid,classid,raceid,factionid,pvpkills,skills,achievments FROM ".
 					$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$charname."' ORDER BY timestamp ASC;");
 					#FIXME geht die suche noch?
 	$mychar[level] = null;
@@ -1050,6 +1072,9 @@ function fetchArmoryCharacter ($charname) {
 			$mychar[classid]		= $row[classid];
 			$mychar[raceid]			= $row[raceid];
 			$mychar[factionid]	= $row[factionid];
+			$mychar[pvpkills]		= $row[pvpkills];
+			$mychar[skills]			= unserialize($row[skills]);
+			$mychar[achievments]	= unserialize($row[achievments]);
 	}
 	#check if char is in db and accurate, if not, fetch online
 	if (! $mychar[level]) {
@@ -1058,6 +1083,8 @@ function fetchArmoryCharacter ($charname) {
 		$mychar[timestamp] = time();
 		$char = new SimpleXMLElement($mychar[content]);
 		$myilvl = genArmoryIlvl($char);
+		$myskills = genArmorySkills($char);
+		$myachievments = genArmoryAchievments($char);
 		$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
 					"name='".$char->characterInfo->character['name']."', ".
 					"timestamp='".$mychar[timestamp]."', ".
@@ -1067,7 +1094,10 @@ function fetchArmoryCharacter ($charname) {
 					"classid='".$char->characterInfo->character['classId']."', ".
 					"raceid='".$char->characterInfo->character['raceId']."', ".
 					"factionid='".$char->characterInfo->character['factionId']."', ".
-					"ilevelavg='".$myilvl."';";
+					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
+					"skills='".$myskills."', ".
+					"achievments='".serialize($myachievments)."', ".
+					"ilevelavg='".serialize($myilvl)."';";
 		$mychar[ilevelavg] = $myilvl;
 		$mychar[name]				= (string) $char->characterInfo->character['name'];
 		$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
@@ -1076,50 +1106,58 @@ function fetchArmoryCharacter ($charname) {
 		$mychar[classid]		= (string) $char->characterInfo->character['classId'];
 		$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
 		$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+		$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
+		$mychar[skills]			= $myskills;
+		$mychar[achievments]	= $myachievments;
 		if (! empty($char->characterInfo->character['name']))
 			$sqlr = mysql_query($sql);
 	} else {
 		if ((($mychar[timestamp] + $GLOBALS[armorychartimeout])  < time()) 
-		AND ($GLOBALS[armorycharupdatecount] <= $GLOBALS[armorycharmaxupdate])) {
-			$GLOBALS[armorycharupdatecount]++;
+		AND ($GLOBALS[armorycharupdatecount] < $GLOBALS[armorycharmaxupdate])) {
 			$mychar[content] = fetchArmoryXML ("n", $charname);
-			if (strlen($mychar[content]) > 200) {
-				sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
-				$mychar[timestamp] = time();
-				$char = new SimpleXMLElement($mychar[content]);
-				$myilvl = genArmoryIlvl($char);
-				$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
-							"timestamp='".$mychar[timestamp]."', ".
-							"content='".mysql_real_escape_string($mychar[content])."', ".
-							"level='".$char->characterInfo->character['level']."', ".
-							"genderid='".$char->characterInfo->character['genderId']."', ".
-							"classid='".$char->characterInfo->character['classId']."', ".
-							"raceid='".$char->characterInfo->character['raceId']."', ".
-							"factionid='".$char->characterInfo->character['factionId']."', ".
-							"ilevelavg='".$myilvl."' WHERE name='".$char->characterInfo->character['name']."';";
-				$sqlr = mysql_query($sql);
-				$mychar[ilevelavg] = $myilvl;
-				$mychar[name]				= (string) $char->characterInfo->character['name'];
-				$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
-				$mychar[level]			= (string) $char->characterInfo->character['level'];
-				$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
-				$mychar[classid]		= (string) $char->characterInfo->character['classId'];
-				$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
-				$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+			if (! $GLOBALS[armorydown]) {
+				if (strpos($mychar[content], '<character ')) {
+					$GLOBALS[armorycharupdatecount]++;
+					sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
+					$mychar[timestamp] = time();
+					$char = new SimpleXMLElement($mychar[content]);
+					$myilvl = genArmoryIlvl($char);
+					$myskills = genArmorySkills($char);
+					$myachievments = genArmoryAchievments($char);
+					$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+								"timestamp='".$mychar[timestamp]."', ".
+								"content='".mysql_real_escape_string($mychar[content])."', ".
+								"level='".$char->characterInfo->character['level']."', ".
+								"genderid='".$char->characterInfo->character['genderId']."', ".
+								"classid='".$char->characterInfo->character['classId']."', ".
+								"raceid='".$char->characterInfo->character['raceId']."', ".
+								"factionid='".$char->characterInfo->character['factionId']."', ".
+								"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
+								"skills='".serialize($myskills)."', ".
+								"achievments='".serialize($myachievments)."', ".
+								"ilevelavg='".$myilvl."' WHERE name='".$char->characterInfo->character['name']."';";
+					$sqlr = mysql_query($sql);
+					$mychar[ilevelavg] = $myilvl;
+					$mychar[name]				= (string) $char->characterInfo->character['name'];
+					$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
+					$mychar[level]			= (string) $char->characterInfo->character['level'];
+					$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
+					$mychar[classid]		= (string) $char->characterInfo->character['classId'];
+					$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
+					$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+					$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
+					$mychar[skills]			= $myskills;
+					$mychar[achievments]	= $myachievments;
+				} else {
+					$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET timestamp='".time().
+									"' WHERE name='".$charname."';";
+					$sqlr = mysql_query($sql);
+				}
 			} else {
 				sysmsg ("Fetching data from Armory failed. Armory probably down. XML Length: ".strlen($mychar[content]), 3);
 			}
 		} else {
 			sysmsg ("Fetching data from Database for Char: ".$charname, 3);
-/*			$char = new SimpleXMLElement($mychar[content]);
-			$mychar[name]				= (string) $char->characterInfo->character['name'];
-			$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
-			$mychar[level]			= (string) $char->characterInfo->character['level'];
-			$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
-			$mychar[classid]		= (string) $char->characterInfo->character['classId'];
-			$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
-			$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
-			*/
 		}
 	}
 

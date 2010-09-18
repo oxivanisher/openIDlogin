@@ -34,25 +34,31 @@ if ($_GET['name']) {
     echo $char[guildname] . ';';
     echo $char[genderid] . '';
 } else {
-	$sql = "SELECT name FROM ".$GLOBALS[cfg][armory][charcachetable].
+	$sql = "SELECT name,timestamp FROM ".$GLOBALS[cfg][armory][charcachetable].
 					" WHERE timestamp<".(time() - $GLOBALS[armorychartimeout]).
-					" ORDER BY timestamp ASC;";
+					" ORDER BY timestamp ASC, level DESC, name ASC;";
 	$sqlr = mysql_query($sql);
 
 	#command line char update
-	$count = 0;
+	$countt = 0;
+	$countu = 0;
 	while ($row = mysql_fetch_array($sqlr)) {
-		if ($GLOBALS[armorycharupdatecount]	<= $GLOBALS[armorychardaemonmaxupdate]) {
+		$countt++;
+		if ($GLOBALS[armorycharupdatecount]	< $GLOBALS[armorycharmaxupdate]) {
 			$char = fetchArmoryCharacter($row[name]);
-			sleep(3);
+			sleep(1);
 			if (! $GLOBALS[armorydown]) {
-				$GLOBALS[armorycharupdatecount]++;
+				$countu++;
 				echo "Updating ".$row[name]."\n";
 			}
 		}
 	}
-#	if ($GLOBALS[armorydown])
-#		echo "Armory down.\n";
+	if ($countt OR $countu) {
+		echo "total chars updated: ".$countu."\n";
+		echo "total to update: ".$countt."\n";
+	}
+	if ($GLOBALS[armorydown])
+		echo "Armory down.\n";
 }
 
 ?>

@@ -57,8 +57,7 @@ if ($_SESSION[loggedin] == 1) {
 				#date not working
 				$sql = "UPDATE smf_members SET member_name='".$_POST[nickname]."', real_name='".$_POST[nickname].
 								"', email_address='".$_POST[email]."', birthdate='".date($_POST[yob]."-".$_POST[mob]."-".$_POST[dob]).
-								"', gender='".$tmpGender."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', skype='".$_POST[skype]."', Jabber='".
-								$_POST[jid].
+								"', gender='".$tmpGender."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', Jabber='".$_POST[jid].
 								"', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
 								"', signature='".$_POST[signature]."', website_url='".$_POST[website]."', usertitle='".$_POST[motto].
 								"' WHERE openid_uri='".$_SESSION[openid_identifier]."';";
