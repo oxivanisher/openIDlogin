@@ -1,10 +1,10 @@
 <?php
 
-  $MODULE[show]     = 0;
-	$MODULE[admin]		= 1;
-	$MODULE[dev]			= 1;
-	$MODULE[role]     = 2;
-	$MODULE[name]			= "Module Skeleton";
-	$MODULE[comment]	= "Comment for the module.";
+  $MODULE[show]     = 1;
+	$MODULE[admin]		= 0;
+	$MODULE[dev]			= 0;
+	$MODULE[role]     = 3;
+	$MODULE[name]			= "Top 10";
+	$MODULE[comment]	= "Auf dieser Seite Sieht ihr die Top 10 Charakter in den Bereichen<br />PVP, Beruffe, Achievments und Item Level Durchschnitt.";
 
 ?>
