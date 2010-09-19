@@ -166,7 +166,7 @@ if ($_SESSION[loggedin] == 1) {
 	session_destroy();
 	session_write_close();
 
-	$GLOBALS[html] .= file_get_contents("join/success.html");
+	$GLOBALS[html] .= templGetFile("success.html");
 
 } elseif ($_SESSION[registerme] == 1) {
 	# stage 2 of openid register
@@ -175,6 +175,7 @@ if ($_SESSION[loggedin] == 1) {
 	fetchUsers();
 
 #FIXME enable me!
+
 	foreach ($GLOBALS[users][byuri] as $myUser) {
 		if ($myUser[uri] == $GLOBALS[newopenid]) {
 			sysmsg ("Registration: OpenID already used by ".$myUser[name], 1);
@@ -190,7 +191,9 @@ if ($_SESSION[loggedin] == 1) {
 		$_SESSION[tosave] = 1;
 		$_SESSION[newopenid] = $GLOBALS[newopenid];
 
-		$GLOBALS[html] .= str_replace("MYOPENIDREPLACE",$GLOBALS[newopenid], file_get_contents("join/register.html"));
+		$cont = templGetFile("register.html");
+		$cont = templReplText($cont, "OPENID", $GLOBALS[newopenid]);
+		$GLOBALS[html] .= $cont;
 	} else {
 		$GLOBALS[redirect] = 1;
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." Verification failed on registration.", 1);
@@ -211,7 +214,7 @@ if ($_SESSION[loggedin] == 1) {
 } else {
 	# show the openid formular (default view)
 
-	$GLOBALS[html] .= str_replace("MYMODULEREPLACE",$GLOBALS[newopenid], file_get_contents("join/welcome.html"));
+	$GLOBALS[html] .= templGetFile("welcome.html");
 }
 
 

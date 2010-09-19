@@ -3,6 +3,7 @@
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 	# module functions
+	/*
 	if ($_POST[mydo] == "savechars") {
 		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
 			if ($_POST[chars]) {
@@ -24,6 +25,7 @@ if ($_SESSION[loggedin] == 1) {
 			$sqlr = mysql_query($sql);
 		}
 	}
+*/
 
 	#init stuff
 	fetchUsers();
@@ -31,7 +33,7 @@ if ($_SESSION[loggedin] == 1) {
 	#show character detail and on own profile input field for characters
 	if ($_POST[mydo] == "showusercharlist") {
 		$GLOBALS[html] .= "<hr />";
-		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
+/*		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
 			#change user rights form
 			$tmpnames = ""; $tbool = true;; $tmp = "";
 			if(! empty($GLOBALS[users][byuri][$_POST[user]][armorychars])) {
@@ -53,7 +55,7 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "</form><hr />";
 			$GLOBALS[html] .= "<br />";
 		}
-
+*/
 		$GLOBALS[html] .= "<h3>Charakter von <a href='?module=".$_POST[module]."&mydo=showusercharlist&user=".
 											$_POST[user]."'>".$GLOBALS[users][byuri][$_POST[user]][name]."</a></h3>";
 		$GLOBALS[html] .= "<table>";

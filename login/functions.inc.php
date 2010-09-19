@@ -1029,7 +1029,9 @@ function genArmoryIlvl ($mychar) {
 	if (count($mychar->characterInfo->characterTab->items->item)) {
 		$count = 0; $total = 0;
 		foreach ($mychar->characterInfo->characterTab->items->item as $myitem) {
-			if (($myitem->attributes()->slot != 3) AND ($myitem->attributes()->slot != 18)) {
+			if (($myitem->attributes()->slot != 3) AND
+					($myitem->attributes()->slot != 18) AND
+					($myitem->attributes()->slot != -1)) {
 				$count++;
 				$total += (integer) $myitem->attributes()->level;
 			}
@@ -1184,13 +1186,13 @@ function genArmoryIlvlHtml ($ilvl, $text) {
 		$color = "#998888";
 	elseif ($ilvl < 200)
 		$color = "#aa6666";
-	elseif ($ilvl < 220)
-		$color = "#cc4444";
 	elseif ($ilvl < 240)
-		$color = "#dd2222";
+		$color = "#cc4444";
 	elseif ($ilvl < 250)
-		$color = "#ee1111";
+		$color = "#dd2222";
 	elseif ($ilvl < 260)
+		$color = "#ee1111";
+	elseif ($ilvl < 270)
 		$color = "#ff0000";
 	else
 		$color = "#48233e";

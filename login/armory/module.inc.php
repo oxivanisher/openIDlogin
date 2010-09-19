@@ -5,6 +5,6 @@
 	$MODULE[dev]			= 0;
 	$MODULE[role]			= 2;
 	$MODULE[name]			= "WOW Armory";
-	$MODULE[comment]	= "TESTMODUL! Here goes the XML Magic.";
+	$MODULE[comment]	= "Das Armory Modul f&uuml;r die Gilde.";
 
 ?>

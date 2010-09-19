@@ -209,11 +209,11 @@ function openid_verify () {
 						}
 
 						if ($applicant) {
-							$atmp = file_get_contents("join/waiting.html");
-							$atmp = str_replace("MYNICKREPLACE",$appname, $atmp);	
-							$atmp = str_replace("MYANSWERREPLACE",$appanswer, $atmp);	
-							$atmp = str_replace("MYSTATEREPLACE",$appstate, $atmp);	
-							$atmp = str_replace("MYAGEREPLACE",$appage, $atmp);	
+							$atmp = templGetFile("waiting.html");
+							$atmp = templReplText($atmp, "NICK", $appname);	
+							$atmp = templReplText($atmp, "ANSWER", $appanswer);	
+							$atmp = templReplText($atmp, "STATE", $appstate);	
+							$atmp = templReplText($atmp, "AGE", $appage);	
 							$GLOBALS[html] .= $atmp;
 						} else {
 							sysmsg ("Unauthorized access / Banned! ".$esc_identity, 1);
