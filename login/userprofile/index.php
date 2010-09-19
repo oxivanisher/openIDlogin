@@ -44,13 +44,28 @@ if ($_SESSION[loggedin] == 1) {
 				(! empty($_POST[surname])) AND
 				(! empty($_POST[forename]))) {
 
+				#armory chars setup
+				if ($_POST[chars]) {
+					$tnames = explode(",", $_POST[chars]);
+					$nnames = array();
+					$mybool = false;
+					foreach ($tnames as $tname) {
+						array_push($nnames, ucfirst(trim($tname)));
+						$mybool = true;
+					}
+					if ($mybool) $rnames = serialize(array_unique($nnames));
+					else $rnames = "";
+				} else {
+					$rnames = "";
+				}
+				
 				#update oom profile db
 				$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET nickname='".$_POST[nickname]."', email='".$_POST[email].
 								"', surname='".$_POST[surname]."', forename='".$_POST[forename]."', dob='".$_POST[dob].
 								"', mob='".$_POST[mob]."', yob='".$_POST[yob]."', sex='".$_POST[sex]."', icq='".$_POST[icq].
 								"', msn='".$_POST[msn]."', skype='".$_POST[skype]."', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
 								"', signature='".$_POST[signature]."', website='".$_POST[website]."', motto='".$_POST[motto].
-								"', accurate='1' WHERE openid='".$_SESSION[openid_identifier]."';";
+								"', armorychars='".$rnames."', accurate='1' WHERE openid='".$_SESSION[openid_identifier]."';";
 				$sqlq = mysql_query($sql);
 				if ($sqlq) {
 					$GLOBALS[html] .= "- ";
@@ -193,27 +208,7 @@ if ($_SESSION[loggedin] == 1) {
 				sysmsg ("XMPP Setting updated!", 1);
 				$GLOBALS[html] .= "<br />";
 				
-				#armory chars setup
-				if ($_POST[chars]) {
-					$tnames = explode(",", $_POST[chars]);
-					$nnames = array();
-					$mybool = false;
-					foreach ($tnames as $tname) {
-						array_push($nnames, ucfirst(trim($tname)));
-						$mybool = true;
-					}
-					if ($mybool) $rnames = serialize(array_unique($nnames));
-					else $rnames = "";
-				} else {
-					$rnames = "";
-				}
-				$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET armorychars='".$rnames.
-				        "' WHERE openid='".$_SESSION[openid_identifier]."';";
-				$sqlr = mysql_query($sql);
-				$GLOBALS[html] .= "- ";
-				sysmsg ("WOW Chars updated!", 1);
-				$GLOBALS[html] .= "<br />";
-				
+
 		} else {
 			$GLOBALS[html] .= "<h2>Profile NICHT aktualisiert. Wichtige Felder wurden nicht ausgef&uuml;llt!</h2>";
 		}

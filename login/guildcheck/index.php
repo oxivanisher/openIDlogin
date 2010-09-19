@@ -12,7 +12,7 @@ if ($_SESSION[loggedin] == 1) {
 		#change user rights form	
 		$GLOBALS[html] .= "<hr />";
 		$GLOBALS[html] .= "<h2>Analyse Resultat:</h2>";
-		$content = stripslashes ($_POST[content]);
+		$content = stripslashes ( $_POST[content]);
 		if ($content) {
 			$charxml = new SimpleXMLElement($content);
 			$maina = array();
@@ -46,16 +46,16 @@ if ($_SESSION[loggedin] == 1) {
 					if ($value == $mychar) {
 						if ($bool) $bool = false;
 						else $tmpb = ", ";
-						$tmptext .= $tmpb.htmlspecialchars(ucfirst($key));
+						$tmptext .= $tmpb.ucfirst($key);
 						unset($alta[$key]);
 					}
 				}
 				if ($bool) {
 					$co++;
-					$reto .= utf8_decode(ucfirst($mychar)).", ";
+					$reto .= ucfirst($mychar).", ";
 				} else {
 					$cw++;
-					$retw .= "&nbsp;&nbsp;".utf8_decode(ucfirst($mychar)).": ".$tmptext."<br />";
+					$retw .= "&nbsp;&nbsp;".ucfirst($mychar).": ".$tmptext."<br />";
 				}
 			}
 			$GLOBALS[html] .= "<h2>Mains without Twinks (".$co."):</h2><br />".$reto."<br /><br />";
@@ -72,12 +72,12 @@ if ($_SESSION[loggedin] == 1) {
 			$tmpa = array_unique($tmpa);
 			foreach ($tmpa as $main) {
 				$bool = true; $tmp = "";
-				$GLOBALS[html] .= "&nbsp;&nbsp;".utf8_decode(ucfirst($main)).": ";
+				$GLOBALS[html] .= "&nbsp;&nbsp;".ucfirst($main).": ";
 				foreach ($alta as $key => $value) {
 					if ($value == $main) {
 						if ($bool) $bool = false;
 						else $tmp = ", ";
-						$GLOBALS[html] .= $tmp.utf8_decode(ucfirst($key));
+						$GLOBALS[html] .= $tmp.ucfirst($key);
 						unset($alta[$key]);
 					}
 				}
@@ -92,7 +92,7 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "2) Im WOW '/exportguild' ausf&uuml;hren.<br />";
 		$GLOBALS[html] .= "3) Den Text aus dem Fenster im WOW in das Textfeld unten einf&uuml;gen.<br />";
 		$GLOBALS[html] .= "4) Submit dr&uuml;cken.<br /><br />";
-		$GLOBALS[html] .= "<form action='?' method='post'>";
+		$GLOBALS[html] .= "<form action='?' method='post' accept-charset='UTF-8'>";
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."'>";
 		$GLOBALS[html] .= "<input type='hidden' name='mydo' value='analyze'>";
 		$GLOBALS[html] .= "<textarea name='content' cols='80' rows='10'></textarea><br />";
