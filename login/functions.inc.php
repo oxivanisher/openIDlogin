@@ -1271,4 +1271,25 @@ function genArmoryItemHtml ($id) {
 
 	return $ret;
 }
+
+function templGetFile ($filename) {
+	return file_get_contents($GLOBALS[cfg][moduledir]."/".$_POST[module]."/html/".$filename);
+}
+
+function templReplText ($content, $search, $replace) {
+	return str_replace("MY".$search."REPLACE", $replace, $content);
+}
+
+function templGenDropdown ($name, $from, $to, $selected) {
+	$dd = "<select name='".$name."'>";
+	for ($i = $from; $i <= $to; $i++) {
+  	if ($selected == $i)
+    	$mytmp = " selected";
+	  else
+  	  $mytmp = "";
+ 		$dd .= "<option".$mytmp.">".$i."</option>\n";
+	}
+	$dd .= "</select>\n";
+	return $dd;
+}
 ?>

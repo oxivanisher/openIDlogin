@@ -165,75 +165,30 @@ if ($_SESSION[loggedin] == 1) {
 			applyProfile ($_SESSION[openid_identifier], $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]);
 		}
 		$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
-		$GLOBALS[html] .= "<table>";
-		$GLOBALS[html] .= "<form action='?' method='POST'>";
-		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='updateprofile' />";
 		while ($row = mysql_fetch_array($sql)) {
-      $dobDropdown  = 'Tag ';
-      $dobDropdown .= '<select name="dob">';
-      for ($i = 1; $i <= 31; $i++) {
-				if ($row[dob] == $i)
-					$mytmp = " selected";
-				else
-					$mytmp = "";
-        $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
-			}
-      $dobDropdown .= '</select>';
-
- 			$dobDropdown .= ' Monat ';
-      $dobDropdown .= '<select name="mob">';
-      for ($i = 1; $i <= 12; $i++) {
- 				if ($row[mob] == $i)
-					$mytmp = " selected";
-				else
-					$mytmp = "";
-       $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
-			}
-      $dobDropdown .= '</select>';
-
-      $dobDropdown .= ' Jahr ';
-      $dobDropdown .= '<select name="yob">';
-      for ($i = 2000; $i >= 1950; $i--) {
- 				if ($row[yob] == $i)
-					$mytmp = " selected";
-				else
-					$mytmp = "";
-       $dobDropdown .= '<option'.$mytmp.'>'.$i.'</option>';
-			}
-      $dobDropdown .= '</select>';
-
-
-			#render update form
-			$GLOBALS[html] .= "<tr><td>Nickname *</td><td><input type='text' name='nickname' value='".$row[nickname]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Vorname *</td><td><input type='text' name='forename' value='".$row[forename]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Zuname *</td><td><input type='text' name='surname' value='".$row[surname]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Email *</td><td><input type='text' name='email' value='".$row[email]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>ICQ#</td><td><input type='text' name='icq' value='".$row[icq]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>MSN</td><td><input type='text' name='msn' value='".$row[msn]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Skype</td><td><input type='text' name='skype' value='".$row[skype]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Usertitle</td><td><input type='text' name='usertitle' value='".$row[usertitle]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Avatar</td><td><input type='text' name='avatar' value='".$row[avatar]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Website</td><td><input type='text' name='website' value='".$row[website]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Motto</td><td><input type='text' name='motto' value='".$row[motto]."' size='20' /></td></tr>";
-			$GLOBALS[html] .= "<tr><td>Geburtsdatum *</td><td>".$dobDropdown."</td></tr>";
-			$GLOBALS[html] .= "<tr><td valign='top'>Signatur</td><td><textarea name='signature' cols='50' rows='5'>".
-												$row[signature]."</textarea></td></tr>";
+			$cont = templGetFile("form.html");
+			$cont = templReplText($cont, "DOB", templGenDropdown("dob", 1, 31, $row[dob]));
+			$cont = templReplText($cont, "MOB", templGenDropdown("mob", 1, 12, $row[mob]));
+			$cont = templReplText($cont, "YOB", templGenDropdown("yob", 1930, 2000, $row[yob]));
+			$cont = templReplText($cont, "MODULE", $_POST[module]);
+			$cont = templReplText($cont, "MYJOB", "updateprofile");
+			$cont = templReplText($cont, "SIGNATURE", $row[signature]);
+			$cont = templReplText($cont, "RANKIMG", $GLOBALS[cfg][profile][$row[role]][icon]);
+			$cont = templReplText($cont, "RANKNAME", $GLOBALS[cfg][profile][$row[role]][name]);
+			$cont = templReplText($cont, "NICK", $_POST[nickname]);
+			$cont = templReplText($cont, "FORENAME", $row[forename]);
+			$cont = templReplText($cont, "SURNAME", $row[surname]);
+			$cont = templReplText($cont, "EMAIL", $row[email]);
+			$cont = templReplText($cont, "ICQ", $row[icq]);
+			$cont = templReplText($cont, "MSN", $row[msn]);
+			$cont = templReplText($cont, "SKYPE", $row[skype]);
+			$cont = templReplText($cont, "USERTITLE", $row[usertitle]);
+			$cont = templReplText($cont, "AVATAR", $row[avatar]);
+			$cont = templReplText($cont, "WEBSITE", $row[website]);
+			$cont = templReplText($cont, "MOTTO", $row[motto]);
 			#FIXME jid is missing
-			$GLOBALS[html] .= "<tr><td colspan='2'>&nbsp;</td></tr>";
-
-			$GLOBALS[html] .= "<tr><td>Rolle</td><td><img src='".$GLOBALS[cfg][profile][$row[role]][icon].
-												"' /> (".$GLOBALS[cfg][profile][$row[role]][name].")</td></tr>";
-
 		}
-		$GLOBALS[html] .= "<tr><td>&nbsp;</td></tr>";
-		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td>Felder mit * m&uuml;ssen ausgef&uuml;llt werden.</td></tr>";
-		$GLOBALS[html] .= "<tr><td>&nbsp;</td></tr>";
-		$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /> ".
-											"<input type='reset' name='reset' value='reset' /></td></tr>";
-		$GLOBALS[html] .= "</table>";
-
-		$GLOBALS[html] .= "<br /><br /><a href='?mydo=reloadrole&module=userprofile'>&gt; Benutzerberechtigungen neu laden</a>";
+		$GLOBALS[html] .= $cont;
 
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {
