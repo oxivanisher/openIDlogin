@@ -5,7 +5,7 @@ if ($_SESSION[loggedin] == 1) {
 	updateTimestamp($_SESSION[openid_identifier]);
 
 	#check for officer or higher
-	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 7) {
+	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 6) {
 		sysmsg ("You are allowed to use this Module", 2);
 		if ($_POST[mydo] == "approve") {
 			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
@@ -49,8 +49,7 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
 			#show deny message
-			informUsers ("User ".$_POST[applicant]." denied to the guild.", "7");
-
+			informUsers ("Benutzer ".$_POST[applicant]." wurde abgewiesen.", "6");
 		}
 
 		if ($_POST[mydo] == "showapplicant") {
@@ -161,7 +160,7 @@ if ($_SESSION[loggedin] == 1) {
 	# show "you will be accepted" text
 
 	sysmsg ("Saved application of ".$_SESSION[newopenid], 1);
-	informUsers ("New application waiting: ".$_POST[nickname], "7");
+	informUsers ("Jemand hat sich auf der Website beworben: ".$_POST[nickname], "7");
 	killCookies();
 	setcookie (session_id(), "", time() - 3600);
 	session_destroy();
@@ -176,14 +175,14 @@ if ($_SESSION[loggedin] == 1) {
 	fetchUsers();
 
 #FIXME enable me!
-/*	foreach ($GLOBALS[users][byuri] as $myUser) {
+	foreach ($GLOBALS[users][byuri] as $myUser) {
 		if ($myUser[uri] == $GLOBALS[newopenid]) {
 			sysmsg ("Registration: OpenID already used by ".$myUser[name], 1);
 			$GLOBALS[html] .= "<br />";
 			$_SESSION[registred] = 0;
 			$success = 0;
 		}
-	} */
+	}
 
 	if ($success) {
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." verification sucessful!", 2);

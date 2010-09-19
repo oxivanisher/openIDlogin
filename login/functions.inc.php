@@ -320,6 +320,11 @@ function getNiceAge($timestamp) {
 	return $ageOfMsgReturn;
 }
 
+function genTime($timestamp) {
+	return strftime("%e. %B %Y, %H:%M:%S", $timestamp);
+
+}
+
 function genMsgUrl($user) {
 	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
 					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
@@ -779,7 +784,7 @@ function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
 
 	if ($GLOBALS[bot]) {
 		$thash = $subject;
-		$tmodule = "daemon";
+		$tmodule = "xmpp_daemon";
 		$tuser = $user;
 		$tip = "XMPP";
 	} else {
@@ -1024,8 +1029,10 @@ function genArmoryIlvl ($mychar) {
 	if (count($mychar->characterInfo->characterTab->items->item)) {
 		$count = 0; $total = 0;
 		foreach ($mychar->characterInfo->characterTab->items->item as $myitem) {
-			$count++;
-			$total += (integer) $myitem->attributes()->level;
+			if (($myitem->attributes()->slot != 3) AND ($myitem->attributes()->slot != 18)) {
+				$count++;
+				$total += (integer) $myitem->attributes()->level;
+			}
 		}
 		return round($total/$count);
 	} else return 0;
@@ -1209,4 +1216,59 @@ function genArmoryClassClass ($ilvl) {
 	return $myclass;
 }
 
+
+
+function fetchArmoryItem ($itemid) {
+
+	# id, icon, level, quality, type, name, timestamp
+	$myitem = "";
+	unset($char);
+	$sql = mysql_query("SELECT id, icon, level, quality, type, name, timestamp FROM ".
+					$GLOBALS[cfg][armory][itemcachetable]." WHERE id='".$itemid."';");
+	$myitem[level] = null;
+	while ($row = mysql_fetch_array($sql)) {
+			$myitem[timestamp]	= $row[timestamp];
+			$myitem[name]				= $row[name];
+			$myitem[level]			= $row[level];
+			$myitem[id]					= $row[id];
+			$myitem[quality]		= $row[quality];
+			$myitem[type]				= $row[type];
+			$myitem[icon]				= $row[icon];
+	}
+	#check if char is in db and accurate, if not, fetch online
+	if (! $myitem[level]) {
+		sysmsg ("Fetching nonexisting Item from Armory: ".$itemid, 3);
+		$myitem[content] = fetchArmoryXML ("i", $itemid);
+		$myitem[timestamp] = time();
+		$item = new SimpleXMLElement($myitem[content]);
+		if ((string) $item->itemInfo->item['id']) {
+			$sql = "INSERT INTO ".$GLOBALS[cfg][armory][itemcachetable]." SET ".
+						"name='".$item->itemInfo->item['name']."', ".
+						"icon='".$item->itemInfo->item['icon']."', ".
+						"timestamp='".time()."', ".
+						"level='".$item->itemInfo->item['level']."', ".
+						"id='".$item->itemInfo->item['id']."', ".
+						"quality='".$item->itemInfo->item['quality']."', ".
+						"type='".$item->itemInfo->item['type']."';";
+			$myitem[name]				= (string) $item->itemInfo->item['name'];
+			$myitem[timestamp]	= (string) $item->itemInfo->item['timestamp'];
+			$myitem[level]			= (string) $item->itemInfo->item['level'];
+			$myitem[id]					= (string) $item->itemInfo->item['id'];
+			$myitem[quality]		= (string) $item->itemInfo->item['quality'];
+			$myitem[type]				= (string) $item->itemInfo->item['type'];
+			$myitem[icon]				= (string) $item->itemInfo->item['icon'];
+			$sqlr = mysql_query($sql);
+		}
+	}
+	return $myitem;
+}
+
+
+function genArmoryItemHtml ($id) {
+	# http://wow.allakhazam.com/images/icons/icons.tar.gz
+	$item = fetchArmoryItem($id);
+	$ret = "<img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
+
+	return $ret;
+}
 ?>

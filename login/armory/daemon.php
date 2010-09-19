@@ -22,7 +22,7 @@ while ($row = mysql_fetch_array($sql))
 
 
 ############# LOAD COMPLETE ###############
-
+$_POST[module] = "armory_bot";
 
 if ($_GET['name']) {
 		$char = fetchArmoryCharacter($_GET['name']);
@@ -42,6 +42,7 @@ if ($_GET['name']) {
 	#command line char update
 	$countt = 0;
 	$countu = 0;
+	$names = "";
 	while ($row = mysql_fetch_array($sqlr)) {
 		$countt++;
 		if ($GLOBALS[armorycharupdatecount]	< $GLOBALS[armorycharmaxupdate]) {
@@ -49,16 +50,15 @@ if ($_GET['name']) {
 			sleep(1);
 			if (! $GLOBALS[armorydown]) {
 				$countu++;
-				echo "Updating ".$row[name]."\n";
+				$names .= " ".$row[name];
 			}
 		}
 	}
 	if ($countt OR $countu) {
-		echo "total chars updated: ".$countu."\n";
-		echo "total to update: ".$countt."\n";
+		sysmsg ("Updated ".$countu." of ".$countt." chars ->".$names, 1);
 	}
 	if ($GLOBALS[armorydown])
-		echo "Armory down.\n";
+		sysmsg ("Armory down.", 1);
 }
 
 ?>
