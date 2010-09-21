@@ -44,7 +44,7 @@ if ($_SESSION[loggedin] == 1) {
 			$sqlq = mysql_query($sql);
 
 			#show sucess message
-			informUsers ("Ein herzliches Willkommen unserem neuesten Mitstreiter: ".$tmp[nickname]." (".")", "5");
+			informUsers ("Ein herzliches Willkommen unserem neuesten Mitstreiter: ".$tmp[nickname], "5");
 		} elseif ($_POST[mydo] == "deny") {
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
@@ -160,7 +160,7 @@ if ($_SESSION[loggedin] == 1) {
 	# show "you will be accepted" text
 
 	sysmsg ("Saved application of ".$_SESSION[newopenid], 1);
-	informUsers ("Jemand hat sich auf der Website beworben: ".$_POST[nickname], "7");
+	informUsers ($_POST[nickname]." hat sich auf der Website beworben.", "7");
 	killCookies();
 	setcookie (session_id(), "", time() - 3600);
 	session_destroy();

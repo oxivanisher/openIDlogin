@@ -172,12 +172,14 @@ if ($_SESSION[loggedin] == 1) {
 
 	#show overview list (default)
 	} else {
+		$ccount = 0;
 		$max = 6;
 		$GLOBALS[html] .= "<table>\n";
 		$GLOBALS[html] .= "<tr><th>User</th><th colspan='".$max."'>Charakter</th></tr>\n";
-
+		$ucount = 0;
 		foreach ($GLOBALS[users][byuri] as $myuser) {
 			$count = 0;
+			$ucount++;
 			$GLOBALS[html] .= "<tr><td><a href='?module=".$_POST[module]."&mydo=showusercharlist&user=".$myuser[uri]."'>".
 												$myuser[name]." (".count($myuser[armorychars]).")</a></td>\n";
 			#new object			
@@ -191,6 +193,7 @@ if ($_SESSION[loggedin] == 1) {
 						$GLOBALS[html] .= "<td>\n";
 					}
 					$char = "";
+					$ccount++;
 					if ($char = fetchArmoryCharacter($mycharname)) {
 						$GLOBALS[html] .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
 															"<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
@@ -209,6 +212,8 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<tr><td colspan='".($max + 1)."'>aaa</td></tr>\n";
 		}
 		$GLOBALS[html] .= "</table>\n";
+		$GLOBALS[html] .= "<br />";
+		$GLOBALS[html] .= "<h3>Anzahl Member: ".$ucount."; Anzahl Charakter: ".$ccount."</h3>";
 	}
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {

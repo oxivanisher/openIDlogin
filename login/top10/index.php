@@ -149,9 +149,9 @@ if ($_SESSION[loggedin] == 1) {
 	}
 
 
-	$GLOBALS[html] .= "<h2><a href='?module=".$_POST[module]."&mydo='>PVP / Itemlevel</a> | ";
+	$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&mydo='>Ach. Total / PVP / Itemlevel</a> | ";
 	$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=achievments'>Achievments</a> | ";
-	$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=skills'>Berufe</a></h2>";
+	$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=skills'>Berufe</a></h3>";
 
 	if ($_POST[mydo] == "achievments") {
 		$GLOBALS[html] .= "<h3>Achievments</h3>";

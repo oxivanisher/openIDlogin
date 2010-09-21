@@ -88,15 +88,15 @@ if ($_SESSION[loggedin] == 1) {
 		}
 	} else {
 		$GLOBALS[html] .= "<h3>Wie funktioniert das?</h3>";
-		$GLOBALS[html] .= "1) Das WOW Addon runterladen und installieren: <a href=''>XML Guild Export</a><br />";
+		$GLOBALS[html] .= "1) Das WOW Addon runterladen und installieren: <a href='/login/".$_POST[module]."/GuildXMLExport.zip'>XML Guild Export</a><br />";
 		$GLOBALS[html] .= "2) Im WOW '/exportguild' ausf&uuml;hren.<br />";
 		$GLOBALS[html] .= "3) Den Text aus dem Fenster im WOW in das Textfeld unten einf&uuml;gen.<br />";
-		$GLOBALS[html] .= "4) Submit dr&uuml;cken.<br /><br />";
+		$GLOBALS[html] .= "4) Senden dr&uuml;cken.<br /><br />";
 		$GLOBALS[html] .= "<form action='?' method='post' accept-charset='UTF-8'>";
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."'>";
 		$GLOBALS[html] .= "<input type='hidden' name='mydo' value='analyze'>";
 		$GLOBALS[html] .= "<textarea name='content' cols='80' rows='10'></textarea><br />";
-		$GLOBALS[html] .= "<input type='submit' name='submit' value='submit'>";
+		$GLOBALS[html] .= "<input type='submit' name='senden' value='senden'>";
 		$GLOBALS[html] .= "</form>";
 	}
 

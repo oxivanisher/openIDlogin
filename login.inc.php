@@ -169,7 +169,10 @@ switch ($_POST[job]) {
 	case "refresh":
 		#fetch all users and set the cookies
 		fetchUsers();
-		setCookies();
+		if ($_SESSION[loggedin])
+			setCookies();
+		else
+			killCookies();
 
 		if ((checkProfile()) AND ($_SESSION[loggedin]))
 				$_POST[module] = "userprofile";
@@ -190,12 +193,12 @@ switch ($_POST[job]) {
 				}
 
 				if ($show)
-					$GLOBALS[html] .= "<h2><a href='?'>Modul &Uuml;bersicht</a> &gt;";
+					$GLOBALS[html] .= "<h2><a href='?'>&Uuml;bersicht</a> &gt;";
 
 				if (file_exists($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php')) {
 					include($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php');
 					if ($show)
-						$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2>";
+						$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2><hr />";
 					include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
 				} else {
 					sysmsg ("No Module description found!", 1);
@@ -208,8 +211,8 @@ switch ($_POST[job]) {
 
 			#nope, show module index
 			$GLOBALS[myreturn][msg] = "refreshing";
-			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
-			$GLOBALS[html] .= "<ul>";
+#			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
+			$GLOBALS[html] = "<ul>";
 				
 			#have fun reading this code :P
 			if (is_dir($GLOBALS[cfg][moduledir])) {
@@ -389,11 +392,11 @@ if (! empty($GLOBALS[html])) {
 	echo "<div style='background-color:transparent; background-image:url(/img/transparent.png); padding:10px; height:100%;'><h1><center> "
 				.$_SERVER[SERVER_NAME]." <img src='/".$GLOBALS[cfg][moduledir]."/openid-icon-100x100.png' width='40' height='40' title='".
 				$tmp."'> <abbr title='User Control Center'>IMBA Admin</abbr></center></h1>";
-	echo "<hr /><br />";
+	echo "<hr />";
 
 	#this is pure cosmetic!!
 	if (($_POST[job] == "verify") OR ($_POST[job] == "auth"))
-		echo str_replace("\n", "<br />", $GLOBALS[html])."<br />";
+		echo str_replace("\n", "<br />", $GLOBALS[html]);
 	else
 		echo $GLOBALS[html]."<br />";
 
