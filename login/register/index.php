@@ -47,7 +47,13 @@ if ($_SESSION[loggedin] == 1) {
 			#show sucess message
 			sendMail($tmp[email], "Herzlich Willkommen (Deine Bewerbung)", "Deine Bewerbung zur Gilde Alptroeim wurde akzeptiert!\nHerzlich Willkommen!");
 			applyProfile ($tmp[openid], '5');
-			informUsers ("Ein herzliches Willkommen unserem neuesten Mitstreiter: ".$tmp[nickname], "5");
+
+			if ($tmp[sex] == "F")
+				$padawan = "unserer neuesten Mitstreiterin";
+			else
+				$padawan = "unserem neuesten Mitstreiter";
+
+			informUsers ("Ein herzliches Willkommen ".$padawan.": ".$tmp[nickname], "5");
 			sysmsg ("User accepted to guild: ".$tmp[nickname].", ".$tmp[openid], 1);
 		} elseif ($_POST[mydo] == "deny") {
 			#sendMail(, "Absage (Deine Bewerbung)", "Deine Bewerbung wurde leider abgelehnt. Dies ist die Nachricht dazu:\n".$_POST[answer]);
@@ -182,7 +188,7 @@ if ($_SESSION[loggedin] == 1) {
 	fetchUsers();
 
 #FIXME enable me! check if user is already in profile db
-/*
+
 	foreach ($GLOBALS[users][byuri] as $myUser) {
 		if ($myUser[uri] == $GLOBALS[newopenid]) {
 			sysmsg ("Registration: OpenID already used by ".$myUser[name], 1);
@@ -191,7 +197,7 @@ if ($_SESSION[loggedin] == 1) {
 			$success = 0;
 		}
 	}
-*/
+
 	if ($success) {
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." verification sucessful!", 2);
 		$_SESSION[toregister] = 0;

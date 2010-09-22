@@ -79,12 +79,15 @@ if ($_SESSION[loggedin] == 1) {
 	
 				#smf db
 				if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][smf]) {
-					#FIXME gender missing 1:male, 2:female
-					$tmpGender = 1;
+					$tmpsex = 0;
+					if ($tmp[sex] == "M")
+						$tmpsex = 1;
+					elseif ($tmp[sex] == "F")
+						$tmpsex = 2;
 					#date not working
 					$sql = "UPDATE smf_members SET member_name='".$_POST[nickname]."', real_name='".$_POST[nickname].
 									"', email_address='".$_POST[email]."', birthdate='".date($_POST[yob]."-".$_POST[mob]."-".$_POST[dob]).
-									"', gender='".$tmpGender."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', Jabber='".$_POST[jid].
+									"', gender='".$tmpsex."', icq='".$_POST[icq]."', msn='".$_POST[msn]."', Jabber='".$_POST[jid].
 									"', usertitle='".$_POST[usertitle]."', avatar='".$_POST[avatar].
 									"', signature='".$_POST[signature]."', website_url='".$_POST[website]."', usertitle='".$_POST[motto].
 									"' WHERE openid_uri='".$_SESSION[openid_identifier]."';";
@@ -261,6 +264,11 @@ if ($_SESSION[loggedin] == 1) {
 			$cont = templReplText($cont, "MOTTO", $row[motto]);
 			$cont = templReplText($cont, "JID", $myjid);
 			$cont = templReplText($cont, "CHARS", $tmpnames);
+
+			$tmpgender = "male";
+			if ($row[sex] == "F")
+				$tmpgender = "female";
+			$cont = templReplText($cont, "GENDER", $tmpgender);
 		}
 		$GLOBALS[html] .= $cont;
 

@@ -81,6 +81,8 @@ if ($_POST[ssoInpLogout] == 1) {
 	$_SESSION[tmp][referer] = $_POST[ssoInpReferer];
 } elseif ($_POST[job] == "module") {
 	$_POST[job] = "ajax";
+} elseif ($_POST[job] == "hidden") {
+	$_POST[job] = "hidden";
 } elseif ($_POST[job] == "status") {
 	$GLOBALS[myreturn][username] = $_SESSION[user][nickname];
 } elseif ($_POST[job] == "update") {
@@ -136,19 +138,26 @@ switch ($_POST[job]) {
 
 			#yes! hurray!
 			getOnlineUsers();
-			checkSites();
 			setCookies();
 			createSession();
 			updateLastOnline();
-			checkProfile();
 
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
 			$GLOBALS[redirect] = 1;
-			$GLOBALS[html] .= "<br /><br /><br /><h2><center>";
+			$tmp = $GLOBALS[html];
+			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
 				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
-			$GLOBALS[html] .= "</center></h2><br /><br /><br />";
+			$GLOBALS[html] .= "</center></h2><center><br /><br /><br />".$tmp."<br /><br />";
 			$_SESSION[freshlogin] = 1;
+
+
+#			checkProfile();
+
+			checkSites();
+
+
+			$GLOBALS[html] .= "</center>";
 
 			#set the cookie for the "logged out" - "login box"
 			$cookieTarget = str_replace($GLOBALS[cfg][openid_identifier_base], "", $_SESSION[openid_identifier]);
@@ -320,6 +329,13 @@ switch ($_POST[job]) {
 		$GLOBALS[myreturn][msg] = "status";
 		jasonOut();
 
+		break;
+
+	case "hidden":
+		updateTimestamp($_SESSION[openid_identifier]);
+		header("Content-type: image/png");
+		echo file_get_contents('1px.png');
+		exit();
 		break;
 
 	#this is for not logged in users

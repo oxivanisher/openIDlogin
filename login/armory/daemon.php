@@ -26,7 +26,7 @@ $_POST[module] = "armory_bot";
 
 if ($_GET['name']) {
 		$char = fetchArmoryCharacter(utf8_encode($_GET['name']));
-    echo $char[name] . ';';
+    echo ucfirst($_GET[name]) . ';';
     echo $char[classid] . ';';
     echo $char[factionid] . ';';
     echo $char[raceid] . ';';
