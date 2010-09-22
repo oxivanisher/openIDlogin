@@ -181,8 +181,8 @@ if ($_SESSION[loggedin] == 1) {
 	$success = openid_verify();
 	fetchUsers();
 
-#FIXME enable me!
-
+#FIXME enable me! check if user is already in profile db
+/*
 	foreach ($GLOBALS[users][byuri] as $myUser) {
 		if ($myUser[uri] == $GLOBALS[newopenid]) {
 			sysmsg ("Registration: OpenID already used by ".$myUser[name], 1);
@@ -191,7 +191,7 @@ if ($_SESSION[loggedin] == 1) {
 			$success = 0;
 		}
 	}
-
+*/
 	if ($success) {
 		sysmsg ("Register OpenID: ".$GLOBALS[newopenid]." verification sucessful!", 2);
 		$_SESSION[toregister] = 0;

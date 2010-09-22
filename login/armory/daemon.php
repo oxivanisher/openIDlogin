@@ -21,11 +21,11 @@ while ($row = mysql_fetch_array($sql))
 	$GLOBALS[$row[name]] = $row[value];
 
 
-############# LOAD COMPLETE ###############
 $_POST[module] = "armory_bot";
+############# LOAD COMPLETE ###############
 
 if ($_GET['name']) {
-		$char = fetchArmoryCharacter($_GET['name']);
+		$char = fetchArmoryCharacter(utf8_encode($_GET['name']));
     echo $char[name] . ';';
     echo $char[classid] . ';';
     echo $char[factionid] . ';';

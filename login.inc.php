@@ -333,6 +333,7 @@ if ($_POST[job] == "logout")
 	$sql = mysql_query("UPDATE ".$GLOBALS[cfg][lastonlinedb]." SET timestamp='".(time() - $GLOBALS[cfg][lastidletimeout])."' WHERE openid='".$myoldid."';");
 
 #generate final html output (this is dirty .. i know)
+echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">';
 echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Control Center</title>";
 echo '<meta http-equiv="Content-Type" content="text/html; charset=utf8" />';
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css1]."' type='text/css' />\n";
