@@ -119,20 +119,40 @@ function fetchUsers () {
 	#cleanup
 	unset ($GLOBALS[users]);
 	$count = 0;
-	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1 ORDER BY member_name;");
-	while ($row = mysql_fetch_array($sql))
-		if (! empty($row[openid_uri])) {
-			#experimental
-			$tmpname = $row[member_name];
-			$tmpuri = $row[openid_uri];
-			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
-			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
-			$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
-			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
-			$GLOBALS[users][byuri][$tmpuri][role] = 0;
+	#fetching oom openid profile informations
+	$sql = mysql_query("SELECT nickname,openid,role,armorychars FROM ".$GLOBALS[cfg][userprofiletable]." WHERE 1 ORDER BY nickname;");
+	while ($row = mysql_fetch_array($sql)) {
+		if (! empty($row[openid])) {
+			if ((! $row[role]) AND (! $_SESSION[isadmin])) 
+				continue;
+
+			$GLOBALS[users][byname][strtolower($tmpname)] = $row[nickname];
+			$GLOBALS[users][byuri][$row[openid]][name] = $row[nickname];
+			$GLOBALS[users][byuri][$row[openid]][uri] = $row[openid];
+			$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
+			$GLOBALS[users][byuri][$row[openid]][armorychars] = unserialize($row[armorychars]);
 			$count++;
 		}
+	}
 	$GLOBALS[users][count][all] = $count;
+
+	$count = 0;
+	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql))
+		if (! empty($row[openid_uri])) {
+			if (! empty($GLOBALS[users][byuri][$rows[openid_uri]][name])) {
+			#experimental
+#			$tmpname = $row[member_name];
+#			$tmpuri = $row[openid_uri];
+#			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
+#			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
+				$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
+#			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
+#			$GLOBALS[users][byuri][$tmpuri][role] = 0;
+				$count++;
+			}
+		}
+	$GLOBALS[users][count][smf] = $count;
 
 	getXmppUsers();
 
@@ -150,16 +170,6 @@ function fetchUsers () {
 			}
 		}
 	}
-
-	#fetching oom openid profile informations
-	$count = 0;
-	$sql = mysql_query("SELECT openid,role,armorychars FROM ".$GLOBALS[cfg][userprofiletable]." WHERE 1;");
-	while ($row = mysql_fetch_array($sql)) {
-		$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
-		$GLOBALS[users][byuri][$row[openid]][armorychars] = unserialize($row[armorychars]);
-		$count++;
-	}
-	$GLOBALS[users][count][role] = $count;
 
 	#eqdkp
 	$count = 0;
