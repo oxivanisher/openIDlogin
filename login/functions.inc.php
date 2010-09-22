@@ -1294,4 +1294,40 @@ function templGenDropdown ($name, $from, $to, $selected) {
 	$dd .= "</select>\n";
 	return $dd;
 }
+function check_email_address($email) {
+#	if (!preg_match("/^( [a-zA-Z0-9] )+( [a-zA-Z0-9\._-] )*@( [a-zA-Z0-9_-] )+( [a-zA-Z0-9\._-] +)+$/" , $email)) {
+#  	return false;
+#	}
+	return true;
+}
+
+function sendMail ($target, $subject, $message) {
+	if (substr($target, 0, 4) == "http") {
+		$sql = "SELECT email FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$target."';";
+		$sqlr = mysql_query($sql);
+		while ($row = mysql_fetch_array($sqlr))
+			$targetaddr = $row[email];
+	} else {
+		$targetaddr = $target;
+	}
+	#check for correct email addr
+	if (check_email_address($targetaddr)) {
+		if ($GLOBALS[adminemailname])
+			$sender = $GLOBALS[adminemailname];
+		else
+			$sender = "IMBA Admin @ ".$_SERVER[SERVER_NAME];
+
+	  $header = 'MIME-Version: 1.0' . "\n" . 'Content-type: text/plain; charset=UTF-8'
+    . "\n" . 'From: '.$sender.' <'.$GLOBALS[adminemail].">\n";
+		// Make sure there are no bare linefeeds in the headers
+		$header = preg_replace('#(?<!\r)\n#si', "\r\n", $header);
+		// Fix any bare linefeeds in the message to make it RFC821 Compliant.
+		$message = preg_replace("#(?<!\r)\n#si", "\r\n", $message);
+
+	  mail($targetaddr, $subject, $message, $header); 
+		return $targetaddr;
+
+	}
+	return false;
+}
 ?>

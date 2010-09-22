@@ -19,6 +19,31 @@ if ($_SESSION[loggedin] == 1) {
 			if (isValidURL($_POST[newurl])) {
 				$GLOBALS[html] .= "- ".$_POST[newurl]." is a valid URL<br />";
 				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][usernametable]." SET openid_uri='".$_POST[newurl]."' WHERE id_member='".$_POST[newuser]."';");
+
+				$sql = "SELECT email_address,icq,msn,usertitle,avatar,signature,website_url,personal_text ".
+								"FROM smf_members WHERE openid_uri='".$_POST[newurl]."';";
+				$sqlq = mysql_query($sql);
+				while ($row = mysql_fetch_array($sqlq)) {
+					$temail = $row[email_address];
+					$ticq = $row[icq];
+					$tmsn = $row[msn];
+					$tusertitle = $row[usertitle];
+					$tavatar = $row[avatar];
+					$tsignature = $row[signature];
+					$twebsite = $row[website_url];
+					$tmotto = $row[personal_text];
+				}
+				
+				$sql = "INSERT INTO ".$GLOBALS[cfg][userprofiletable].
+								" (openid,nickname,email,icq,msn,usertitle,avatar,signature,website,motto,accurate,role) VALUES ".
+								"('".$_POST[newurl]."','".$GLOBALS[users][byuri][$myOpenID][name]."', ".
+								"'".$temail."', '".$ticq."', '".$tmsn."', '".$tusertitle."', '".$tavatar."', '".$tsignature."', '".
+								$twebsite."', '".$tmotto."', '0', '0');";
+				$sqlq = mysql_query($sql);
+
+				fetchUsers();
+				applyProfile($_POST[newurl], '5');
+
 				$GLOBALS[html] .= "<h3>=&gt; User registred!</h3>";
 			} else {
 				$GLOBALS[html] .= "<h3>=&gt; Not a valid URL!</h3>";

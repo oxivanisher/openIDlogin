@@ -2,7 +2,7 @@
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
 	#apply profile function
-	if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and (! empty($_POST[profile])) and ($_SESSION[isadmin])) {
+	if (($_POST[myjob] == "applyprofile") and (! empty($_POST[user])) and ($_SESSION[isadmin])) {
 		fetchUsers();
 		applyProfile($_POST[user], $_POST[profile]);
 	}

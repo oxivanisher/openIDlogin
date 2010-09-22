@@ -237,6 +237,9 @@ if ($_SESSION[loggedin] == 1) {
 		$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
 		while ($row = mysql_fetch_array($sql)) {
 			$cont = templGetFile("form.html");
+			if (! $row[accurate])
+					$GLOBALS[html] .= "<h2>Deine Profildaten sind nicht aktuell!</h2>"
+														."F&uuml;ll bitte die Felder aus und speichere dein Profil bevor du den IMBA Admin weiter brauchen kannst.<br />";
 			$cont = templReplText($cont, "DOB", templGenDropdown("dob", 1, 31, $row[dob]));
 			$cont = templReplText($cont, "MOB", templGenDropdown("mob", 1, 12, $row[mob]));
 			$cont = templReplText($cont, "YOB", templGenDropdown("yob", 1930, 2000, $row[yob]));

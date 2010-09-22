@@ -20,6 +20,13 @@ if ($_SESSION[loggedin] == 1) {
 
 			sysmsgs ("Kicked User ".$_POST[user]." offline!",1);
 
+		#send testmail to user
+		} elseif (($_POST[myjob] == "sendmail") and (! empty($_POST[user]) and (! empty($_POST[text])))) {
+			$GLOBALS[html] .= "<h3>=&gt; Sending mail to user: ".$_POST[user]." returned: ".
+												sendMail($_POST[user], "Test Message", $_POST[text])."</h3>";
+			sysmsg ("Sent testmessage to: ".$_POST[user], 1);
+
+
 		#push user idle
 		} elseif (($_POST[myjob] == "pushidle") and (! empty($_POST[user]))) {
 			$GLOBALS[html] .= "<h3>=&gt; Pushing User ID ".$_POST[user]." Idle</h3>";
@@ -184,6 +191,14 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='changeopenid' />";
 		$GLOBALS[html] .= "<td><h3>Change User OpenID</h3></td>";
 		$GLOBALS[html] .= "<td>".$uDropdown." to <input type='text' name='newurl' value='' size='40' /></td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='sendmail' />";
+		$GLOBALS[html] .= "<td><h3>Send Testmail</h3><br />To: ".$uDropdown."</td>";
+		$GLOBALS[html] .= "<td><textarea name='text' cols='20' rows='3'>Text</textarea></td>";
 		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
 		$GLOBALS[html] .= "</tr></form></table><br />";
 

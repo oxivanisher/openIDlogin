@@ -9,7 +9,8 @@ if ($_SESSION[loggedin] == 1) {
 		sysmsg ("You are allowed to use this Module", 2);
 		if ($_POST[mydo] == "approve") {
 			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='1' WHERE openid='".$_POST[applicant]."';");
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='1',answer='".$_POST[answer]
+							."' WHERE openid='".$_POST[applicant]."';");
 
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$_POST[applicant]."';");
 			while ($row = mysql_fetch_array($sql)) {
@@ -44,12 +45,17 @@ if ($_SESSION[loggedin] == 1) {
 			$sqlq = mysql_query($sql);
 
 			#show sucess message
+			sendMail($tmp[email], "Herzlich Willkommen (Deine Bewerbung)", "Deine Bewerbung zur Gilde Alptroeim wurde akzeptiert!\nHerzlich Willkommen!");
+			applyProfile ($tmp[openid], '5');
 			informUsers ("Ein herzliches Willkommen unserem neuesten Mitstreiter: ".$tmp[nickname], "5");
+			sysmsg ("User accepted to guild: ".$tmp[nickname].", ".$tmp[openid], 1);
 		} elseif ($_POST[mydo] == "deny") {
+			#sendMail(, "Absage (Deine Bewerbung)", "Deine Bewerbung wurde leider abgelehnt. Dies ist die Nachricht dazu:\n".$_POST[answer]);
 			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
-			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2' WHERE openid='".$_POST[applicant]."';");
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2',answer='".$_POST[answer]."' WHERE openid='".$_POST[applicant]."';");
 			#show deny message
 			informUsers ("Benutzer ".$_POST[applicant]." wurde abgewiesen.", "6");
+			sysmsg ("User denied: ".$tmp[nickname].", ".$tmp[openid], 1);
 		}
 
 		if ($_POST[mydo] == "showapplicant") {
@@ -90,7 +96,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
 				$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>Answer:</td><td>";
-				$GLOBALS[html] .= "<textarea name='answer' rows='4' cols='50'>Text for the User</textarea></td></tr>";
+				$GLOBALS[html] .= "<textarea name='answer' rows='4' cols='50'>Begr&uuml;ndung an den Bewerber</textarea></td></tr>";
 				$GLOBALS[html] .= "<tr><td valign='top'>&nbsp;</td><td>";
 					$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' />Approve&nbsp;&nbsp;";
 					$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' />Deny&nbsp;&nbsp;";
@@ -159,6 +165,7 @@ if ($_SESSION[loggedin] == 1) {
 
 	# show "you will be accepted" text
 
+	sendMail($_POST[email], "Deine Bewerbung", "Deine Bewerbung wurde im System gespeichert.");
 	sysmsg ("Saved application of ".$_SESSION[newopenid], 1);
 	informUsers ($_POST[nickname]." hat sich auf der Website beworben.", "7");
 	killCookies();
