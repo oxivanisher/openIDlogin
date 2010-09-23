@@ -2,60 +2,13 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	# module functions
-	/*
-	if ($_POST[mydo] == "savechars") {
-		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
-			if ($_POST[chars]) {
-				$tnames = explode(",", $_POST[chars]);
-				$nnames = array();
-				$mybool = false;
-				foreach ($tnames as $tname) {
-					array_push($nnames, trim($tname));
-					$mybool = true;
-				}
-				if ($mybool) $rnames = serialize($nnames);
-				else $rnames = "";
-			} else {
-				$rnames = "";
-			}
-
-			$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET armorychars='".$rnames.
-							"' WHERE openid='".$_POST[user]."';";
-			$sqlr = mysql_query($sql);
-		}
-	}
-*/
-
 	#init stuff
 	fetchUsers();
  
 	#show character detail and on own profile input field for characters
 	if ($_POST[mydo] == "showusercharlist") {
 		$GLOBALS[html] .= "<hr />";
-/*		if (($_POST[user] == $_SESSION[openid_identifier]) OR ($_SESSION[isadmin])) {
-			#change user rights form
-			$tmpnames = ""; $tbool = true;; $tmp = "";
-			if(! empty($GLOBALS[users][byuri][$_POST[user]][armorychars])) {
-				array_unique($GLOBALS[users][byuri][$_POST[user]][armorychars]);
-				foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mychar) {
-					if ($tbool) $tbool = false;
-					else $tmp = ", ";
-					$tmpnames .= $tmp.$mychar;
-				}
-			}
 
-			$GLOBALS[html] .= "Deine Charakter (Kommagetrennt): ";
-			$GLOBALS[html] .= "<form action='?' method='POST'>";
-			$GLOBALS[html] .= "<input type='hidden' name='mydo' value='savechars' />";
-			$GLOBALS[html] .= "<input type='hidden' name='user' value='".$_POST[user]."' />";
-			$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-			$GLOBALS[html] .= "<input type='text' name='chars' value='".$tmpnames."' size='40' />";
-			$GLOBALS[html] .= "<input type='submit' name='save' value='save' />";
-			$GLOBALS[html] .= "</form><hr />";
-			$GLOBALS[html] .= "<br />";
-		}
-*/
 		$GLOBALS[html] .= "<h3>Charakter von <a href='?module=".$_POST[module]."&mydo=showusercharlist&user=".
 											$_POST[user]."'>".$GLOBALS[users][byuri][$_POST[user]][name]."</a></h3>";
 		$GLOBALS[html] .= "<table>";
@@ -104,8 +57,13 @@ if ($_SESSION[loggedin] == 1) {
 
 	#show character sheet
 	} elseif ($_POST[mydo] == "showchardetail") {
+		if (($_POST[myjob] == "forcerefresh") AND (! empty($_POST[mycharname]))) {
+			$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET timestamp='1' WHERE name LIKE '".$_POST[mycharname]."';";
+			$sqlr = mysql_query($sql);
+			sysmsg("Force Armory refresh of char: ".$_POST[mycharname], 2);
+		}
 
-		$GLOBALS[html] .= "Loading char: <a href='?module=".$_POST[module]."&mydo=showchardetail&mycharname=".$_POST[mycharname]."'>".$_POST[mycharname]."</a><br /><br />";
+
 		if ($char = fetchArmoryCharacter($_POST[mycharname])) {
 			$sql = "SELECT content FROM ".$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$char[name]."';";
 			$sqlr = mysql_query($sql);
@@ -117,9 +75,19 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "<tr><td colspan='2'>";
 			$GLOBALS[html] .= "<h3 class='".genArmoryClassClass($char[classid])."'>".$char[name]." ".$char[level].", ".showArmoryName("gender", $char[genderid])." ".
 												showArmoryName("race", $char[raceid])." ".showArmoryName("class", $char[classid])."</h3>";
+			$GLOBALS[html] .= "Eingetragen bei:";
+			foreach (getArmoryUserOfChar($_POST[mycharname]) as $myuser)
+				$GLOBALS[html] .= " ".genMsgUrl($myuser);
+			$GLOBALS[html] .= "<br /><br />";
+
 			$GLOBALS[html] .= "</td></tr>";
-			$GLOBALS[html] .= "<tr><td colspan='2' align='right'>Profil Alter ".getAge($char[timestamp]).
-												", N&auml;chstes update:<br />".genTime($GLOBALS[armorychartimeout] + $char[timestamp])."</td></tr>";
+			$GLOBALS[html] .= "<tr><td colspan='2' align='right'>";
+			$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&myjob=forcerefresh&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
+												"/reload.png' title='Force Reload' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a>";
+			$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
+												"/refresh.png' title='Refresh' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a> ";
+			$GLOBALS[html] .= "Profil Alter ".getAge($char[timestamp]).", N&auml;chstes update:<br />".genTime($GLOBALS[armorychartimeout] + $char[timestamp])." ";
+			$GLOBALS[html] .= "</td></tr>";
 			$GLOBALS[html] .= "<tr><td colspan='2'><br /><br /></td></tr>";
 
 			$GLOBALS[html] .= "<tr>";
@@ -136,6 +104,7 @@ if ($_SESSION[loggedin] == 1) {
 			$total = 0;
 			foreach ($char[achievments] as $achievments)
 				foreach (array_keys($achievments) as $id) {
+					if ($id == 92) continue;
 					$GLOBALS[html] .= "<tr><td>&nbsp;&nbsp;".showArmoryName("achievment", $id).":</td><td>".$achievments[$id]."</td></tr>";
 					$total += $achievments[$id];
 				}
@@ -152,10 +121,11 @@ if ($_SESSION[loggedin] == 1) {
   		  $count = 0; $total = 0;
  	  	 	foreach ($mychar->characterInfo->characterTab->items->item as $myitem) {
     	  	$total += (integer) $myitem->attributes()->level;
-  	  	  $count++;
-    	  	$itemid = (integer) $myitem->attributes()->id;
+     	  	$itemid = (integer) $myitem->attributes()->id;
     	  	$itemslot = (integer) $myitem->attributes()->slot;
-
+					if (($itemslot == 3) OR ($itemslot == 18) OR ($itemslot == -1)) 
+						continue;
+	 	  	  $count++;
 					$GLOBALS[html] .= genArmoryItemHtml($itemid).", ".showArmoryName("slot", $itemslot)."<br /><br />";
 
 				}
@@ -196,9 +166,7 @@ if ($_SESSION[loggedin] == 1) {
 					$ccount++;
 					if ($char = fetchArmoryCharacter($mycharname)) {
 						$GLOBALS[html] .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
-															"<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
-															", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
-															"</span>\n";
+															genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid]);
 					} else {
 						$GLOBALS[html] .= genArmoryIlvlHtml(0,"00").$mycharname;
 					}

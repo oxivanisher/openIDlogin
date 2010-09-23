@@ -155,11 +155,11 @@ if ($_SESSION[loggedin] == 1) {
 
 	#generate WOW Character array
 	$myWowChars = array();
-	for ($i = 1; $i < 20; $i++) {
+	for ($i = 1; $i < 50; $i++) {
 		$myname = "char".$i."Name";
 		if (isset($_POST[$myname]))
 			if (! empty($_POST[$myname]))
-				array_push($myWowChars, $_POST[$myname]);
+				array_push($myWowChars, chop($_POST[$myname]));
 	}
 
 	$sql = "INSERT INTO ".$GLOBALS[cfg][userapplicationtable].

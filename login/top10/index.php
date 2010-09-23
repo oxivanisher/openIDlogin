@@ -62,12 +62,8 @@ if ($_SESSION[loggedin] == 1) {
 											array_push($rarray, $char[name]);
 											$tcount++;
 											$GLOBALS[html] .= "<tr><td>".$tkey."</td>";
-											$GLOBALS[html] .= "<td>".
-	                          "<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
-	                          ", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
-	                          "</span></td>";
-											$GLOBALS[html] .= "<td><a href='?module=messaging&myjob=composemessage&user=".$myuser[uri]."'>".
-																				$GLOBALS[users][byuri][$myuser[uri]][name]."</a></td></tr>";
+											$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
+											$GLOBALS[html] .= "<td>".genMsgUrl($myuser[uri])."</td></tr>";
 										}
 									}
 								}
@@ -101,12 +97,8 @@ if ($_SESSION[loggedin] == 1) {
 											array_push($rarray, $char[name]);
 											$tcount++;
 											$GLOBALS[html] .= "<tr><td>".$tkey."</td>";
-											$GLOBALS[html] .= "<td>".
-	                          "<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
-	                          ", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
-	                          "</span></td>";
-											$GLOBALS[html] .= "<td><a href='?module=messaging&myjob=composemessage&user=".$myuser[uri]."'>".
-																				$GLOBALS[users][byuri][$myuser[uri]][name]."</a></td></tr>";
+											$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
+											$GLOBALS[html] .= "<td>".genMsgUrl($myuser[uri])."</td></tr>";
 										}
 									}
 								}
@@ -136,10 +128,11 @@ if ($_SESSION[loggedin] == 1) {
 								array_push($rarray, $char[name]);
 								$tcount++;
 								$GLOBALS[html] .= "<tr><td>".$tkey."</td>";
-								$GLOBALS[html] .= "<td>".
-	                       "<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
-	                       ", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
-	                       "</span></td>";
+								$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
+								$GLOBALS[html] .= "<td>";
+								foreach (getArmoryUserOfChar($char[name]) as $myurl)
+									$GLOBALS[html] .= genMsgUrl($myurl);
+								$GLOBALS[html] .= "</td></tr>";
 							}
 						}
 					}
@@ -172,7 +165,7 @@ if ($_SESSION[loggedin] == 1) {
 		}
 	} else {
 		$GLOBALS[html] .= "<h3>Achievments Total</h3>";
-		$GLOBALS[html] .= "<table><tr><th>Punkte</th><th>Charakter</th></tr>";
+		$GLOBALS[html] .= "<table><tr><th>Punkte</th><th>Charakter</th><th>Benutzer</th></tr>";
 		getCheapArray($topa, 10);
 		$GLOBALS[html] .= "</table><br />";
 	

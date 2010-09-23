@@ -3,7 +3,8 @@
 function setCookies () {
 	#set smf cookie
 	$GLOBALS[html] .= "<b>checking for smf user:</b><br />";
-	$sql = mysql_query("SELECT id_member,member_name,passwd,password_salt,email_address FROM ".$GLOBALS[cfg][usernametable]." WHERE openid_uri='".$_SESSION[openid_identifier]."';");
+	$sql = mysql_query("SELECT id_member,member_name,passwd,password_salt,email_address FROM ".
+				$GLOBALS[cfg][usernametable]." WHERE openid_uri='".$_SESSION[openid_identifier]."';");
 	while ($row = mysql_fetch_array($sql)) {
 		$data = array($row[id_member], sha1($row[passwd] . $row[password_salt]), (time() + 3600), 0);
 		setcookie('alpCookie',serialize($data),(time() + 3600),$GLOBALS[cfg][cookiepath],$GLOBALS[cfg][cookiedomain]);
@@ -126,7 +127,7 @@ function fetchUsers () {
 			if ((! $row[role]) AND (! $_SESSION[isadmin])) 
 				continue;
 
-			$GLOBALS[users][byname][strtolower($row[nickname])] = $row[nickname];
+			$GLOBALS[users][byname][strtolower($row[nickname])] = $row[openid];
 			$GLOBALS[users][byuri][$row[openid]][name] = $row[nickname];
 			$GLOBALS[users][byuri][$row[openid]][uri] = $row[openid];
 			$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
@@ -406,18 +407,28 @@ function getOnlineUsers () {
 	while ($nrow = mysql_fetch_array($newmsgsql))
 		array_push($newmsgopenid, array($nrow[receiver], $nrow[sender]));
 
+	#system messages
+	foreach ($newmsgopenid as $mymsg) {
+		if (($mymsg[0] == $_SESSION[openid_identifier]) 
+			AND (empty($GLOBALS[users][byuri][$mymsg[1]][name]))) {
+			array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[adminmsgname]);
+			array_push($GLOBALS[ajaxuserreturnopenid], chop($mymsg[1]));
+			array_push($GLOBALS[ajaxuserreturntimes], getNiceAge($orow[timestamp]));
+			array_push($GLOBALS[ajaxuserreturnnewmessage], 1);
+			array_push($GLOBALS[ajaxuserreturnstatus], "1");
+			continue;
+		}
+	}
+
 	#get the users from last online table and go trough them
 	$onlinesql = mysql_query("SELECT openid,timestamp,xmppstatus FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE 1 ORDER BY timestamp DESC;");
 	while ($orow = mysql_fetch_array($onlinesql)) {
 		#catch some eventually problems
-		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
 		if ($orow[name] == '0') continue;
-
-		#yes, this is a ok user 
-		$cnt++;
 
 		#am i this user here?
 		if ($orow[openid] == $_SESSION[openid_identifier]) {
+			$cnt++;
 			$bool = true;
 			if ($orow[timestamp] > ( time() - $GLOBALS[cfg][lastonlinetimeout] )) {				
 				$ocnt++;
@@ -432,16 +443,23 @@ function getOnlineUsers () {
 			continue;
 		}
 
-		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name]);
-		array_push($GLOBALS[ajaxuserreturnopenid], $orow[openid]);
-		array_push($GLOBALS[ajaxuserreturntimes], getNiceAge($orow[timestamp]));
-
 		#count new mwssages
 		$mcount = 0;
 		foreach ($newmsgopenid as $mymsg) {
 			if (($mymsg[0] == $_SESSION[openid_identifier]) AND ($mymsg[1]  == $orow[openid]))
 				$mcount++;
 		}
+		#end currend user run if a banned or not correct user (exept system messages)
+		if (empty($GLOBALS[users][byuri][$orow[openid]][name])) continue;
+
+		#yes, this is a ok user 
+		$cnt++;
+
+
+		array_push($GLOBALS[ajaxuserreturnname], $GLOBALS[users][byuri][$orow[openid]][name]);
+		array_push($GLOBALS[ajaxuserreturnopenid], $orow[openid]);
+		array_push($GLOBALS[ajaxuserreturntimes], getNiceAge($orow[timestamp]));
+
 		array_push($GLOBALS[ajaxuserreturnnewmessage], $mcount);
 
 		#is the user online?
@@ -479,7 +497,7 @@ function getOnlineUsers () {
 			$icnt++;
 
 		#so, the user is offline then (to infinity and beyond!)
-		} else { 
+		} else {
 			array_push($GLOBALS[ajaxuserreturnstatus], "-1");
 			$fcnt++;
 		}
@@ -554,7 +572,13 @@ function jasonOut () {
 				while ($row = mysql_fetch_array($sql)) {
 					$GLOBALS[myreturn][newmsgs]++;
 					$GLOBALS[myreturn][newmsgid] = $row[id];
-					array_push($tmppa, $GLOBALS[users][byuri][$row[sender]][name]);
+
+					if (empty($GLOBALS[users][byuri][$row[sender]][name]))
+						$tmpnamea = $GLOBALS[adminmsgname];
+					else
+						$tmpnamea = $GLOBALS[users][byuri][$row[sender]][name];
+
+					array_push($tmppa, $tmpnamea);
 				}
 				array_unique($tmppa);
 				$GLOBALS[myreturn][newmsgsfrom] = $tmppa;
@@ -1016,7 +1040,6 @@ function fetchArmoryXML ($type, $target) {
 function loadArmoryNames () {
 	#load names into memory $GLOBALS[armorynames]
 	#id, category, iid, name
-#		$GLOBALS[cfg][armory][names]
 	if (! $GLOBALS[armorynames][init]) {
 		$sql = mysql_query("SELECT category,iid,name FROM ".$GLOBALS[cfg][armory][names]." WHERE 1;");
 		while ($row = mysql_fetch_array($sql)) {
@@ -1101,22 +1124,16 @@ function fetchArmoryCharacter ($charname) {
 		$mychar[content] = fetchArmoryXML ("n", $charname);
 		$mychar[timestamp] = time();
 		$char = new SimpleXMLElement($mychar[content]);
-		$myilvl = genArmoryIlvl($char);
-		$myskills = genArmorySkills($char);
-		$myachievments = genArmoryAchievments($char);
 		$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
 					"name='".$char->characterInfo->character['name']."', ".
-					"timestamp='".$mychar[timestamp]."', ".
+					"timestamp='0', ".
 					"content='".mysql_real_escape_string($mychar[content])."', ".
 					"level='".$char->characterInfo->character['level']."', ".
 					"genderid='".$char->characterInfo->character['genderId']."', ".
 					"classid='".$char->characterInfo->character['classId']."', ".
 					"raceid='".$char->characterInfo->character['raceId']."', ".
 					"factionid='".$char->characterInfo->character['factionId']."', ".
-					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
-					"skills='".$myskills."', ".
-					"achievments='".serialize($myachievments)."', ".
-					"ilevelavg='".serialize($myilvl)."';";
+					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', "."';";
 		$mychar[ilevelavg] = $myilvl;
 		$mychar[name]				= (string) $char->characterInfo->character['name'];
 		$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
@@ -1126,8 +1143,6 @@ function fetchArmoryCharacter ($charname) {
 		$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
 		$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
 		$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
-		$mychar[skills]			= $myskills;
-		$mychar[achievments]	= $myachievments;
 		if (! empty($char->characterInfo->character['name']))
 			$sqlr = mysql_query($sql);
 	} else {
@@ -1228,6 +1243,15 @@ function genArmoryClassClass ($ilvl) {
 	return $myclass;
 }
 
+function getArmoryUserOfChar ($char) {
+	$return = array();
+	foreach ($GLOBALS[users][byuri] as $myuser)
+		if (! empty($myuser[armorychars]))
+			foreach ($myuser[armorychars] as $mychar)
+				if (strtolower($mychar) == strtolower($char))
+					array_push($return, $myuser[uri]);
+	return $return;
+}
 
 
 function fetchArmoryItem ($itemid) {
@@ -1273,6 +1297,13 @@ function fetchArmoryItem ($itemid) {
 		}
 	}
 	return $myitem;
+}
+
+function genArmoryCharHtml ($name, $classid, $raceid, $genderid, $factionid) {
+	return "<a href='?module=armory&mydo=showchardetail&mycharname=".$name."'><span class='".genArmoryClassClass($classid)."' title='".showArmoryName("race", $raceid).
+					", ".showArmoryName("gender", $genderid).", ".showArmoryName("faction", $factionid).
+					"'>".$name." ".
+					"</span></a>";
 }
 
 

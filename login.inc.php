@@ -202,12 +202,13 @@ switch ($_POST[job]) {
 				}
 
 				if ($show)
-					$GLOBALS[html] .= "<h2><a href='?'>&Uuml;bersicht</a> &gt;";
+					$GLOBALS[html] .= "<h3><a href='?'><img src='".$GLOBALS[cfg][moduledir]."/home.png' style='width:32px;height:32px;' title='Home'/></a>&nbsp;&nbsp;&nbsp;";
 
 				if (file_exists($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php')) {
 					include($GLOBALS[cfg][moduledir].'/'.$_POST[module].'/module.inc.php');
 					if ($show)
-						$GLOBALS[html] .= " <a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h2><hr />";
+						$GLOBALS[html] .= "<img src='".$GLOBALS[cfg][moduledir]."/back.png' style='width:32px;height:32px;' ".
+															"onclick='javascript:history.back()' title='Back'>&nbsp;&nbsp;&nbsp;<a href='?module=".$_POST[module]."'>".$MODULE[name]."</a></h3><hr />";
 					include('./'.$GLOBALS[cfg][moduledir].'/'.$_POST[module].'/index.php');
 				} else {
 					sysmsg ("No Module description found!", 1);

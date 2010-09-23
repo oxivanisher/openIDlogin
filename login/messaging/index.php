@@ -279,7 +279,12 @@ switch ($_POST[myjob]) {
 
 				if ($new)	$mynewreturn  = "<b>"; else $mynewreturn  = "";
 
-				$mynewreturn .= $GLOBALS[users][byuri][$row[sender]][name]." ".getNiceAge($row[timestamp]);
+				if (empty($GLOBALS[users][byuri][$row[sender]][name]))
+					$tmpname = $GLOBALS[adminmsgname];
+				else
+					$tmpname = $GLOBALS[users][byuri][$row[sender]][name];
+
+				$mynewreturn .= $tmpname." ".getNiceAge($row[timestamp]);
 
 				if ($new)	$mynewreturn .= ":</b> "; else $mynewreturn .= ": <i>";
 
@@ -331,7 +336,10 @@ switch ($_POST[myjob]) {
 		$sql = mysql_query("SELECT id,sender,receiver,timestamp,subject,message,new FROM ".$GLOBALS[cfg][msg][msgtable].
 					" WHERE receiver='".$_SESSION[openid_identifier]."' ORDER BY sender DESC, timestamp DESC;");
 		while ($row = mysql_fetch_array($sql)) {
-			$tmpname = $GLOBALS[users][byuri][$row[sender]][name];
+			if (empty($GLOBALS[users][byuri][$row[sender]][name]))
+				$tmpname = $GLOBALS[adminmsgname];
+			else
+				$tmpname = $GLOBALS[users][byuri][$row[sender]][name];
 
 			if ($row['new'] == "1") $ncnt++;
 
@@ -367,7 +375,10 @@ switch ($_POST[myjob]) {
 
 	case "getname":
 		fetchUsers();
-		$GLOBALS[myreturn][name] = $GLOBALS[users][byname][$_POST[openid]];
+		if (empty($GLOBALS[users][byname][$_POST[openid]]))
+			$GLOBALS[myreturn][name] = $GLOBALS[adminmsgname];
+		else		
+			$GLOBALS[myreturn][name] = $GLOBALS[users][byname][$_POST[openid]];
 	break;
 
 
@@ -387,8 +398,14 @@ switch ($_POST[myjob]) {
 			if (($row[receiver] == $_SESSION[openid_identifier]) AND ($row['new'] == "1")) $tmp = "color: lime; ";
 			else $tmp = "";
 
+			if (! empty($GLOBALS[users][byuri][$row[sender]][name]))
+				$tmpsender = genMsgUrl($row[sender]);
+			else
+				$tmpsender = $GLOBALS[adminmsgname];
+
+
 			$GLOBALS[html] .= "<tr style='".$tmp."'>";
-			$GLOBALS[html] .= "<td style='vertical-align: top;'>".genMsgUrl($row[sender])."</td>";
+			$GLOBALS[html] .= "<td style='vertical-align: top;'>".$tmpsender."</td>";
 			$GLOBALS[html] .= "<td style='vertical-align: top;'>".getAge($row[timestamp])."</td>";
 
 			$GLOBALS[html] .= "<td style='vertical-align: top;'>";
