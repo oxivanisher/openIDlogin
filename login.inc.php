@@ -221,7 +221,8 @@ switch ($_POST[job]) {
 			#nope, show module index
 			$GLOBALS[myreturn][msg] = "refreshing";
 #			$GLOBALS[html] = "<h2><a href='?'>Modul &Uuml;bersicht</a></h2><br />";
-			$GLOBALS[html] = "<ul>";
+#			$GLOBALS[html] = "<ul>";
+			$GLOBALS[html] = "";
 				
 			#have fun reading this code :P
 			if (is_dir($GLOBALS[cfg][moduledir])) {
@@ -252,21 +253,25 @@ switch ($_POST[job]) {
 						}
 			      closedir($dh);
 				}
+				function mynav ($module, $name, $comment) {
+					return "<h3><a href='?module=".$module."'><img src='".$GLOBALS[cfg][moduledir]."/".$module.
+									"/icon.png' style='float:left;padding:5px;spaceing:3px;'/>".$name."</a></h3>".$comment."<br /><br />";
+				}
+
 				#write navigation
 				foreach ($nav[user] as $mylink)
-					$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
-
+					$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 				if ($_SESSION[isadmin]) {
-					$GLOBALS[html] .= "<hr />";
+					$GLOBALS[html] .= "<hr />Administration";
 					foreach ($nav[admin] as $mylink)
-						$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
+						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 				}
 				if ($_SESSION[isdev]) {
-					$GLOBALS[html] .= "<hr />";
+					$GLOBALS[html] .= "<hr />Entwicklung";
 					foreach ($nav[dev] as $mylink)
-						$GLOBALS[html] .= "<li><h3><a href='?module=".$mylink[module]."'>".$mylink[name]."</a></h3>".$mylink[comment]."<br /><br /></li>";
+						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 				}
-				$GLOBALS[html] .= "</ul>";
+#				$GLOBALS[html] .= "</ul>";
 			} 
 			$GLOBALS[html] .= "<br />";	
 	

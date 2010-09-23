@@ -59,6 +59,7 @@ if ($_SESSION[loggedin] == 1) {
 					$rnames = "";
 				}
 				
+				$GLOBALS[html] .= "- Profil aktualisiert f&uuml;r: ";
 				#update oom profile db
 				$sql = "UPDATE ".$GLOBALS[cfg][userprofiletable]." SET nickname='".$_POST[nickname]."', email='".$_POST[email].
 								"', surname='".$_POST[surname]."', forename='".$_POST[forename]."', dob='".$_POST[dob].
@@ -68,13 +69,10 @@ if ($_SESSION[loggedin] == 1) {
 								"', armorychars='".$rnames."', accurate='1' WHERE openid='".$_SESSION[openid_identifier]."';";
 				$sqlq = mysql_query($sql);
 				if ($sqlq) {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("OOM Profile updated", 1);
-					$GLOBALS[html] .= "<br />";
+					$GLOBALS[html] .= "IMBA Admin, ";
+					sysmsg ("OOM Profile updated", 2);
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("OOM Profile update failed", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("OOM Profile update failed", 2);
 				}
 	
 				#smf db
@@ -93,18 +91,13 @@ if ($_SESSION[loggedin] == 1) {
 									"' WHERE openid_uri='".$_SESSION[openid_identifier]."';";
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("SMF Profile updated", 1);
-						$GLOBALS[html] .= "<br />";
+						$GLOBALS[html] .= "Forum, ";
+						sysmsg ("SMF Profile updated", 2);
 					} else {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("SMF Profile update failed", 1);
-						$GLOBALS[html] .= "<br />";
+						sysmsg ("SMF Profile update failed", 2);
 					}
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("No SMF Raider Profile found", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("No SMF Profile found", 2);
 				}
 	
 				#phpraider
@@ -113,41 +106,33 @@ if ($_SESSION[loggedin] == 1) {
 									"' WHERE username='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."';";
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("PHP Raider Profile updated", 1);
-						$GLOBALS[html] .= "<br />";
+						$GLOBALS[html] .= "Raid Planer,  ";
+						sysmsg ("PHP Raider Profile updated", 2);
 					} else {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("PHP Raider Profile update failed", 1);
-						$GLOBALS[html] .= "<br />";
+						sysmsg ("PHP Raider Profile update failed", 2);
 					}
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("No PHP Raider Profile found", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("No PHP Raider Profile found", 2);
 				}
 	
 				#eqdkp
 				if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][eqdkp]) {
 					$sql = "UPDATE eqdkp_users SET username='".$_POST[nickname]."', user_email='".$_POST[email].
 									"', birthday='".$_POST[dob].".".$_POST[mob].".".$_POST[yob]."', icq='".$_POST[icq]."', msn='".$_POST[msn].
-									"' WHERE username='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][name]."';";
+									"' WHERE user_id='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][eqdkp]."';";
+								echo $sql;
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("EQDKP Profile updated", 1);
-						$GLOBALS[html] .= "<br />";
+						$GLOBALS[html] .= "DKP System,  ";
+						sysmsg ("EQDKP Profile updated", 2);
 					} else {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("EQDKP Profile update failed", 1);
-						$GLOBALS[html] .= "<br />";
+						sysmsg ("EQDKP Profile update failed", 2);
 					}
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("No EQDKP Profile found", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("No EQDKP Profile found", 2);
 				}
-	
+				fetchUsers();
+
 				#wordpress
 				if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][wordpress]) {
 					$sql = "UPDATE wp_users SET user_login='".$_POST[nickname]."', user_nicename='".$_POST[nickname].
@@ -155,18 +140,13 @@ if ($_SESSION[loggedin] == 1) {
 									"' WHERE user_url='".$_SESSION[openid_identifier]."';";
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("Blog Profile updated", 1);
-						$GLOBALS[html] .= "<br />";
+						$GLOBALS[html] .= "Blog, ";
+						sysmsg ("Blog Profile updated", 2);
 					} else {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("Blog Profile update failed", 1);
-						$GLOBALS[html] .= "<br />";
+						sysmsg ("Blog Profile update failed", 2);
 					}
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("No Blog Profile found", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("No Blog Profile found", 2);
 				}
 	
 				#wiki
@@ -176,18 +156,13 @@ if ($_SESSION[loggedin] == 1) {
 									"' WHERE user_id='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][mediawiki]."';";
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("Wiki Profile updated", 1);
-						$GLOBALS[html] .= "<br />";
+						$GLOBALS[html] .= "Wiki, ";
+						sysmsg ("Wiki Profile updated", 2);
 					} else {
-						$GLOBALS[html] .= "- ";
-						sysmsg ("Wiki Profile update failed", 1);
-						$GLOBALS[html] .= "<br />";
+						sysmsg ("Wiki Profile update failed", 2);
 					}
 				} else {
-					$GLOBALS[html] .= "- ";
-					sysmsg ("No Wiki Profile found", 1);
-					$GLOBALS[html] .= "<br />";
+					sysmsg ("No Wiki Profile found", 2);
 				}
 
 				#jid / xmpp setup
@@ -207,9 +182,8 @@ if ($_SESSION[loggedin] == 1) {
 									$_SESSION[openid_identifier]."', '".strtolower($_POST[jid])."');");
 					}
 				}
-				$GLOBALS[html] .= "- ";
-				sysmsg ("XMPP Setting updated!", 1);
-				$GLOBALS[html] .= "<br />";
+				$GLOBALS[html] .= "Jabber Transfer ";
+				sysmsg ("XMPP Setting updated!", 2);
 				
 
 		} else {

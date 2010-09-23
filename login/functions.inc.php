@@ -21,7 +21,7 @@ function setCookies () {
 	#set eqdkp cookie
 	$mybool = 1;
 	$GLOBALS[html] .= "<b>checking for eqdkp user:</b><br />";
-	$sql = mysql_query("SELECT user_password,user_id,username FROM eqdkp_users WHERE username='".strtolower($nametransfer)."';");
+	$sql = mysql_query("SELECT user_password,user_id,username FROM eqdkp_users WHERE username='".$nametransfer."';");
 	while ($row = mysql_fetch_array($sql)) {
 		$mybool = 0;
 		$data[auto_login_id] = $row[user_password];
@@ -32,7 +32,7 @@ function setCookies () {
 	}
 
 	if (($mybool) AND (! empty($nametransfer))) {
-		$sql2 = mysql_query("INSERT INTO eqdkp_users (username, user_email, user_password) VALUES ('".strtolower($nametransfer).
+		$sql2 = mysql_query("INSERT INTO eqdkp_users (username, user_email, user_password) VALUES ('".$nametransfer.
 				"', '".$tmpemailtransfer."', '".md5(rand())."');");
 
 		$sql = mysql_query("SELECT user_password,user_id,username FROM eqdkp_users WHERE username='".strtolower($nametransfer)."';");
@@ -126,7 +126,7 @@ function fetchUsers () {
 			if ((! $row[role]) AND (! $_SESSION[isadmin])) 
 				continue;
 
-			$GLOBALS[users][byname][strtolower($tmpname)] = $row[nickname];
+			$GLOBALS[users][byname][strtolower($row[nickname])] = $row[nickname];
 			$GLOBALS[users][byuri][$row[openid]][name] = $row[nickname];
 			$GLOBALS[users][byuri][$row[openid]][uri] = $row[openid];
 			$GLOBALS[users][byuri][$row[openid]][role] = $row[role];
@@ -140,13 +140,13 @@ function fetchUsers () {
 	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
-			if (! empty($GLOBALS[users][byuri][$rows[openid_uri]][name])) {
+			if (! empty($GLOBALS[users][byuri][$row[openid_uri]])) {
 			#experimental
-#			$tmpname = $row[member_name];
+#			$tmpname = $row[member_name]
 #			$tmpuri = $row[openid_uri];
 #			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
 #			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
-				$GLOBALS[users][byuri][$tmpuri][smf] = $row[id_member];
+				$GLOBALS[users][byuri][$row[openid_uri]][smf] = $row[id_member];
 #			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
 #			$GLOBALS[users][byuri][$tmpuri][role] = 0;
 				$count++;
