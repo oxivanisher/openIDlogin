@@ -255,22 +255,38 @@ switch ($_POST[job]) {
 			      closedir($dh);
 				}
 				function mynav ($module, $name, $comment) {
+					if ($GLOBALS[tmp][marker])
+						$cssclass = "imbaRowDark";
+					else
+						$cssclass = "imbaRowLight";
+					if ($GLOBALS[tmp][marker]) $GLOBALS[tmp][marker] = 0;
+					else $GLOBALS[tmp][marker] = 1;
+#					return "<div style='float:left;clear:both;' class='".$cssclass."'><a href='?module=".
+#									$module."'><img src='".$GLOBALS[cfg][moduledir]."/".$module.
+#									"/icon.png' style='padding:5px;spaceing:3px;'/></a></div>".
+#									"<div style='float:left;' class='".$cssclass."'><h3><a href='?module=".
+#									$module."'>".$name."</a></h3>".$comment."<br /><br /></div>\n";
 					return "<h3><a href='?module=".$module."'><img src='".$GLOBALS[cfg][moduledir]."/".$module.
-									"/icon.png' style='float:left;padding:5px;spaceing:3px;'/>".$name."</a></h3>".$comment."<br /><br />";
+								 "/icon.png' style='float:left;padding:5px;spaceing:3px;'/>".$name."</a></h3>".$comment."<br /><br />";
+					 
 				}
 
 				#write navigation
-				foreach ($nav[user] as $mylink)
+				$GLOBALS[tmp][marker] = 0;
+				foreach ($nav[user] as $mylink) {
 					$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
+				}
 				if ($_SESSION[isadmin]) {
-					$GLOBALS[html] .= "<hr />Administration";
-					foreach ($nav[admin] as $mylink)
+#					$GLOBALS[html] .= "<div style='float:left;clear:both;'><hr />Administration</div>";
+					foreach ($nav[admin] as $mylink) {
 						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
+					}
 				}
 				if ($_SESSION[isdev]) {
-					$GLOBALS[html] .= "<hr />Entwicklung";
-					foreach ($nav[dev] as $mylink)
+#					$GLOBALS[html] .= "<div style='float:left;clear:both;'><hr />Entwicklung</div>";
+					foreach ($nav[dev] as $mylink) {
 						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
+					}
 				}
 #				$GLOBALS[html] .= "</ul>";
 			} 
@@ -360,6 +376,7 @@ echo "<html><head><title>".$_SERVER[SERVER_NAME]." OpenID Control Center</title>
 echo '<meta http-equiv="Content-Type" content="text/html; charset=utf8" />';
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css1]."' type='text/css' />\n";
 echo "<link rel='stylesheet' href='".$GLOBALS[cfg][css2]."' type='text/css' />\n";
+echo "<link rel='stylesheet' href='/login/imba.css' type='text/css' />\n";
 echo "</head>";
 echo "\n<script language='JavaScript'>\n";
 echo "<!--\nfunction ssoRefresh()\n{\n";

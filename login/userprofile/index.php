@@ -120,7 +120,6 @@ if ($_SESSION[loggedin] == 1) {
 					$sql = "UPDATE eqdkp_users SET username='".$_POST[nickname]."', user_email='".$_POST[email].
 									"', birthday='".$_POST[dob].".".$_POST[mob].".".$_POST[yob]."', icq='".$_POST[icq]."', msn='".$_POST[msn].
 									"' WHERE user_id='".$GLOBALS[users][byuri][$_SESSION[openid_identifier]][eqdkp]."';";
-								echo $sql;
 					$sqlq = mysql_query($sql);
 					if ($sqlq) {
 						$GLOBALS[html] .= "DKP System,  ";

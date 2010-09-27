@@ -8,7 +8,7 @@ if ($_SESSION[loggedin] == 1) {
 	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 6) {
 		sysmsg ("You are allowed to use this Module", 2);
 		if ($_POST[mydo] == "approve") {
-			$GLOBALS[html] .= "- "; sysmsg ("Aproove the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			sysmsg ("Aproove the user ".$_POST[applicant], 2);
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='1',answer='".$_POST[answer]
 							."' WHERE openid='".$_POST[applicant]."';");
 
@@ -45,7 +45,8 @@ if ($_SESSION[loggedin] == 1) {
 			$sqlq = mysql_query($sql);
 
 			#show sucess message
-			sendMail($tmp[email], "Herzlich Willkommen (Deine Bewerbung)", "Deine Bewerbung zur Gilde Alptroeim wurde akzeptiert!\nHerzlich Willkommen!");
+			sendMail($_POST[email], "Herzlich Willkommen (Deine Bewerbung)", 
+														"Deine Bewerbung zur Gilde Alptroeim wurde akzeptiert!\nHerzlich Willkommen!\n\n".$_POST[answer]);
 			applyProfile ($tmp[openid], '5');
 
 			if ($tmp[sex] == "F")
@@ -56,8 +57,9 @@ if ($_SESSION[loggedin] == 1) {
 			informUsers ("Ein herzliches Willkommen ".$padawan.": ".$tmp[nickname], "5");
 			sysmsg ("User accepted to guild: ".$tmp[nickname].", ".$tmp[openid], 1);
 		} elseif ($_POST[mydo] == "deny") {
-			#sendMail(, "Absage (Deine Bewerbung)", "Deine Bewerbung wurde leider abgelehnt. Dies ist die Nachricht dazu:\n".$_POST[answer]);
-			$GLOBALS[html] .= "- "; sysmsg ("Deny the user ".$_POST[applicant], 1); $GLOBALS[html] .= "<br />";
+			sendMail($_POST[email], "Absage (Deine Bewerbung)", 
+															"Deine Bewerbung wurde leider abgelehnt. Dies ist die Nachricht dazu:\n\n".$_POST[answer]);
+			sysmsg ("Deny the user ".$_POST[applicant], 2);
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='2',answer='".$_POST[answer]."' WHERE openid='".$_POST[applicant]."';");
 			#show deny message
 			informUsers ("Benutzer ".$_POST[applicant]." wurde abgewiesen.", "6");
@@ -65,27 +67,29 @@ if ($_SESSION[loggedin] == 1) {
 		}
 
 		if ($_POST[mydo] == "showapplicant") {
-			$GLOBALS[html] .= "- "; sysmsg ("Showing applicant details of ".$_POST[applicant], 1); $GLOBALS[html] .= "<br /><br />";
+			sysmsg ("Showing applicant details of ".$_POST[applicant], 2);
 			#showapplicant detail chart
 			$GLOBALS[html] .= "<table>";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$_POST[applicant]."';");
 			while ($row = mysql_fetch_array($sql)) {
 			#display list of applicants
 				#$_POST[applicant]
-				$GLOBALS[html] .= "<form action='?' method='POST'>";
-				$GLOBALS[html] .= "<input type='hidden' name='applicant' value='".$_POST[applicant]."' />";
-				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-				$GLOBALS[html] .= "<tr><td>Nickname:</td><td>".$row[nickname]."</td></tr>";
+				if ($row[state] == 0) $new = 1;
+				else $new = 0;
+
+				$GLOBALS[html] .= "<h2>Bewerbung von ".$row[nickname]."</h2>";
+				if ($new) {
+					$GLOBALS[html] .= "<form action='?' method='POST'>";
+					$GLOBALS[html] .= "<input type='hidden' name='applicant' value='".$_POST[applicant]."' />";
+					$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+					$GLOBALS[html] .= "<input type='hidden' name='email' value='".$_POST[email]."' />";
+				}
 				$GLOBALS[html] .= "<tr><td>Email:</td><td>".$row[email]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Surname:</td><td>".$row[surname]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Forename:</td><td>".$row[forename]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Sex:</td><td>".$row[sex]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Birthday:</td><td>".$row[dob].".".$row[mob].".".$row[yob]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>JabberID:</td><td>".$row[jid]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>ICQ#</td><td>".$row[icq]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>MSN:</td><td>".$row[msn]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Skype:</td><td>".$row[skype]."</td></tr>";
-				$GLOBALS[html] .= "<tr><td valign='top'>Application:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Nachname:</td><td>".$row[surname]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Vorname:</td><td>".$row[forename]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Geschlecht:</td><td>".$row[sex]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td>Geburtsdatum:</td><td>".$row[dob].".".$row[mob].".".$row[yob]."</td></tr>";
+				$GLOBALS[html] .= "<tr><td valign='top'>Bewerbung:</td><td>".str_replace("\n", "<br />", $row[comment])."</td></tr>";
 				$GLOBALS[html] .= "<tr><td>WOW Chars:</td>";
 				$GLOBALS[html] .= "<td>";
 				foreach (unserialize($row[wowchars]) as $mycharname) {
@@ -99,34 +103,46 @@ if ($_SESSION[loggedin] == 1) {
 						}
 				}
 				$GLOBALS[html] .= "</td></tr>";
-				$GLOBALS[html] .= "<tr><td>Application Age:</td><td>".getAge($row[timestamp])."</td></tr>";
-				$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
-				$GLOBALS[html] .= "<tr><td valign='top'>Answer:</td><td>";
-				$GLOBALS[html] .= "<textarea name='answer' rows='4' cols='50'>Begr&uuml;ndung an den Bewerber</textarea></td></tr>";
-				$GLOBALS[html] .= "<tr><td valign='top'>&nbsp;</td><td>";
-					$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' />Approve&nbsp;&nbsp;";
-					$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' />Deny&nbsp;&nbsp;";
-					$GLOBALS[html] .= "<input type='radio' name='mydo' value='showapplicant' checked='checked' /> Nothing";
-					$GLOBALS[html] .= "</td></tr>";
-				$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='submit' value='submit' /></td></tr>";
-				$GLOBALS[html] .= "</form>";
+				$GLOBALS[html] .= "<tr><td>Beworben vor:</td><td>".getAge($row[timestamp])."</td></tr>";
+				if ($new) {
+					$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
+					$GLOBALS[html] .= "<tr><td valign='top'>Antwort:</td><td>";
+					$GLOBALS[html] .= "<textarea name='answer' rows='4' cols='50'>Begr&uuml;ndung an den Bewerber</textarea></td></tr>";
+					$GLOBALS[html] .= "<tr><td valign='top'>&nbsp;</td><td>";
+						$GLOBALS[html] .= "<input type='radio' name='mydo' value='approve' />Zusagen&nbsp;&nbsp;";
+						$GLOBALS[html] .= "<input type='radio' name='mydo' value='deny' />Absagen&nbsp;&nbsp;";
+						$GLOBALS[html] .= "<input type='radio' name='mydo' value='showapplicant' checked='checked' /> Nichts";
+						$GLOBALS[html] .= "</td></tr>";
+					$GLOBALS[html] .= "<tr><td>&nbsp;</td><td><input type='submit' name='speichern' value='speichern' /></td></tr>";
+					$GLOBALS[html] .= "</form>";
+				} else {
+					if ($row[state] == 2)
+						$tmps = $GLOBALS[cfg][moduledir]."/deny.png";
+					elseif ($row[state] == 1)
+						$tmps = $GLOBALS[cfg][moduledir]."/accept.png";
+					$GLOBALS[html] .= "<tr><td colspan='2'><hr /></td></tr>";
+					$GLOBALS[html] .= "<tr><td valign='top'>Antwort:&nbsp;<img src='".$tmps.
+														"' style='width:18px;height:18px;' /></td><td>".$row[answer]."</td></tr>";
+				}
 
 			}
 			$GLOBALS[html] .= "</table>";
 
 		} else {
-			$GLOBALS[html] .= "- "; sysmsg ("Display list of applicants", 1); $GLOBALS[html] .= "<br /><br />";
-			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state='0';");
+			sysmsg ("Display list of applicants", 2);
+
+			#list applicants
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state='0' ORDER BY timestamp ASC;");
+			$GLOBALS[html] .= "<h2>Aktive Bewerbungen</h2>";
 			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Birthday</th><th>Characters</th></tr>";
+			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>OpenID</th><th>Wann Beworben</th><th>WOW Charakter</th></tr>";
 			while ($row = mysql_fetch_array($sql)) {
 			#display list of applicants
-				#$_POST[applicant]
 				$GLOBALS[html] .= "<tr>";
 				$GLOBALS[html] .= "<td><a href='?module=".$_POST[module]."&mydo=showapplicant&applicant=".
 													$row[openid]."'>".$row[nickname]."</a></td>";
 				$GLOBALS[html] .= "<td>".$row[email]."</td>";
-				$GLOBALS[html] .= "<td>".$row[openid]."</td>";
+				$GLOBALS[html] .= "<td>".getNiceAge($row[timestamp])."</td>";
 				$GLOBALS[html] .= "<td>".$row[dob].".".$row[mob].".".$row[yob]."</td>";
 
 				$GLOBALS[html] .= "<td>";
@@ -144,6 +160,43 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "</tr>";
 			}
 			$GLOBALS[html] .= "</table>";
+			$GLOBALS[html] .= "<br /><br />";
+
+			#display applicant history
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state<>'0' ORDER BY timestamp DESC;");
+			$GLOBALS[html] .= "<h2>Alte Bewerbungen</h2>";
+			$GLOBALS[html] .= "<table>";
+			$GLOBALS[html] .= "<tr><th>Nickname</th><th>Email</th><th>Wann Beworben</th><th>Geburtstag</th><th>WOW Charakter</th></tr>";
+			while ($row = mysql_fetch_array($sql)) {
+				if ($row[state] == 2)
+					$tmps = $GLOBALS[cfg][moduledir]."/deny.png";
+				elseif ($row[state] == 1)
+					$tmps = $GLOBALS[cfg][moduledir]."/accept.png";
+				$GLOBALS[html] .= "<tr>";
+				$GLOBALS[html] .= "<td><img src='".$tmps."' style='width:18px;height:18px;' />&nbsp;";
+				$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=showapplicant&applicant=".
+													$row[openid]."'>".$row[nickname]."</a></td>";
+				$GLOBALS[html] .= "<td>".$row[email]."</td>";
+				$GLOBALS[html] .= "<td>".getNiceAge($row[timestamp])."</td>";
+				$GLOBALS[html] .= "<td>".$row[dob].".".$row[mob].".".$row[yob]."</td>";
+
+				$GLOBALS[html] .= "<td>";
+				foreach (unserialize($row[wowchars]) as $mycharname) {
+					if ($char = fetchArmoryCharacter($mycharname)) {
+						$GLOBALS[html] .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
+															"<span class='".genArmoryClassClass($char[classid])."' title='".showArmoryName("race", $char[raceid]).
+															", ".showArmoryName("gender", $char[genderid]).", ".showArmoryName("faction", $char[factionid])."'>".$char[name]." ".
+															"</span>";
+						} else {
+							$GLOBALS[html] .= genArmoryIlvlHtml(0,"00").$mycharname;
+						}
+				}
+				$GLOBALS[html] .= "</td>";
+				$GLOBALS[html] .= "</tr>";
+			}
+			$GLOBALS[html] .= "</table>";
+
+
 		}
 	} else {
 		$GLOBALS[html] .= "- "; sysmsg ("You are not allowed to use this Module", 1); $GLOBALS[html] .= "<br />";

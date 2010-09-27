@@ -22,9 +22,12 @@ if ($_SESSION[loggedin] == 1) {
 
 		#send testmail to user
 		} elseif (($_POST[myjob] == "sendmail") and (! empty($_POST[user]) and (! empty($_POST[text])))) {
-			$GLOBALS[html] .= "<h3>=&gt; Sending mail to user: ".$_POST[user]." returned: ".
-												sendMail($_POST[user], "Test Message", $_POST[text])."</h3>";
-			sysmsg ("Sent testmessage to: ".$_POST[user], 1);
+			sysmsg ("Sent testmessage to: ".$_POST[user], 2);
+			if ($tmp = sendMail($_POST[user], "Test Message", $_POST[text]))
+				$GLOBALS[html] .= "<h3>=&gt; Sending mail to user: ".$_POST[user]." succesful (".$tmp.")</h3>";
+			else
+				$GLOBALS[html] .= "<h3>=&gt; Sending mail to user: ".$_POST[user]." failed!</h3>";
+				
 
 
 		#push user idle
@@ -198,6 +201,14 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
 		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='sendmail' />";
 		$GLOBALS[html] .= "<td><h3>Send Testmail</h3><br />To: ".$uDropdown."</td>";
+		$GLOBALS[html] .= "<td><textarea name='text' cols='20' rows='3'>Text</textarea></td>";
+		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
+		$GLOBALS[html] .= "</tr></form></table><br />";
+
+		$GLOBALS[html] .= "<table><form action='?' method='POST'><tr>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='sendmail' />";
+		$GLOBALS[html] .= "<td><h3>Send Testmail</h3><br />To: <input type='text' size='15' name='user' /></td>";
 		$GLOBALS[html] .= "<td><textarea name='text' cols='20' rows='3'>Text</textarea></td>";
 		$GLOBALS[html] .= "<td><input type='submit' name='submit' value='submit' /></td>";
 		$GLOBALS[html] .= "</tr></form></table><br />";

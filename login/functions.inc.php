@@ -1014,27 +1014,36 @@ function checkProfile ($myOpenID = '') {
 }
 
 function fetchArmoryXML ($type, $target) {
-	$BASEURL = "http://eu.wowarmory.com/";
-	if ($type == "i")
-		$URL = $BASEURL."item-info.xml?i=".$target;
-	elseif ($type == "n")
-		$URL = $BASEURL."character-sheet.xml?r=".$GLOBALS[realm]."&n=".$target;
-	else return 0;
-	$URL .= "&rhtml=n";
-	$useragent = "Mozilla/5.0 (Windows; U; Windows NT 5.0; de-DE; rv:1.6) Gecko/20040206 Firefox/1.0.1";
-	ini_set('user_agent',$useragent);
-	$curl = curl_init();
-	curl_setopt ($curl, CURLOPT_URL, $URL);
-	curl_setopt($curl, CURLOPT_USERAGENT, $useragent);
-	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-	$load = curl_exec($curl);
-	curl_close($curl);
-	if (strpos($load, '<errorhtml type="503"/>')) {
-		$GLOBALS[armorycharupdatecount] = $GLOBALS[armorycharmaxupdate] + 1;
+	if ($GLOBALS[armorydowntimestamp] > (time() - $GLOBALS[armorydownwait])) {
 		$GLOBALS[armorydown] = 1;
-		sysmsg ("WOW Armory down.", 3);
+		return '<'.'?'.'xml version="1.0" encoding="ISO-8859-1"?'.'>'.
+						'<page globalSearch="1" lang="en_us"><errorhtml type="503"/></page>';
+	} else {
+		$BASEURL = "http://eu.wowarmory.com/";
+		if ($type == "i")
+			$URL = $BASEURL."item-info.xml?i=".$target;
+		elseif ($type == "n")
+			$URL = $BASEURL."character-sheet.xml?r=".$GLOBALS[realm]."&n=".$target;
+		else return 0;
+		$URL .= "&rhtml=n";
+		$useragent = "Mozilla/5.0 (Windows; U; Windows NT 5.0; de-DE; rv:1.6) Gecko/20040206 Firefox/1.0.1";
+		ini_set('user_agent',$useragent);
+		$curl = curl_init();
+		curl_setopt ($curl, CURLOPT_URL, $URL);
+		curl_setopt($curl, CURLOPT_USERAGENT, $useragent);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		$load = curl_exec($curl);
+		curl_close($curl);
+		if (strpos($load, '<errorhtml type="503"/>')) {
+			$GLOBALS[armorycharupdatecount] = $GLOBALS[armorycharmaxupdate] + 1;
+			$GLOBALS[armorydown] = 1;
+			$GLOBALS[armorydowntimestamp] = time();
+			sysmsg ("WOW Armory down.", 3);
+			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][settingstable]." SET value='".
+							$GLOBALS[armorydowntimestamp]."' WHERE name='armorydowntimestamp';");
+		}
+		return $load;
 	}
-	return $load;
 }
 
 function loadArmoryNames () {
@@ -1126,7 +1135,7 @@ function fetchArmoryCharacter ($charname) {
 		$char = new SimpleXMLElement($mychar[content]);
 		$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
 					"name='".$char->characterInfo->character['name']."', ".
-					"timestamp='0', ".
+					"timestamp='1', ".
 					"content='".mysql_real_escape_string($mychar[content])."', ".
 					"level='".$char->characterInfo->character['level']."', ".
 					"genderid='".$char->characterInfo->character['genderId']."', ".
@@ -1335,12 +1344,6 @@ function templGenDropdown ($name, $from, $to, $selected) {
 	$dd .= "</select>\n";
 	return $dd;
 }
-function check_email_address($email) {
-#	if (!preg_match("/^( [a-zA-Z0-9] )+( [a-zA-Z0-9\._-] )*@( [a-zA-Z0-9_-] )+( [a-zA-Z0-9\._-] +)+$/" , $email)) {
-#  	return false;
-#	}
-	return true;
-}
 
 function sendMail ($target, $subject, $message) {
 	if (substr($target, 0, 4) == "http") {
@@ -1352,7 +1355,7 @@ function sendMail ($target, $subject, $message) {
 		$targetaddr = $target;
 	}
 	#check for correct email addr
-	if (check_email_address($targetaddr)) {
+	if (filter_var($targetaddr, FILTER_VALIDATE_EMAIL)) {
 		if ($GLOBALS[adminemailname])
 			$sender = $GLOBALS[adminemailname];
 		else
@@ -1368,7 +1371,6 @@ function sendMail ($target, $subject, $message) {
 	  mail($targetaddr, $subject, $message, $header); 
 		return $targetaddr;
 
-	}
-	return false;
+	} else return false;
 }
 ?>

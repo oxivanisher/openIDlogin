@@ -4,11 +4,9 @@
 if ($_SESSION[loggedin] == 1) {
 	#init stuff
 	fetchUsers();
- 
+
 	#show character detail and on own profile input field for characters
 	if ($_POST[mydo] == "showusercharlist") {
-		$GLOBALS[html] .= "<hr />";
-
 		$GLOBALS[html] .= "<h3>Charakter von <a href='?module=".$_POST[module]."&mydo=showusercharlist&user=".
 											$_POST[user]."'>".$GLOBALS[users][byuri][$_POST[user]][name]."</a></h3>";
 		$GLOBALS[html] .= "<table>";
@@ -49,7 +47,7 @@ if ($_SESSION[loggedin] == 1) {
 				$GLOBALS[html] .= "</td>";
 				$GLOBALS[html] .= "</tr>";
 			} else {
-				$GLOBALS[html] .= "Charakter ".$mycharname." wurde in der Armory nicht gefunden.<br />";
+				$GLOBALS[html] .= $mycharname." wurde in der Armory nicht gefunden.<br />";
 			}
 		}
 		$GLOBALS[html] .= "</table>";
@@ -150,10 +148,14 @@ if ($_SESSION[loggedin] == 1) {
 		foreach ($GLOBALS[users][byuri] as $myuser) {
 			$count = 0;
 			$ucount++;
+			if (is_array($myuser[armorychars]))
+				$tmpa = " (".count($myuser[armorychars]).")";
+			else
+				$tmpa = "";
 			$GLOBALS[html] .= "<tr><td><a href='?module=".$_POST[module]."&mydo=showusercharlist&user=".$myuser[uri]."'>".
-												$myuser[name]." (".count($myuser[armorychars]).")</a></td>\n";
+												$myuser[name].$tmpa."</a></td>\n";
 			#new object			
-			if (! empty($myuser[armorychars])) {
+			if (is_array($myuser[armorychars])) {
 				foreach ($myuser[armorychars] as $mycharname) {
 					$count++;
 					if ($count == $max) {
@@ -183,6 +185,10 @@ if ($_SESSION[loggedin] == 1) {
 		$GLOBALS[html] .= "<br />";
 		$GLOBALS[html] .= "<h3>Anzahl Member: ".$ucount."; Anzahl Charakter: ".$ccount."</h3>";
 	}
+	if ($GLOBALS[armorydown] == 1)
+		$GLOBALS[html] .= "<br /><h2>Achtung: Die Armory ist zurzeit down!</h2>";
+
+
 	updateTimestamp($_SESSION[openid_identifier]);
 } else {
 	sysmsg ("You are not logged in!", 1);
