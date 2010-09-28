@@ -6,7 +6,6 @@ if ($_SESSION[loggedin] == 1) {
 
 	#check for officer or higher
 	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] >= 6) {
-		sysmsg ("You are allowed to use this Module", 2);
 		if ($_POST[mydo] == "approve") {
 			sysmsg ("Aproove the user ".$_POST[applicant], 2);
 			$sql = mysql_query("UPDATE ".$GLOBALS[cfg][userapplicationtable]." SET state='1',answer='".$_POST[answer]
@@ -67,7 +66,6 @@ if ($_SESSION[loggedin] == 1) {
 		}
 
 		if ($_POST[mydo] == "showapplicant") {
-			sysmsg ("Showing applicant details of ".$_POST[applicant], 2);
 			#showapplicant detail chart
 			$GLOBALS[html] .= "<table>";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE openid='".$_POST[applicant]."';");
@@ -129,8 +127,6 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "</table>";
 
 		} else {
-			sysmsg ("Display list of applicants", 2);
-
 			#list applicants
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userapplicationtable]." WHERE state='0' ORDER BY timestamp ASC;");
 			$GLOBALS[html] .= "<h2>Aktive Bewerbungen</h2>";

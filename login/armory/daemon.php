@@ -54,9 +54,9 @@ if ($_GET['name']) {
 			}
 		}
 	}
-	if ($countt OR $countu)
+	if ($countu)
 		sysmsg ("Updated ".$countu." of ".$countt." chars ->".$names, 1);
-	elseif ($GLOBALS[armorydown])
+	elseif ($countt AND $GLOBALS[armorydown])
 		sysmsg ("Armory down.", 1);
 }
 
