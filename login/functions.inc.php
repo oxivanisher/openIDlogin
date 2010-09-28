@@ -1142,7 +1142,7 @@ function fetchArmoryCharacter ($charname) {
 					"classid='".$char->characterInfo->character['classId']."', ".
 					"raceid='".$char->characterInfo->character['raceId']."', ".
 					"factionid='".$char->characterInfo->character['factionId']."', ".
-					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', "."';";
+					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."';";
 		$mychar[ilevelavg] = $myilvl;
 		$mychar[name]				= (string) $char->characterInfo->character['name'];
 		$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
