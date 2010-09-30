@@ -339,7 +339,9 @@ function genTime($timestamp) {
 }
 
 function genUserLink($user) {
-	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
+#	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
+#					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
+	return "<a href='?module=userprofile&user=".$GLOBALS[users][byuri][$user][uri].
 					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
 }
 

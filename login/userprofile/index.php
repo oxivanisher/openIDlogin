@@ -203,9 +203,9 @@ if ($_SESSION[loggedin] == 1) {
 			#get armory chars
 			fetchUsers();
 			$tmpnames = "";
-			if(! empty($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars])) {
-			  array_unique($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]);
-			  foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mychar) {
+			if(! empty($GLOBALS[users][byuri][$_POST[user]][armorychars])) {
+			  array_unique($GLOBALS[users][byuri][$_POST[user]][armorychars]);
+			  foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mychar) {
 					if ($char = fetchArmoryCharacter($mychar)) {
 						$tmpnames .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
 												genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])." ";
@@ -223,6 +223,7 @@ if ($_SESSION[loggedin] == 1) {
 				else
 					$tmp = "";
 
+				$cont = templReplText($cont, "USER", $_POST[user]);
 				$cont = templReplText($cont, "DOB", $row[dob]);
 				$cont = templReplText($cont, "MOB", $row[mob]);
 				$cont = templReplText($cont, "YOB", $row[yob]);
