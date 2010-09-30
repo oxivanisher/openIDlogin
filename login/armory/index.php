@@ -75,7 +75,7 @@ if ($_SESSION[loggedin] == 1) {
 												showArmoryName("race", $char[raceid])." ".showArmoryName("class", $char[classid])."</h3>";
 			$GLOBALS[html] .= "Eingetragen bei:";
 			foreach (getArmoryUserOfChar($_POST[mycharname]) as $myuser)
-				$GLOBALS[html] .= " ".genMsgUrl($myuser);
+				$GLOBALS[html] .= " ".genUserLink($myuser);
 			$GLOBALS[html] .= "<br /><br />";
 
 			$GLOBALS[html] .= "</td></tr>";

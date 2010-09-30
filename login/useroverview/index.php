@@ -12,20 +12,28 @@ if ($_SESSION[loggedin] == 1) {
 	updateTimestamp($_SESSION[openid_identifier]);
 	$pDropdown = drawProfileDropdown();
 
-	#draw user table
-	if ($_SESSION[isadmin]) {
-		$GLOBALS[html] .= "&nbsp;= you are admin";
-	} else {
-		$GLOBALS[html] .= "&nbsp;= you are user";
-	}
+	#check if we are allowed to do see admin stuff
+	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > 8)
+		$admin = true;
+	else
+		$admin = false;
 
 	#show user table
 	$GLOBALS[html] .= "<table>";
-	$GLOBALS[html] .= "<tr><th>Name</th><th>Last online</th><th>Jabber</th>";
-	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th><th>Change Role</th>";
+	$GLOBALS[html] .= "<tr><th>Name</th>";
+	if ($admin) $GLOBALS[html] .= "<th>&nbsp;</th>";
+	$GLOBALS[html] .= "<th>Last online</th><th>Jabber</th>";
+	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
 	$GLOBALS[html] .= "</tr>";
 	$count = 0; $bcount = 0;
 	$ocnt = 0; $acnt = 0; $dcnt = 0; $wcnt = 0; $mcnt = 0; $m3cnt = 0;
+
+	#html form hidden fields
+	if ($admin) {
+		$GLOBALS[html] .= "<form action='?' method='POST'>";
+		$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
+		$GLOBALS[html] .= "<input type='hidden' name='myjob' value='applyprofile' />";
+	}
 	foreach ($GLOBALS[users][byuri] as $myuri) {
 		if (! empty($myuri[name])) {
 			if ( $myuri[online] > ( time() - $GLOBALS[cfg][lastonlinetimeout])) $tmp = "color: lime;";
@@ -55,9 +63,19 @@ if ($_SESSION[loggedin] == 1) {
 			else
 				$xmpptmpf = "Nein";
 
-			$GLOBALS[html] .= "<tr style='".$tmp."'><td><img src='".$GLOBALS[cfg][profile][$myuri[role]][icon]."' title='".
-												$GLOBALS[cfg][profile][$myuri[role]][name]."' width='16' height='16' />&nbsp;".
-												genMsgUrl($myuri[uri])."</td>"."<td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
+			$GLOBALS[html] .= "<tr style='".$tmp."'>";
+			$GLOBALS[html] .= "<td><img src='".$GLOBALS[cfg][profile][$myuri[role]][icon]."' title='".
+												$GLOBALS[cfg][profile][$myuri[role]][name]."' width='16' height='16' />&nbsp;";
+			$GLOBALS[html] .= genUserLink($myuri[uri])."</td>";
+
+			if ($admin)
+				if (($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > $myuri[role]) AND ($myuri[uri] != $_SESSION[openid_identifier]))
+					$GLOBALS[html] .= "<td><input type='radio' name='user' value='".$myuri[uri]."' /></td>";
+				else
+					$GLOBALS[html] .= "<td></td>";
+
+			$GLOBALS[html] .= "<td>".getAge($myuri[online])."</td><td>".$xmpptmpf."</td>";
+
 			$count++;
 
 			if ($myuri[online] > (time() - $GLOBALS[cfg][lastonlinetimeout]))
@@ -73,21 +91,19 @@ if ($_SESSION[loggedin] == 1) {
 			else
 				$m3cnt++;
 
-			if ($_SESSION[isadmin]) {
+			if ($_SESSION[isadmin])
 				$GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
-
-				$GLOBALS[html] .= "<form action='?' method='POST'>";
-				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='applyprofile' />";
-				$GLOBALS[html] .= "<input type='hidden' name='user' value='".$myuri[uri]."' />";
-				$GLOBALS[html] .= "<td>".$pDropdown."<input type='submit' name='change' value='change'></td>";
-				$GLOBALS[html] .= "</form>";
-			}
+			
 			$GLOBALS[html] .= "</tr>";
 
 		}
 	}
-	$GLOBALS[html] .= "</table><br /><h3>Total: ".$count."</h3><br />";
+	$GLOBALS[html] .= "</table><br />";
+	if ($admin) {
+		$GLOBALS[html] .= "Rechte wechseln zu ".$pDropdown." <input type='submit' name='wechseln' value='wechseln' /><br /><br />";
+		$GLOBALS[html] .= "</form>";
+	}
+	$GLOBALS[html] .= "<h3>Total: ".$count."</h3><br />";
 	$GLOBALS[html] .= "Online: ".$ocnt;
 	$GLOBALS[html] .= ", AFK: ".$acnt."<br /><br />";
 	$GLOBALS[html] .= "<b>Zuletzt online vor:</b><ul>";

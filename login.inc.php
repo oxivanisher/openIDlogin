@@ -121,7 +121,7 @@ switch ($_POST[job]) {
 
 			#yes
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
-				sysmsg("Checking Identity for:\n".$_POST[ssoInpUsername], 1);
+				sysmsg("Checking Identity for:\n".$_POST[ssoInpUsername], 2);
 			$GLOBALS[html] .= "</center></h2>";
 			#call openid auth function
 			openid_auth();
@@ -142,12 +142,16 @@ switch ($_POST[job]) {
 			createSession();
 			updateLastOnline();
 
+			include($GLOBALS[cfg][moduledir]."/GeoIP/geoipcity.inc");
+			$gi = geoip_open("/usr/local/share/GeoIP/GeoIPCity.dat",GEOIP_STANDARD);
+			$record = geoip_record_by_addr($gi,getIP());
+
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
 			$GLOBALS[redirect] = 1;
 			$tmp = $GLOBALS[html];
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
-				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
+				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier]." from ".$record->city, 1);
 			$GLOBALS[html] .= "</center></h2><center><br /><br /><br />".$tmp."<br /><br />";
 			$_SESSION[freshlogin] = 1;
 
@@ -230,7 +234,7 @@ switch ($_POST[job]) {
 				if ($dh = opendir($GLOBALS[cfg][moduledir])) {
 	      	while (($file = readdir($dh)) !== false) {
 						if (is_dir($GLOBALS[cfg][moduledir]."/".$file)) 
-							if (($file != ".") AND ($file != "..") AND ($file != "Auth"))
+							if (($file != ".") AND ($file != "..") AND ($file != "Auth") AND ($file != "GeoIP") AND ($file != "img"))
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
 										if ($MODULE[role] <= $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]) {

@@ -245,7 +245,7 @@ switch ($_POST[myjob]) {
 		}
 
 		$GLOBALS[html] .= "<h2>Read Message</h2>";
-		$GLOBALS[html] .= "From: ".genMsgUrl($GLOBALS[myreturn][message][sender])."<br />";
+		$GLOBALS[html] .= "From: ".genUserLink($GLOBALS[myreturn][message][sender])."<br />";
 		$GLOBALS[html] .= "To: ".$GLOBALS[myreturn][message][receiver]."<br />";
 		$GLOBALS[html] .= "Date: ".$GLOBALS[myreturn][message][date]."<br />";
 		$GLOBALS[html] .= "Age: ".$GLOBALS[myreturn][message][age]."<br />";
@@ -399,7 +399,7 @@ switch ($_POST[myjob]) {
 			else $tmp = "";
 
 			if (! empty($GLOBALS[users][byuri][$row[sender]][name]))
-				$tmpsender = genMsgUrl($row[sender]);
+				$tmpsender = genUserLink($row[sender]);
 			else
 				$tmpsender = $GLOBALS[adminmsgname];
 

@@ -197,55 +197,104 @@ if ($_SESSION[loggedin] == 1) {
 		while ($crow = mysql_fetch_array($csql))
 			$myjid = $crow[xmpp];
 
-		#get armory chars
-		fetchUsers();
-		$tmpnames = ""; $tbool = true;; $tmp = "";
-		if(! empty($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars])) {
-		  array_unique($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]);
-		  foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mychar) {
-		    if ($tbool) $tbool = false;
-		    else $tmp = ", ";
-		    $tmpnames .= $tmp.$mychar;
-		  }
+		
+		#do we have a user to show?
+		if ($_POST[user]) {
+			#get armory chars
+			fetchUsers();
+			$tmpnames = "";
+			if(! empty($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars])) {
+			  array_unique($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]);
+			  foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mychar) {
+					if ($char = fetchArmoryCharacter($mychar)) {
+						$tmpnames .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
+												genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])." ";
+					}
+			  }
+			}
+
+			#show a user profile
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_POST[user]."';");
+			while ($row = mysql_fetch_array($sql)) {
+				$cont = templGetFile("show.html");
+
+				if ($row[usertitle])
+					$tmp = '"'.$row[usertitle].'"';
+				else
+					$tmp = "";
+
+				$cont = templReplText($cont, "DOB", $row[dob]);
+				$cont = templReplText($cont, "MOB", $row[mob]);
+				$cont = templReplText($cont, "YOB", $row[yob]);
+				$cont = templReplText($cont, "SIGNATURE", $row[signature]);
+				$cont = templReplText($cont, "RANKIMG", $GLOBALS[cfg][profile][$row[role]][icon]);
+				$cont = templReplText($cont, "RANKNAME", $GLOBALS[cfg][profile][$row[role]][name]);
+				$cont = templReplText($cont, "NICK", $row[nickname]);
+				$cont = templReplText($cont, "FORENAME", $row[forename]);
+				$cont = templReplText($cont, "USERTITLE", $tmp);
+				$cont = templReplText($cont, "AVATAR", $row[avatar]);
+				$cont = templReplText($cont, "WEBSITE", $row[website]);
+				$cont = templReplText($cont, "MOTTO", $row[motto]);
+				$cont = templReplText($cont, "JID", $myjid);
+				$cont = templReplText($cont, "CHARS", $tmpnames);
+	
+				$tmpgender = "male";
+				if ($row[sex] == "F")
+					$tmpgender = "female";
+				$cont = templReplText($cont, "GENDER", $tmpgender);
+			}
+			$GLOBALS[html] .= $cont;
+
+		} else {
+			#get armory chars
+			fetchUsers();
+			$tmpnames = ""; $tbool = true; $tmp = "";
+			if(! empty($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars])) {
+			  array_unique($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars]);
+			  foreach ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][armorychars] as $mychar) {
+					if ($tbool) $tbool = false;
+					else $tmp = ", ";
+			    $tmpnames .= $tmp.$mychar;
+			  }
+			}
+
+			#get profile informations
+			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
+			while ($row = mysql_fetch_array($sql)) {
+				$cont = templGetFile("form.html");
+				if (! $row[accurate])
+						$GLOBALS[html] .= "<h2>Deine Profildaten sind nicht aktuell!</h2>"
+															."F&uuml;ll bitte die Felder aus und speichere dein Profil bevor du den IMBA Admin weiter brauchen kannst.<br />";
+				$cont = templReplText($cont, "DOB", templGenDropdown("dob", 1, 31, $row[dob]));
+				$cont = templReplText($cont, "MOB", templGenDropdown("mob", 1, 12, $row[mob]));
+				$cont = templReplText($cont, "YOB", templGenDropdown("yob", 1930, 2000, $row[yob]));
+				$cont = templReplText($cont, "MODULE", $_POST[module]);
+				$cont = templReplText($cont, "MYJOB", "updateprofile");
+				$cont = templReplText($cont, "SIGNATURE", $row[signature]);
+				$cont = templReplText($cont, "RANKIMG", $GLOBALS[cfg][profile][$row[role]][icon]);
+				$cont = templReplText($cont, "RANKNAME", $GLOBALS[cfg][profile][$row[role]][name]);
+				$cont = templReplText($cont, "NICK", $row[nickname]);
+				$cont = templReplText($cont, "FORENAME", $row[forename]);
+				$cont = templReplText($cont, "SURNAME", $row[surname]);
+				$cont = templReplText($cont, "EMAIL", $row[email]);
+				$cont = templReplText($cont, "ICQ", $row[icq]);
+				$cont = templReplText($cont, "MSN", $row[msn]);
+				$cont = templReplText($cont, "SKYPE", $row[skype]);
+				$cont = templReplText($cont, "USERTITLE", $row[usertitle]);
+				$cont = templReplText($cont, "AVATAR", $row[avatar]);
+				$cont = templReplText($cont, "WEBSITE", $row[website]);
+				$cont = templReplText($cont, "MOTTO", $row[motto]);
+				$cont = templReplText($cont, "JID", $myjid);
+				$cont = templReplText($cont, "CHARS", $tmpnames);
+	
+				$tmpgender = "male";
+				if ($row[sex] == "F")
+					$tmpgender = "female";
+				$cont = templReplText($cont, "GENDER", $tmpgender);
+			}
+			$GLOBALS[html] .= $cont;
 		}
-
-		#get profile informations
-		$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_SESSION[openid_identifier]."';");
-		while ($row = mysql_fetch_array($sql)) {
-			$cont = templGetFile("form.html");
-			if (! $row[accurate])
-					$GLOBALS[html] .= "<h2>Deine Profildaten sind nicht aktuell!</h2>"
-														."F&uuml;ll bitte die Felder aus und speichere dein Profil bevor du den IMBA Admin weiter brauchen kannst.<br />";
-			$cont = templReplText($cont, "DOB", templGenDropdown("dob", 1, 31, $row[dob]));
-			$cont = templReplText($cont, "MOB", templGenDropdown("mob", 1, 12, $row[mob]));
-			$cont = templReplText($cont, "YOB", templGenDropdown("yob", 1930, 2000, $row[yob]));
-			$cont = templReplText($cont, "MODULE", $_POST[module]);
-			$cont = templReplText($cont, "MYJOB", "updateprofile");
-			$cont = templReplText($cont, "SIGNATURE", $row[signature]);
-			$cont = templReplText($cont, "RANKIMG", $GLOBALS[cfg][profile][$row[role]][icon]);
-			$cont = templReplText($cont, "RANKNAME", $GLOBALS[cfg][profile][$row[role]][name]);
-			$cont = templReplText($cont, "NICK", $row[nickname]);
-			$cont = templReplText($cont, "FORENAME", $row[forename]);
-			$cont = templReplText($cont, "SURNAME", $row[surname]);
-			$cont = templReplText($cont, "EMAIL", $row[email]);
-			$cont = templReplText($cont, "ICQ", $row[icq]);
-			$cont = templReplText($cont, "MSN", $row[msn]);
-			$cont = templReplText($cont, "SKYPE", $row[skype]);
-			$cont = templReplText($cont, "USERTITLE", $row[usertitle]);
-			$cont = templReplText($cont, "AVATAR", $row[avatar]);
-			$cont = templReplText($cont, "WEBSITE", $row[website]);
-			$cont = templReplText($cont, "MOTTO", $row[motto]);
-			$cont = templReplText($cont, "JID", $myjid);
-			$cont = templReplText($cont, "CHARS", $tmpnames);
-
-			$tmpgender = "male";
-			if ($row[sex] == "F")
-				$tmpgender = "female";
-			$cont = templReplText($cont, "GENDER", $tmpgender);
-		}
-		$GLOBALS[html] .= $cont;
-
-	updateTimestamp($_SESSION[openid_identifier]);
+		updateTimestamp($_SESSION[openid_identifier]);
 } else {
 	sysmsg ("You are not logged in!", 1);
 }

@@ -63,7 +63,7 @@ if ($_SESSION[loggedin] == 1) {
 											$tcount++;
 											$GLOBALS[html] .= "<tr><td>".$tkey."</td>";
 											$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
-											$GLOBALS[html] .= "<td>".genMsgUrl($myuser[uri])."</td></tr>";
+											$GLOBALS[html] .= "<td>".genUserLink($myuser[uri])."</td></tr>";
 										}
 									}
 								}
@@ -98,7 +98,7 @@ if ($_SESSION[loggedin] == 1) {
 											$tcount++;
 											$GLOBALS[html] .= "<tr><td>".$tkey."</td>";
 											$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
-											$GLOBALS[html] .= "<td>".genMsgUrl($myuser[uri])."</td></tr>";
+											$GLOBALS[html] .= "<td>".genUserLink($myuser[uri])."</td></tr>";
 										}
 									}
 								}
@@ -131,7 +131,7 @@ if ($_SESSION[loggedin] == 1) {
 								$GLOBALS[html] .= "<td>".genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])."</td>";
 								$GLOBALS[html] .= "<td>";
 								foreach (getArmoryUserOfChar($char[name]) as $myurl)
-									$GLOBALS[html] .= genMsgUrl($myurl);
+									$GLOBALS[html] .= genUserLink($myurl);
 								$GLOBALS[html] .= "</td></tr>";
 							}
 						}

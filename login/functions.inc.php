@@ -247,7 +247,7 @@ function fetchUsers () {
 function drawUsersDropdown($selected = FALSE) {
 	$tmphtml = "";
 	$tmphtml .= "<select name='user'>";
-	$tmphtml .= "<option value=''>Choose User</option>";
+	$tmphtml .= "<option value=''>Benutzer Auswahl</option>";
 
 	ksort($GLOBALS[users][byname]);
 	foreach ($GLOBALS[users][byname] as $tmpname => $mytmpurl)
@@ -264,9 +264,11 @@ function drawUsersDropdown($selected = FALSE) {
 #draw profile dropdown
 function drawProfileDropdown() {
 	$tmphtml = "<select name='profile'>";
-	$tmphtml .= "<option value=''>Choose Profile</option>";
-	foreach ($GLOBALS[cfg][profile] as $myname => $myprofile)
-		$tmphtml .= "<option value='".$myname."'>".$myprofile[name]."</option>";
+	$tmphtml .= "<option value=''>Profil Auswahl</option>";
+	foreach ($GLOBALS[cfg][profile] as $myname => $myprofile) {
+		if (($myname < $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]) OR ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] == 9))
+			$tmphtml .= "<option value='".$myname."'>".$myprofile[name]."</option>";
+	}
 	$tmphtml .= "</select>";
 	return $tmphtml;
 }
@@ -336,7 +338,7 @@ function genTime($timestamp) {
 
 }
 
-function genMsgUrl($user) {
+function genUserLink($user) {
 	return "<a href='?module=messaging&myjob=composemessage&user=".$GLOBALS[users][byuri][$user][uri].
 					"'>".$GLOBALS[users][byuri][$user][name]."</a>";
 }
@@ -656,7 +658,7 @@ function getAllChatChannels ($owner = NULL) {
 		if ($row[owner] == 0)
 			$owner = "Willhelm";
 		else
-			$owner = genMsgUrl($GLOBALS[users][byname][strtolower($GLOBALS[users][bychat][$row[owner]])]);  #
+			$owner = genUserLink($GLOBALS[users][byname][strtolower($GLOBALS[users][bychat][$row[owner]])]);  #
 
 		$tret[$count][id] = $row[id];
 		$tret[$count][owner] = $row[owner];
