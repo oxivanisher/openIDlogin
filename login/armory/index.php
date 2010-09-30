@@ -63,126 +63,134 @@ if ($_SESSION[loggedin] == 1) {
 
 
 		if ($char = fetchArmoryCharacter($_POST[mycharname])) {
-			$sql = "SELECT content FROM ".$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$char[name]."';";
+			$sql = "SELECT content,ilevelavg FROM ".$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$char[name]."';";
 			$sqlr = mysql_query($sql);
-			while ($row = mysql_fetch_array($sqlr))
+			while ($row = mysql_fetch_array($sqlr)) {
 				$char[content] = $row[content];
+				$char[ilvl] = $row[ilevelavg];
+			}
 			$mychar = new SimpleXMLElement($char[content]);
 
-			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><td colspan='2'>";
-			$GLOBALS[html] .= "<h3 class='".genArmoryClassClass($char[classid])."'>".$char[name]." ".$char[level].", ".showArmoryName("gender", $char[genderid])." ".
-												showArmoryName("race", $char[raceid])." ".showArmoryName("class", $char[classid])."</h3>";
-			$GLOBALS[html] .= "Eingetragen bei:";
+			$mytitle = "<h3 class='".genArmoryClassClass($char[classid])."'>".$char[name]." ".$char[level].", ".showArmoryName("gender", $char[genderid])." ".
+									showArmoryName("race", $char[raceid])." ".showArmoryName("class", $char[classid])."</h3>";
+
+			$myowner = "Eingetragen bei:";
 			foreach (getArmoryUserOfChar($_POST[mycharname]) as $myuser)
-				$GLOBALS[html] .= " ".genUserLink($myuser);
-			$GLOBALS[html] .= "<br /><br />";
+				$myowner .= " ".genUserLink($myuser);
 
-			$GLOBALS[html] .= "</td></tr>";
-			$GLOBALS[html] .= "<tr><td colspan='2' align='right'>";
-			$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&myjob=forcerefresh&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
-												"/reload.png' title='Force Reload' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a>";
-			$GLOBALS[html] .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
-												"/refresh.png' title='Refresh' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a> ";
-			$GLOBALS[html] .= "Profil Alter ".getAge($char[timestamp]).", N&auml;chstes update:<br />".genTime($GLOBALS[armorychartimeout] + $char[timestamp])." ";
-			$GLOBALS[html] .= "</td></tr>";
-			$GLOBALS[html] .= "<tr><td colspan='2'><br /><br /></td></tr>";
+			$mypinfo  = "<a href='?module=".$_POST[module]."&mydo=showchardetail&myjob=forcerefresh&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
+									"/reload.png' title='Force Reload' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a>";
+#			$mypinfo .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
+#									"/refresh.png' title='Refresh' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a> ";
 
-			$GLOBALS[html] .= "<tr>";
-			$GLOBALS[html] .= "<td style='vertical-align: top'>";
-			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><th>PVP Kills:</th><th align='right'>".$char[pvpkills]."</th></tr>";
-			$GLOBALS[html] .= "<tr><td colspan='2'><br /></td></tr>";
-			$GLOBALS[html] .= "<tr><th colspan='2'>Berufe:</th></tr>";
+			$mypvp  = "<table style='width:100%;'>";
+			$mypvp .= "<tr><th>PVP Kills:</th><th style='text-align:right;'>".$char[pvpkills]."</th></tr>";
+			$mypvp .= "</table>";
+
+			$myskills  = "<table style='width:100%;'>";
+			$myskills .= "<tr><th colspan='2'>Berufe:</th></tr>";
 			if (is_array($char[skills]))
 				foreach ($char[skills] as $skill)
 					foreach (array_keys($skill) as $id)
-						$GLOBALS[html] .= "<tr><td>".showArmoryName("skill", $id).":</td><td align='right'>".$skill[$id]."</td></tr>";
-			$GLOBALS[html] .= "<tr><td colspan='2'><br /></td></tr>";
-			$GLOBALS[html] .= "<tr><th colspan='2'>Achievments:</th></tr>";
+						$myskills .= "<tr><td>".showArmoryName("skill", $id).":</td><td align='right'>".$skill[$id]."</td></tr>";
+			$myskills .= "</table>";
+
+			$myach = "";
+			$myach .= "<table style='width:100%;'><tr><th colspan='2'>Achievments:</th></tr>";
 			$total = 0;
 			if (is_array($char[achievments]))
 				foreach ($char[achievments] as $achievments)
 					foreach (array_keys($achievments) as $id) {
 						if ($achievments[$id] == 0) continue;
-						$GLOBALS[html] .= "<tr><td>".showArmoryName("achievment", $id).":</td><td align='right'>".$achievments[$id]."</td></tr>";
+						$myach .= "<tr><td>".showArmoryName("achievment", $id).":</td><td align='right'>".$achievments[$id]."</td></tr>";
 						$total += $achievments[$id];
 					}
-			$GLOBALS[html] .= "<tr><td><b>Total:</b></td><td align='right'><b>".$total."</b></td></tr>";
-			$GLOBALS[html] .= "</table>";
-			$GLOBALS[html] .= "</td>";
-
+			$myach .= "<tr><td><b>Total:</b></td><td align='right'><b>".$total."</b></td></tr>";
+			$myach .= "</table>";
 
 			#gen filler text for char sheet
-			$tmphtml  = "";
+			$mytalents  = "";
 			foreach ($mychar->characterInfo->characterTab->talentSpecs->talentSpec as $mytalent) {
-				$tmphtml .= "<img src='/img/armory/".$mytalent->attributes()->icon.".png' align='left' style='padding:3px;width:26px;height:26px;' ";
-				$tmphtml .= "title='";
-				$tmphtml .= $mytalent->attributes()->treeOne."/";
-				$tmphtml .= $mytalent->attributes()->treeTwo."/";
-				$tmphtml .= $mytalent->attributes()->treeThree;
-				$tmphtml .= "' />";
+				$mytalents .= "<img src='/img/armory/".$mytalent->attributes()->icon.".png' style='padding:3px;width:26px;height:26px;' ";
+				$mytalents .= "title='";
+				$mytalents .= $mytalent->attributes()->treeOne."/";
+				$mytalents .= $mytalent->attributes()->treeTwo."/";
+				$mytalents .= $mytalent->attributes()->treeThree;
+				$mytalents .= "' />";
 			}
-			$tmphtml .= "<br /><table><tr><td>";
-			$tmphtml .= "<table>";
-			$tmphtml .= "<tr><th colspan='2'>Basis Werte:</th></tr>";
-			$tmphtml .= "<tr><td>St&auml;rke</td><td align='right'>".
+
+			$mystats  = "<table style='width:100%;text-align:left;'>";
+			$mystats .= "<tr><th colspan='2'>Basis Werte:</th></tr>";
+			$mystats .= "<tr><td>St&auml;rke</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->strength->attributes()->effective."</td></tr>";
-			$tmphtml .= "<tr><td>Beweglichkeit</td><td align='right'>".
+			$mystats .= "<tr><td>Beweglichkeit</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->agility->attributes()->effective."</td></tr>";
-			$tmphtml .= "<tr><td>Ausdauer</td><td align='right'>".
+			$mystats .= "<tr><td>Ausdauer</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->stamina->attributes()->effective."</td></tr>";
-			$tmphtml .= "<tr><td>Intelligenz</td><td align='right'>".
+			$mystats .= "<tr><td>Intelligenz</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->intellect->attributes()->effective."</td></tr>";
-			$tmphtml .= "<tr><td>Willenskraft</td><td align='right'>".
+			$mystats .= "<tr><td>Willenskraft</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->spirit->attributes()->effective."</td></tr>";
-			$tmphtml .= "<tr><td>R&uuml;stung</td><td align='right'>".
+			$mystats .= "<tr><td>R&uuml;stung</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->baseStats->armor->attributes()->effective."</td></tr>";
-			$tmphtml .= "</table>";
-			$tmphtml .= "</td><td>";
-			$tmphtml .= "<table>";
-			$tmphtml .= "<tr><th colspan='2'>Wiederst&auml;nde:</th></tr>";
-			$tmphtml .= "<tr><td>Arkan</td><td align='right'>".
+			$mystats .= "</table>";
+
+			$myres  = "<table style='width:100%;text-align:left;'>";
+			$myres .= "<tr><th colspan='2'>Wiederst&auml;nde:</th></tr>";
+			$myres .= "<tr><td>Arkan</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->arcane->attributes()->value."</td></tr>";
-			$tmphtml .= "<tr><td>Feuer</td><td align='right'>".
+			$myres .= "<tr><td>Feuer</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->fire->attributes()->value."</td></tr>";
-			$tmphtml .= "<tr><td>Frost</td><td align='right'>".
+			$myres .= "<tr><td>Frost</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->frost->attributes()->value."</td></tr>";
-			$tmphtml .= "<tr><td>Heilig</td><td align='right'>".
+			$myres .= "<tr><td>Heilig</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->holy->attributes()->value."</td></tr>";
-			$tmphtml .= "<tr><td>Natur</td><td align='right'>".
+			$myres .= "<tr><td>Natur</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->nature->attributes()->value."</td></tr>";
-			$tmphtml .= "<tr><td>Schatten</td><td align='right'>".
+			$myres .= "<tr><td>Schatten</td><td align='right'>".
 									(integer) $mychar->characterInfo->characterTab->resistances->shadow->attributes()->value."</td></tr>";
-			$tmphtml .= "</table>";
-			$tmphtml .= "</td></tr></table>";
+			$myres .= "</table>";
 
-			#gen char sheet
-			$GLOBALS[html] .= "<td style='vertical-align: top'>";
-			$GLOBALS[html] .= "<table><tr><th colspan='2'>Charakter:</th></tr>";
-		  if (count($mychar->characterInfo->characterTab->items->item)) {
-  		  $count = 0; $total = 0;
+
+			$qslots = array(0, 1, 2, 5, 6, 7, 9, 14); $slots = array();
+			if (count($mychar->characterInfo->characterTab->items->item))
+				foreach ($mychar->characterInfo->characterTab->items->item as $myitem)
+					if (in_array((integer) $myitem->attributes()->slot, $qslots))
+						array_push($slots, (integer) $myitem->attributes()->id);
+			$bool = true; $tmp = ""; $pcs = "";
+			foreach ($slots as $myslot) {
+				if ($bool) $bool = false;
+				else $tmp = ":";
+				$pcs .= $tmp.$myslot;
+			}
+			for ($i = 0; $i <= 18; $i++)
+				$slot[$i] = "&nbsp;";
+			if (count($mychar->characterInfo->characterTab->items->item))
  	  	 	foreach ($mychar->characterInfo->characterTab->items->item as $myitem) {
-    	  	$total += (integer) $myitem->attributes()->level;
-     	  	$itemid = (integer) $myitem->attributes()->id;
-    	  	$itemslot = (integer) $myitem->attributes()->slot;
-					if (($itemslot == 3) OR ($itemslot == 18) OR ($itemslot == -1)) 
-						continue;
-	 	  	  $count++;
-#					$GLOBALS[html] .= "<tr><td>".showArmoryName("slot", $itemslot)."</td><td>".genArmoryItemHtml($itemid)."</td></tr>";
-					$GLOBALS[html] .= "<tr><td>".showArmoryName("slot", $itemslot)."</td><td>".genArmoryItemHtml($myitem, $char[level])."</td></tr>";
-
+					if (in_array((integer) $myitem->attributes()->slot, $qslots)) {
+						$qpcs = $pcs;
+					} else $qpcs = "";
+					$slot[(integer) $myitem->attributes()->slot] = genArmoryItemHtml($myitem, $char[level], $qpcs);
 				}
 
-				$GLOBALS[html] .= "</table>";
-				$GLOBALS[html] .= "Items: ".$count."<br />";
-				$GLOBALS[html] .= "Itemlevel &#216;: ".genArmoryIlvlHtml(round($total/$count), round($total/$count))."<br />";
+			$myilvl = genArmoryIlvlHtml($char[ilvl], $char[ilvl]);
 
-			} else $GLOBALS[html] .= "Keine Iteminformationen vorhanden";
-			$GLOBALS[html] .= "</tr>";
-			$GLOBALS[html] .= "</table>";
-			$GLOBALS[html] .= $tmphtml;
-
+			$cont = templGetFile("charview.html");
+			$cont = templReplText($cont, "TITLE", $mytitle);
+			$cont = templReplText($cont, "STATS", $mystats);
+			$cont = templReplText($cont, "RESISTANCES", $myres);
+			$cont = templReplText($cont, "TALENTSPECTS", $mytalents);
+			$cont = templReplText($cont, "SKILLS", $myskills);
+			$cont = templReplText($cont, "PVP", $mypvp);
+			$cont = templReplText($cont, "ACHIEVMENTS", $myach);
+			$cont = templReplText($cont, "ITEMLEVEL", $myilvl);
+			$cont = templReplText($cont, "FORCEUPDATE", $mypinfo);
+			$cont = templReplText($cont, "OWNEDBY", $myowner);
+			$cont = templReplText($cont, "PROFILEAGE", getAge($char[timestamp]));
+			$cont = templReplText($cont, "NEXTPROFILEUPDATE", genTime($GLOBALS[armorychartimeout] + $char[timestamp]));
+			for ($i = 0; $i <= 18; $i++)
+				$cont = templReplText($cont, "SLOT".$i, $slot[$i]);
+			$GLOBALS[html] .= $cont;
 		} else $GLOBALS[html] .= "Character ".$char." not found!";
 
 	#show overview list (default)

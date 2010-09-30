@@ -1321,7 +1321,7 @@ function genArmoryCharHtml ($name, $classid, $raceid, $genderid, $factionid) {
 }
 
 
-function genArmoryItemHtml ($myitem, $charlvl = 0) {
+function genArmoryItemHtml ($myitem, $charlvl = 0, $pcs = "") {
 	# http://wow.allakhazam.com/images/icons/icons.tar.gz
 	$id = (integer) $myitem->attributes()->id;
 	$ench = (integer) $myitem->attributes()->permanentenchant;
@@ -1334,10 +1334,12 @@ function genArmoryItemHtml ($myitem, $charlvl = 0) {
 		$gems .= ":".(integer) $myitem->attributes()->gem1Id;
 	if ((integer) $myitem->attributes()->gem2Id)
 		$gems .= ":".(integer) $myitem->attributes()->gem2Id;
+	if (! empty($pcs))
+		$pcs = "&pcs=".$pcs;
 
 	$item = fetchArmoryItem($id);
 #	$ret = "<img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
-	$ret = "<a href='#' rel='domain=de&item=".$id."&lvl=".$charlvl."&ench=".$ench."&rand=".$rand."&gems=".$gems.
+	$ret = "<a href='#' rel='domain=de&item=".$id."&lvl=".$charlvl."&ench=".$ench."&rand=".$rand."&gems=".$gems.$pcs.
 					"'><img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'></a>";
 
 	return $ret;
