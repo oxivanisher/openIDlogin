@@ -13,7 +13,7 @@ if ($_SESSION[loggedin] == 1) {
 	$pDropdown = drawProfileDropdown();
 
 	#check if we are allowed to do see admin stuff
-	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > 8)
+	if ($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > 6)
 		$admin = true;
 	else
 		$admin = false;
@@ -69,7 +69,8 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= genUserLink($myuri[uri])."</td>";
 
 			if ($admin)
-				if (($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > $myuri[role]) AND ($myuri[uri] != $_SESSION[openid_identifier]))
+				if (($GLOBALS[users][byuri][$_SESSION[openid_identifier]][role] > $myuri[role]) 
+					AND ($myuri[uri] != $_SESSION[openid_identifier]))
 					$GLOBALS[html] .= "<td><input type='radio' name='user' value='".$myuri[uri]."' /></td>";
 				else
 					$GLOBALS[html] .= "<td></td>";

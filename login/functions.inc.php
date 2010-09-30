@@ -1029,13 +1029,14 @@ function fetchArmoryXML ($type, $target) {
 		elseif ($type == "n")
 			$URL = $BASEURL."character-sheet.xml?r=".$GLOBALS[realm]."&n=".$target;
 		else return 0;
-		$URL .= "&rhtml=n";
+		$URL .= "&rhtml=ni";
 		$useragent = "Mozilla/5.0 (Windows; U; Windows NT 5.0; de-DE; rv:1.6) Gecko/20040206 Firefox/1.0.1";
 		ini_set('user_agent',$useragent);
 		$curl = curl_init();
 		curl_setopt ($curl, CURLOPT_URL, $URL);
 		curl_setopt($curl, CURLOPT_USERAGENT, $useragent);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept-Language: de-de, de;")); 
 		$load = curl_exec($curl);
 		curl_close($curl);
 		if (strpos($load, '<errorhtml type="503"/>')) {
@@ -1320,10 +1321,24 @@ function genArmoryCharHtml ($name, $classid, $raceid, $genderid, $factionid) {
 }
 
 
-function genArmoryItemHtml ($id) {
+function genArmoryItemHtml ($myitem, $charlvl = 0) {
 	# http://wow.allakhazam.com/images/icons/icons.tar.gz
+	$id = (integer) $myitem->attributes()->id;
+	$ench = (integer) $myitem->attributes()->permanentenchant;
+	$rand = (integer) $myitem->attributes()->randomPropertiesId;
+	$lvl = (integer) $myitem->attributes()->lvl;
+	$gems = ""; $gbool = false;
+	if ((integer) $myitem->attributes()->gem0Id)
+		$gems .= (integer) $myitem->attributes()->gem0Id;
+	if ((integer) $myitem->attributes()->gem1Id)
+		$gems .= ":".(integer) $myitem->attributes()->gem1Id;
+	if ((integer) $myitem->attributes()->gem2Id)
+		$gems .= ":".(integer) $myitem->attributes()->gem2Id;
+
 	$item = fetchArmoryItem($id);
-	$ret = "<img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
+#	$ret = "<img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
+	$ret = "<a href='#' rel='domain=de&item=".$id."&lvl=".$charlvl."&ench=".$ench."&rand=".$rand."&gems=".$gems.
+					"'><img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'></a>";
 
 	return $ret;
 }

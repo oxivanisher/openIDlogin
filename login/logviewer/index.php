@@ -44,19 +44,23 @@ if ($_SESSION[loggedin] == 1) {
 
 		#view system messages
 		} elseif ($_POST[myjob] == "viewsysmsgs") {
+			include($GLOBALS[cfg][moduledir]."/".$_POST[module]."/geoipcity.inc");
+			$gi = geoip_open("/usr/local/share/GeoIP/GeoIPCity.dat",GEOIP_STANDARD);
 
 			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=viewsysmsgs'>= Refresh System Messages</a></h3>";
 			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."&myjob=clearmsgs'>&gt; Clear System Messages</a></h3><br />";
 			$GLOBALS[html] .= "<table>";
-			$GLOBALS[html] .= "<tr><th>LVL</th><th>User</th><th>Module</th><th>Message</th><th>IP</th></tr>";
+			$GLOBALS[html] .= "<tr><th>LVL</th><th>User</th><th>Module</th><th>Message</th><th>IP</th><th>Ort</th></tr>";
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][systemmsgsdb]." WHERE 1 ORDER BY timestamp DESC;");
 			while ($row = mysql_fetch_array($sql)) {
+				$record = geoip_record_by_addr($gi,$row[ip]);
 				$GLOBALS[html] .= "<tr>";
 				$GLOBALS[html] .= "<td>".$alert[$row[lvl]]."</td>";
 				$GLOBALS[html] .= "<td>".$GLOBALS[users][byuri][$row[user]][name]." ".getNiceAge($row[timestamp])."</td>";
 				$GLOBALS[html] .= "<td>".$row[module]."</td>";
 				$GLOBALS[html] .= "<td>".$row[msg]."</td>";
 				$GLOBALS[html] .= "<td>".$row[ip]."</td>";
+				$GLOBALS[html] .= "<td>".utf8_encode($record->city)."</td>";
 	
 				$GLOBALS[html] .= "</tr>";
 			}

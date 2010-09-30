@@ -142,16 +142,12 @@ switch ($_POST[job]) {
 			createSession();
 			updateLastOnline();
 
-			include($GLOBALS[cfg][moduledir]."/GeoIP/geoipcity.inc");
-			$gi = geoip_open("/usr/local/share/GeoIP/GeoIPCity.dat",GEOIP_STANDARD);
-			$record = geoip_record_by_addr($gi,getIP());
-
 			$GLOBALS[myreturn][loggedin] = 1;
 			$GLOBALS[myreturn][msg] = "loggedin";
 			$GLOBALS[redirect] = 1;
 			$tmp = $GLOBALS[html];
 			$GLOBALS[html] = "<br /><br /><br /><h2><center>";
-				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier]." from ".$record->city, 1);
+				sysmsg("Identity Verified for:\n".$_SESSION[openid_identifier], 1);
 			$GLOBALS[html] .= "</center></h2><center><br /><br /><br />".$tmp."<br /><br />";
 			$_SESSION[freshlogin] = 1;
 
@@ -415,6 +411,7 @@ if ($GLOBALS[redirect]) {
 	echo "<script type='text/javascript' src='tablesort.js'></script>";
 	echo "<script type='text/javascript' src='login.js'></script>";
 	echo "<script type='text/javascript' src='prototype.js'></script>";
+	echo '<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>';
 
 	?><script language="javascript">
 	$(document).ready(function()
