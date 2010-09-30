@@ -110,47 +110,51 @@ if ($_SESSION[loggedin] == 1) {
 
 			#gen filler text for char sheet
 			$mytalents  = "";
-			foreach ($mychar->characterInfo->characterTab->talentSpecs->talentSpec as $mytalent) {
-				$mytalents .= "<img src='/img/armory/".$mytalent->attributes()->icon.".png' style='padding:3px;width:26px;height:26px;' ";
-				$mytalents .= "title='";
-				$mytalents .= $mytalent->attributes()->treeOne."/";
-				$mytalents .= $mytalent->attributes()->treeTwo."/";
-				$mytalents .= $mytalent->attributes()->treeThree;
-				$mytalents .= "' />";
+			if (count($mychar->characterInfo->characterTab->talentSpecs->talentSpec))
+				foreach ($mychar->characterInfo->characterTab->talentSpecs->talentSpec as $mytalent) {
+					$mytalents .= "<img src='/img/armory/".$mytalent->attributes()->icon.".png' style='padding:3px;width:26px;height:26px;' ";
+					$mytalents .= "title='";
+					$mytalents .= $mytalent->attributes()->treeOne."/";
+					$mytalents .= $mytalent->attributes()->treeTwo."/";
+					$mytalents .= $mytalent->attributes()->treeThree;
+					$mytalents .= "' />";
+				}
+
+			if (! empty($mychar->characterInfo->characterTab->baseStats->strength)) {
+				$mystats  = "<table style='width:100%;text-align:left;'>";
+				$mystats .= "<tr><th colspan='2'>Basis Werte:</th></tr>";
+				$mystats .= "<tr><td>St&auml;rke</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->strength->attributes()->effective."</td></tr>";
+				$mystats .= "<tr><td>Beweglichkeit</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->agility->attributes()->effective."</td></tr>";
+				$mystats .= "<tr><td>Ausdauer</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->stamina->attributes()->effective."</td></tr>";
+				$mystats .= "<tr><td>Intelligenz</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->intellect->attributes()->effective."</td></tr>";
+				$mystats .= "<tr><td>Willenskraft</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->spirit->attributes()->effective."</td></tr>";
+				$mystats .= "<tr><td>R&uuml;stung</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->baseStats->armor->attributes()->effective."</td></tr>";
+				$mystats .= "</table>";
 			}
 
-			$mystats  = "<table style='width:100%;text-align:left;'>";
-			$mystats .= "<tr><th colspan='2'>Basis Werte:</th></tr>";
-			$mystats .= "<tr><td>St&auml;rke</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->strength->attributes()->effective."</td></tr>";
-			$mystats .= "<tr><td>Beweglichkeit</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->agility->attributes()->effective."</td></tr>";
-			$mystats .= "<tr><td>Ausdauer</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->stamina->attributes()->effective."</td></tr>";
-			$mystats .= "<tr><td>Intelligenz</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->intellect->attributes()->effective."</td></tr>";
-			$mystats .= "<tr><td>Willenskraft</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->spirit->attributes()->effective."</td></tr>";
-			$mystats .= "<tr><td>R&uuml;stung</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->baseStats->armor->attributes()->effective."</td></tr>";
-			$mystats .= "</table>";
-
-			$myres  = "<table style='width:100%;text-align:left;'>";
-			$myres .= "<tr><th colspan='2'>Wiederst&auml;nde:</th></tr>";
-			$myres .= "<tr><td>Arkan</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->arcane->attributes()->value."</td></tr>";
-			$myres .= "<tr><td>Feuer</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->fire->attributes()->value."</td></tr>";
-			$myres .= "<tr><td>Frost</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->frost->attributes()->value."</td></tr>";
-			$myres .= "<tr><td>Heilig</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->holy->attributes()->value."</td></tr>";
-			$myres .= "<tr><td>Natur</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->nature->attributes()->value."</td></tr>";
-			$myres .= "<tr><td>Schatten</td><td align='right'>".
-									(integer) $mychar->characterInfo->characterTab->resistances->shadow->attributes()->value."</td></tr>";
-			$myres .= "</table>";
-
+			if (! empty($mychar->characterInfo->characterTab->resistances->arcane)) {
+				$myres  = "<table style='width:100%;text-align:left;'>";
+				$myres .= "<tr><th colspan='2'>Wiederst&auml;nde:</th></tr>";
+				$myres .= "<tr><td>Arkan</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->arcane->attributes()->value."</td></tr>";
+				$myres .= "<tr><td>Feuer</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->fire->attributes()->value."</td></tr>";
+				$myres .= "<tr><td>Frost</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->frost->attributes()->value."</td></tr>";
+				$myres .= "<tr><td>Heilig</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->holy->attributes()->value."</td></tr>";
+				$myres .= "<tr><td>Natur</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->nature->attributes()->value."</td></tr>";
+				$myres .= "<tr><td>Schatten</td><td align='right'>".
+										(integer) $mychar->characterInfo->characterTab->resistances->shadow->attributes()->value."</td></tr>";
+				$myres .= "</table>";
+			}
 
 			$qslots = array(0, 1, 2, 5, 6, 7, 9, 14); $slots = array();
 			if (count($mychar->characterInfo->characterTab->items->item))
