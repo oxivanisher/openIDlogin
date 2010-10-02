@@ -4,43 +4,10 @@
 
 #only load as module?
 if ($_SESSION[loggedin] == 1) {
-	/*#make sure the user has a chat id. if not, create one at once (before fetchUsers();)
-	$bool = 1;
-	$sql = mysql_query("SELECT chatid,chatsubscr FROM ".$GLOBALS[cfg][lastonlinedb]." WHERE openid='".$_SESSION[openid_identifier]."';");
-	while ($row = mysql_fetch_array($sql)) {
-		unset ($GLOBALS[chat][subscr]);
-		$GLOBALS[chat][subscr] = unserialize($row[chatsubscr]);
-		$bool = 0;
-	}
-	if ($bool) {
-		$sql2 = mysql_query("INSERT INTO ".$GLOBALS[cfg][lastonlinedb]." (chatid,chatsubscr) VALUES ('".$_SESSION[openid_identifier].
-						"', '".serialize(array())."');");
-		unset ($GLOBALS[chat][subscr]);
-		$GLOBALS[chat][subscr] = array();
-	} */
-
 	if ($_POST[myjob] != "update") fetchUsers();
 
 	#send chat -> functions
 	switch($_POST[myjob]) {
-/*		disabled because only ajax will chat
-			case "chat":
-
-			$data = getChatChannel($_POST[channel]);
-			if (($data[owner] == $GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]) OR ($_SESSION[isadmin]) OR
-														in_array($GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat], unserialize($data[allowed]))) {
-				$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][chat][msgtable]." (sender,channel,timestamp,message) VALUES ('".
-							$GLOBALS[users][byuri][$_SESSION[openid_identifier]][chat]."', '".$_POST[channel]."', '".time()."', '".encodeme($_POST[chat])."');");
-
-				$sql = mysql_query("UPDATE ".$GLOBALS[cfg][chat][channeltable]." SET lastmessage='".time()."' WHERE id='".$_POST[channel]."';");
-				sysmsg ("Chat to channel ".$_POST[channel]." sent!");
-				$GLOBALS[myreturn][msg] = "sent";
-			} else {
-				sysmsg ("Message NOT sent!", 1);
-				$GLOBALS[myreturn][msg] = "notsent";
-			}
-		break; */
-
 		#edit channel -> functions
 		case "editchannel":
 			$data = getChatChannel($_POST[id]);
@@ -109,96 +76,6 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[myreturn][msg] = "leaved"; #FIXME ok check (error/sent)
 		break;
 
-/*
-	#ajax functions!
-	case "readmessages":
-		fetchUsers();
-		$myreturn = "";
-		$cnt = 0; $bool = 0;
-
-		foreach (getMyChatMessagesFrom($_POST[name]) as $mymsg) {
-			$myreturn = "<b>".$mychan[name]."</b>";
-			$myreturn .= $mymsg[sender].": ".$mymsg[msg]."<br />";
-
-			$mynewreturn .= "<b>".$sender[name]."</b> <i>".getNiceAge($mymsg[ts]);
-
-			$mynewreturn .= str_replace("</i>:\n", "<br />", makeClickableURL($mymsg[msg]));
-
-			#fill the array for ajax
-			$GLOBALS[myreturn][message][$cnt][id] = $mymsg[id];
-			$GLOBALS[myreturn][message][$cnt][msg] = $mynewreturn;
-
-			$cnt++;
-			$bool = 1;
-		}
-
-		#if there are no messages, we need to send a blank array to ajax
-		if ($cnt == 0) $GLOBALS[myreturn][message] = array();
-
-		if ($bool) {
-			$GLOBALS[myreturn][msg] = "ok";
-		} else {
-			$GLOBALS[myreturn][msg] = "nok";
-		}
-		$GLOBALS[myreturn][message] = array_reverse($GLOBALS[myreturn][message]);
-
-		updateTimestamp($_SESSION[openid_identifier]);
-	break;
-
-	case "sendmessage":
-//		print_r($GLOBALS); exit;
-		if (empty($_POST[subject])) {
-			if ($_POST[ajax]) {
-				$_POST[subject] = "AJAX GUI";
-			} else {
-				$_POST[subject] = "Unknown Source!";
-				sysmsg ("Processing Message without Source (Subject) incoming per WEB from: ".
-									$_SESSION[openid_identifier]."; to: ".$_POST[user], 0);
-			}
-		}
-		if (! empty($_POST[message])) {
-			$sql = mysql_query("INSERT INTO ".$GLOBALS[cfg][msg][msgtable]." (sender,receiver,timestamp,subject,message,new,xmpp) VALUES ('".
-							$_SESSION[openid_identifier]."', '".$_POST[user]."', '".time()."', '".encodeme($_POST[subject]).
-							"', '".encodeme($_POST[message])."', '1', '1');");
-			if ($sql) {
-				sysmsg ("Message to ".$_POST[user]." sent!");
-				$GLOBALS[myreturn][msg] = "sent";
-			} else {
-				sysmsg ("Message to ".$_POST[user]." NOT sent!", 1);
-				$GLOBALS[myreturn][msg] = "error";
-			}
-		} else {
-				sysmsg ("Empty message to ".$_POST[user]." NOT sent!", 1);
-				$GLOBALS[myreturn][msg] = "error";
-		}
-		updateTimestamp($_SESSION[openid_identifier]);
-	break;
-
-*/
-
-/*	probably never needed
-		#get chat status -> functions (site refresh ajax request)
-		case "status":
-		
-			$GLOBALS[myreturn][msg] = "status";
-		break;
-
-		#get chat update -> functions (update poll ajax request)
-		case "update":
-		
-			$GLOBALS[myreturn][msg] = "update";
-		break;
-
-		#get users -> functions
-		case "getusers":
-			$cnt = 0;
-			foreach ($GLOBALS[users][byuri] as $myuri) {
-				$GLOBALS[myreturn][users][$cnt][name] = $myuri[name];
-				$GLOBALS[myreturn][users][$cnt][openid] = $myuri[uri];
-				$cnt++;
-			}
-		break;
-*/
 	}
 
 	switch($_POST[myjob]) {
@@ -258,35 +135,6 @@ if ($_SESSION[loggedin] == 1) {
 			$GLOBALS[html] .= "</table>";
 
 		break;
-
-/* old default view: vie messages
-		default:
-			$mymsgs = getMyChatMessages();
-			$GLOBALS[html] .= "<h3><a href='?module=".$_POST[module]."'>View Messages</a> | <a href='?module=".$_POST[module]."&myjob=viewchannellist'>List Channels</a> | <a href='?module=".$_POST[module].
-												"&myjob=viewcreatechannel'>Create Channel</a></h3>";
-			$GLOBALS[html] .= "<br />";
-			$GLOBALS[html] .= "<table><tr>";
-			foreach ($mymsgs[chan] as $mychan) {
-				$GLOBALS[html] .= "<form action='?' method='POST'>";
-				$GLOBALS[html] .= "<input type='hidden' name='module' value='".$_POST[module]."' />";
-				$GLOBALS[html] .= "<input type='hidden' name='myjob' value='chat' />";
-				$GLOBALS[html] .= "<input type='hidden' name='channel' value='".$mychan[id]."' />";
-				$GLOBALS[html] .= "<td valign='bottom'>";
-				$GLOBALS[html] .= "<b>".$mychan[name]."</b><br />";
-				foreach ($mymsgs[msg] as $mymsg) {
-					if ($mymsg[channel] == $mychan[id])
-						$GLOBALS[html] .= $mymsg[sender].": ".$mymsg[msg]."<br />";
-				}
-
-				$GLOBALS[html] .= "<input type='text' name='chat' value='' size='20'/>";
-				$GLOBALS[html] .= "<input type='submit' name='submit' value='ok' />";
-
-				$GLOBALS[html] .= "</td>";
-				$GLOBALS[html] .= "</form>";
-			}
-			$GLOBALS[html] .= "</tr></table>";
-*/
-
 	}
 } else {
 	$GLOBALS[html] .= "<b>= You are not logged in!</b>";

@@ -226,6 +226,7 @@ switch ($_POST[job]) {
 			$GLOBALS[html] = "";
 				
 			#have fun reading this code :P
+			$count = 0;
 			if (is_dir($GLOBALS[cfg][moduledir])) {
 				if ($dh = opendir($GLOBALS[cfg][moduledir])) {
 	      	while (($file = readdir($dh)) !== false) {
@@ -233,23 +234,9 @@ switch ($_POST[job]) {
 							if (($file != ".") AND ($file != "..") AND ($file != "Auth") AND ($file != "GeoIP") AND ($file != "img"))
 									if (file_exists($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php')) {
 										include($GLOBALS[cfg][moduledir].'/'.$file.'/module.inc.php');
-										if ($MODULE[role] <= $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]) {
-											if (! $MODULE[show])
-												continue;
-											elseif ($MODULE[dev]) {
-												$nav[dev][$file][module] = $file;
-												$nav[dev][$file][name] = $MODULE[name];
-												$nav[dev][$file][comment] = $MODULE[comment];
-											} elseif ($MODULE[admin]) {
-												$nav[admin][$file][module] = $file;
-												$nav[admin][$file][name] = $MODULE[name];
-												$nav[admin][$file][comment] = $MODULE[comment];
-											} else {
-												$nav[user][$file][module] = $file;
-												$nav[user][$file][name] = $MODULE[name];
-												$nav[user][$file][comment] = $MODULE[comment];
-											}
-										}
+										$mymodules[$file] = $MODULE[role];
+										$count++;
+
 									}
 						}
 			      closedir($dh);
@@ -271,10 +258,55 @@ switch ($_POST[job]) {
 					 
 				}
 
+				#sort nav arrays
+				asort($mymodules);
+				foreach ($mymodules as $mymodule => $role) {
+					include($GLOBALS[cfg][moduledir].'/'.$mymodule.'/module.inc.php');
+					if ($MODULE[role] <= $GLOBALS[users][byuri][$_SESSION[openid_identifier]][role]) {
+						if (! $MODULE[show])
+							continue;
+						elseif ($MODULE[dev]) {
+							$nav[dev][$mymodule][module] = $mymodule;
+							$nav[dev][$mymodule][name] = $MODULE[name];
+							$nav[dev][$mymodule][comment] = $MODULE[comment];
+						} elseif ($MODULE[admin]) {
+							$nav[admin][$mymodule][module] = $mymodule;
+							$nav[admin][$mymodule][name] = $MODULE[name];
+							$nav[admin][$mymodule][comment] = $MODULE[comment];
+						} else {
+							if ($role > 5) {
+								$nav[offi][$mymodule][module] = $mymodule;
+								$nav[offi][$mymodule][name] = $MODULE[name];
+								$nav[offi][$mymodule][comment] = $MODULE[comment];
+							} elseif ($role > 4) {
+								$nav[user][$mymodule][module] = $mymodule;
+								$nav[user][$mymodule][name] = $MODULE[name];
+								$nav[user][$mymodule][comment] = $MODULE[comment];
+							} else {
+								$nav[priv][$mymodule][module] = $mymodule;
+								$nav[priv][$mymodule][name] = $MODULE[name];
+								$nav[priv][$mymodule][comment] = $MODULE[comment];
+							}
+						}
+					}
+				}
+
+
 				#write navigation
 				$GLOBALS[tmp][marker] = 0;
-				foreach ($nav[user] as $mylink) {
+				foreach ($nav[priv] as $mylink) {
 					$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
+				}
+
+				if (count($nav[user])) {
+					$GLOBALS[html] .= "<hr />Community Funktionen<hr />";
+					foreach ($nav[user] as $mylink)
+						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
+				}
+				if (count($nav[offi])) {
+					$GLOBALS[html] .= "<hr />Offiziers Funktionen<hr />";
+					foreach ($nav[offi] as $mylink)
+						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 				}
 				if ($_SESSION[isadmin] AND (! empty($nav[admin]))) {
 #					$GLOBALS[html] .= "<div style='float:left;clear:both;'><hr />Administration</div>";
