@@ -23,7 +23,7 @@ if ($_SESSION[loggedin] == 1) {
 	$GLOBALS[html] .= "<tr><th>Name</th>";
 	if ($admin) $GLOBALS[html] .= "<th>&nbsp;</th>";
 	$GLOBALS[html] .= "<th>Last online</th><th>Jabber</th>";
-	if ($_SESSION[isadmin]) $GLOBALS[html] .= "<th>OpenID</th>";
+	$GLOBALS[html] .= "<th>Games</th>";
 	$GLOBALS[html] .= "</tr>";
 	$count = 0; $bcount = 0;
 	$ocnt = 0; $acnt = 0; $dcnt = 0; $wcnt = 0; $mcnt = 0; $m3cnt = 0;
@@ -92,8 +92,7 @@ if ($_SESSION[loggedin] == 1) {
 			else
 				$m3cnt++;
 
-			if ($_SESSION[isadmin])
-				$GLOBALS[html] .= "<td>".$myuri[uri]."</td>";
+			$GLOBALS[html] .= "<td>".getMultigamingList($myuri[uri], "inline")."</td>";
 			
 			$GLOBALS[html] .= "</tr>";
 

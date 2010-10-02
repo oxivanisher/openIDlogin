@@ -137,19 +137,25 @@ function fetchUsers () {
 	}
 	$GLOBALS[users][count][all] = $count;
 
+	#get multigaming data
+	$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][mg][namestable]." WHERE 1 ORDER BY openid;");
+	$last = "";
+	while ($row = mysql_fetch_array($sql)) {
+		if (empty($GLOBALS[users][byuri][$row[openid]]))
+			continue;
+		if ($row[openid] != $last)
+			$GLOBALS[users][byuri][$row[openid]][multigaming] = array();
+		array_push($GLOBALS[users][byuri][$row[openid]][multigaming], array($row[gameid] => $row[name]));
+		$last = $row[openid];
+	}
+
+	#get smf id's
 	$count = 0;
 	$sql = mysql_query("SELECT openid_uri,member_name,id_member FROM ".$GLOBALS[cfg][usernametable]." WHERE 1;");
 	while ($row = mysql_fetch_array($sql))
 		if (! empty($row[openid_uri])) {
 			if (! empty($GLOBALS[users][byuri][$row[openid_uri]])) {
-			#experimental
-#			$tmpname = $row[member_name]
-#			$tmpuri = $row[openid_uri];
-#			$GLOBALS[users][byname][strtolower($tmpname)] = $tmpuri;
-#			$GLOBALS[users][byuri][$row[openid_uri]][name] = $tmpname;
 				$GLOBALS[users][byuri][$row[openid_uri]][smf] = $row[id_member];
-#			$GLOBALS[users][byuri][$tmpuri][uri] = $tmpuri;
-#			$GLOBALS[users][byuri][$tmpuri][role] = 0;
 				$count++;
 			}
 		}
@@ -1393,5 +1399,58 @@ function sendMail ($target, $subject, $message) {
 		return $targetaddr;
 
 	} else return false;
+}
+
+function getMultigamingGames () {
+	$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][mg][gamestable]." WHERE 1;");
+	while ($row = mysql_fetch_array($sql)) {
+		$mg[$row[id]][name] = $row[name];
+		$mg[$row[id]][url] = $row[url];
+		$mg[$row[id]][comment] = $row[comment];
+	}
+	return $mg;
+}
+
+function getMultigamingList ($user, $type = "table") {
+	$games = getMultigamingGames();
+	$ret = "";
+	switch ($type) {
+		case "table":
+			if(! empty($GLOBALS[users][byuri][$user][armorychars])) {
+				$ret .= "<tr><td style='vertical-align:top;'>WOW</td><td style='vertical-align:top;'>";
+				foreach ($GLOBALS[users][byuri][$user][armorychars] as $mychar)
+					if ($char = fetchArmoryCharacter($mychar))
+						$ret .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
+										genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])." ";
+				$ret .= "</td></tr>";
+			}
+			if (! empty($GLOBALS[users][byuri][$user][multigaming]))
+				foreach ($GLOBALS[users][byuri][$user][multigaming] as $mygame)
+					foreach ($mygame as $myname)
+						if (! empty($myname))
+							$ret .= "<tr><td style='vertical-align:top;'><a href='".$games[key($mygame)][url].
+  	    			        "' target='new' title='".$games[key($mygame)][comment].
+    	    	  	      "'>".$games[key($mygame)][name]."</a></td><td style='vertical-align:top;'>".$myname."</td></tr>";
+			if (! empty($ret))
+				$ret = "<br /><table><tr><th>Game</th><th>Name</th></tr>".$ret."</table>";
+		break;
+
+		case "inline":
+			if(! empty($GLOBALS[users][byuri][$user][armorychars])) {
+				$ret .= "<abbr title='";
+				foreach ($GLOBALS[users][byuri][$user][armorychars] as $mychar)
+					if ($char = fetchArmoryCharacter($mychar))
+						$ret .= $char[name]." ";
+				$ret .= "'>WOW</abbr> ";
+			}
+			if (! empty($GLOBALS[users][byuri][$user][multigaming])) {
+				foreach ($GLOBALS[users][byuri][$user][multigaming] as $mygame)
+					foreach ($mygame as $myname)
+						if (! empty($myname))
+							$ret .= "<abbr title='".$myname."'>".$games[key($mygame)][name]."</abbr> ";
+			}
+		break;
+	}
+	return $ret;
 }
 ?>

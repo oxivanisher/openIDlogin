@@ -200,19 +200,7 @@ if ($_SESSION[loggedin] == 1) {
 		
 		#do we have a user to show?
 		if ($_POST[user]) {
-			#get armory chars
 			fetchUsers();
-			$tmpnames = "";
-			if(! empty($GLOBALS[users][byuri][$_POST[user]][armorychars])) {
-			  array_unique($GLOBALS[users][byuri][$_POST[user]][armorychars]);
-			  foreach ($GLOBALS[users][byuri][$_POST[user]][armorychars] as $mychar) {
-					if ($char = fetchArmoryCharacter($mychar)) {
-						$tmpnames .= genArmoryIlvlHtml($char[ilevelavg],$char[level]).
-												genArmoryCharHtml($char[name], $char[classid], $char[raceid], $char[genderid], $char[factionid])." ";
-					}
-			  }
-			}
-
 			#show a user profile
 			$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][userprofiletable]." WHERE openid='".$_POST[user]."';");
 			while ($row = mysql_fetch_array($sql)) {
@@ -237,7 +225,8 @@ if ($_SESSION[loggedin] == 1) {
 				$cont = templReplText($cont, "WEBSITE", $row[website]);
 				$cont = templReplText($cont, "MOTTO", $row[motto]);
 				$cont = templReplText($cont, "JID", $myjid);
-				$cont = templReplText($cont, "CHARS", $tmpnames);
+				$cont = templReplText($cont, "WOWCHARS", $tmpnames);
+				$cont = templReplText($cont, "MULTIGAMING", getMultigamingList($_POST[user], "table"));
 	
 				$tmpgender = "male";
 				if ($row[sex] == "F")

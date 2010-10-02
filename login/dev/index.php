@@ -70,6 +70,7 @@ if ($_SESSION[loggedin] == 1) {
       changeOpenidUrl ($GLOBALS[cfg][systemmsgsdb], "user");
       changeOpenidUrl ($GLOBALS[cfg][frontendsafetable], "openid");
       changeOpenidUrl ($GLOBALS[cfg][userprofiletable], "openid");
+			changeOpenidUrl ($GLOBALS[cfg][mg][namestable], "openid");
 
 			#smf
 			changeOpenidUrl ("smf_members", "openid_uri");

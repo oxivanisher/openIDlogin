@@ -5,6 +5,6 @@
 	$MODULE[dev]			= 0;
 	$MODULE[role]     = 2;
 	$MODULE[name]			= "Benutzer &Uuml;bersicht";
-	$MODULE[comment]	= "Hier siehst du eine &Uuml;bersicht aller Benutzer.";
+	$MODULE[comment]	= "Hier siehst du eine &Uuml;bersicht aller Benutzer und die von ihnen eingetragenen Spiele.";
 
 ?>

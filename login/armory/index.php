@@ -83,9 +83,7 @@ if ($_SESSION[loggedin] == 1) {
 #			$mypinfo .= "<a href='?module=".$_POST[module]."&mydo=showchardetail&mycharname=".$_POST[mycharname]."'><img src='/".$GLOBALS[cfg][moduledir].
 #									"/refresh.png' title='Refresh' style='width:24px;height:24px;align:right;float:right;padding:5px;' /></a> ";
 
-			$mypvp  = "<table style='width:100%;'>";
-			$mypvp .= "<tr><th>PVP Kills:</th><th style='text-align:right;'>".$char[pvpkills]."</th></tr>";
-			$mypvp .= "</table>";
+			$mypvp = "PVP Kills: ".$char[pvpkills];
 
 			$myskills  = "<table style='width:100%;'>";
 			$myskills .= "<tr><th colspan='2'>Berufe:</th></tr>";
@@ -120,40 +118,117 @@ if ($_SESSION[loggedin] == 1) {
 					$mytalents .= "' />";
 				}
 
-			if (! empty($mychar->characterInfo->characterTab->baseStats->strength)) {
+			if (count($mychar->characterInfo->characterTab->baseStats->strength)) {
 				$mystats  = "<table style='width:100%;text-align:left;'>";
 				$mystats .= "<tr><th colspan='2'>Basis Werte:</th></tr>";
 				$mystats .= "<tr><td>St&auml;rke</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->strength->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->strength->attributes()->effective."</td></tr>";
 				$mystats .= "<tr><td>Beweglichkeit</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->agility->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->agility->attributes()->effective."</td></tr>";
 				$mystats .= "<tr><td>Ausdauer</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->stamina->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->stamina->attributes()->effective."</td></tr>";
 				$mystats .= "<tr><td>Intelligenz</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->intellect->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->intellect->attributes()->effective."</td></tr>";
 				$mystats .= "<tr><td>Willenskraft</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->spirit->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->spirit->attributes()->effective."</td></tr>";
 				$mystats .= "<tr><td>R&uuml;stung</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->baseStats->armor->attributes()->effective."</td></tr>";
+										$mychar->characterInfo->characterTab->baseStats->armor->attributes()->effective."</td></tr>";
 				$mystats .= "</table>";
 			}
 
-			if (! empty($mychar->characterInfo->characterTab->resistances->arcane)) {
+			if (count($mychar->characterInfo->characterTab->resistances->arcane)) {
 				$myres  = "<table style='width:100%;text-align:left;'>";
 				$myres .= "<tr><th colspan='2'>Wiederst&auml;nde:</th></tr>";
 				$myres .= "<tr><td>Arkan</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->arcane->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->arcane->attributes()->value."</td></tr>";
 				$myres .= "<tr><td>Feuer</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->fire->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->fire->attributes()->value."</td></tr>";
 				$myres .= "<tr><td>Frost</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->frost->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->frost->attributes()->value."</td></tr>";
 				$myres .= "<tr><td>Heilig</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->holy->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->holy->attributes()->value."</td></tr>";
 				$myres .= "<tr><td>Natur</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->nature->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->nature->attributes()->value."</td></tr>";
 				$myres .= "<tr><td>Schatten</td><td align='right'>".
-										(integer) $mychar->characterInfo->characterTab->resistances->shadow->attributes()->value."</td></tr>";
+										$mychar->characterInfo->characterTab->resistances->shadow->attributes()->value."</td></tr>";
 				$myres .= "</table>";
+			}
+
+			if (count($mychar->characterInfo->characterTab->melee->power)) {
+				$mymelee  = "<table style='width:100%;text-align:left;'>";
+				$mymelee .= "<tr><th colspan='2'>Nahkampf:</th></tr>";
+				$mymelee .= "<tr><td>Kraft</td><td align='right'>".
+										$mychar->characterInfo->characterTab->melee->power->attributes()->effective."</td></tr>";
+				$mymelee .= "<tr><td>Trefferwertung</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->melee->hitRating->attributes()->increasedHitPercent."%'>".
+										$mychar->characterInfo->characterTab->melee->hitRating->attributes()->value."</abbr></td></tr>";
+				$mymelee .= "<tr><td>Kritische Treffer</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->melee->critChance->attributes()->rating."'>".
+										$mychar->characterInfo->characterTab->melee->critChance->attributes()->percent."%</td></tr>";
+				$mymelee .= "<tr><td>Expertiese</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->melee->expertise->attributes()->percent."%'>".
+										$mychar->characterInfo->characterTab->melee->expertise->attributes()->value."</td></tr>";
+				$mymelee .= "</table>";
+			}
+
+			if (count($mychar->characterInfo->characterTab->ranged->power)) {
+				$myranged  = "<table style='width:100%;text-align:left;'>";
+				$myranged .= "<tr><th colspan='2'>Fernkampf:</th></tr>";
+				$myranged .= "<tr><td>Kraft</td><td align='right'>".
+										$mychar->characterInfo->characterTab->ranged->power->attributes()->effective."</td></tr>";
+				$myranged .= "<tr><td>Trefferwertung</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->ranged->hitRating->attributes()->increasedHitPercent."%'>".
+										$mychar->characterInfo->characterTab->ranged->hitRating->attributes()->value."</abbr></td></tr>";
+				$myranged .= "<tr><td>Kritische Treffer</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->ranged->critChance->attributes()->rating."'>".
+										$mychar->characterInfo->characterTab->ranged->critChance->attributes()->percent."%</td></tr>";
+				$myranged .= "<tr><td>Geschwindigkeit</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->ranged->speed->attributes()->hastePercent."%'>".
+										$mychar->characterInfo->characterTab->ranged->speed->attributes()->value."</td></tr>";
+				$myranged .= "</table>";
+			}
+
+			if (count($mychar->characterInfo->characterTab->spell->bonusDamage)) {
+				$types = array("arcane", "fire", "frost", "holy", "nature", "shadow");
+				$dtotal = 0; $dcount = 0; $dabbr = "";
+				foreach ($types as $type) {
+					$dtotal += (integer) $mychar->characterInfo->characterTab->spell->bonusDamage->$type->attributes()->value;
+					if ($dcount) $dabbr .= ", ".$type.": ".$mychar->characterInfo->characterTab->spell->bonusDamage->$type->attributes()->value;
+					else $dabbr .= $type.": ".$mychar->characterInfo->characterTab->spell->bonusDamage->$type->attributes()->value;
+					$dcount++;
+				}
+				$cabbr = ""; $ccount = 0;
+				foreach ($types as $type) {
+					if ($ccount) $cabbr .= ", ".$type.": ".$mychar->characterInfo->characterTab->spell->critChance->$type->attributes()->percent."%";
+					else $cabbr .= $type.": ".$mychar->characterInfo->characterTab->spell->critChance->$type->attributes()->percent."%";
+					$cvalue = $mychar->characterInfo->characterTab->spell->critChance->$type->attributes()->percent;
+					$ccount++;
+				}
+				$myspell  = "<table style='width:100%;text-align:left;'>";
+				$myspell .= "<tr><th colspan='2'>Zauber:</th></tr>";
+				$myspell .= "<tr><td>Zauberschaden</td><td align='right'><abbr title='".$dabbr."'>".(round($dtotal/$dcount))."</abbr></td></tr>";
+				$myspell .= "<tr><td>Kritische Treffer</td><td align='right'><abbr title='".$cabbr."'>".$cvalue."%</abbr></td></tr>";
+				$myspell .= "<tr><td>Zus&auml;tzliche Heilung</td><td align='right'>".
+										$mychar->characterInfo->characterTab->spell->bonusHealing->attributes()->value."</td></tr>";
+				$myspell .= "<tr><td>Trefferwertung</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->spell->hitRating->attributes()->increasedHitPercent."%'>".
+										$mychar->characterInfo->characterTab->spell->hitRating->attributes()->value."</td></tr>";
+				$myspell .= "<tr><td>Geschwindigkeit</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->spell->hasteRating->attributes()->hastePercent."%'>".
+										$mychar->characterInfo->characterTab->spell->hasteRating->attributes()->hasteRating."</td></tr>";
+				$myspell .= "<tr><td>Mana Regeneration</td><td align='right'>".
+										$mychar->characterInfo->characterTab->spell->manaRegen->attributes()->notCasting."</td></tr>";
+				$myspell .= "</table>";
+			}
+
+			if (count($mychar->characterInfo->characterTab->defenses->armor)) {
+				$mydefense  = "<table style='width:100%;text-align:left;'>";
+				$mydefense .= "<tr><th colspan='2'>Verteidigung:</th></tr>";
+				$mydefense .= "<tr><td>Kraft</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->armor->attributes()->percent."%'>".
+										$mychar->characterInfo->characterTab->defenses->armor->attributes()->effective."</td></tr>";
+				$mydefense .= "<tr><td>Verteidigung</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->defense->attributes()->increasePercent."%'>".
+										$mychar->characterInfo->characterTab->defenses->defense->attributes()->value."</td></tr>";
+				$mydefense .= "<tr><td>Ducken</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->dodge->attributes()->rating."'>".
+										$mychar->characterInfo->characterTab->defenses->dodge->attributes()->percent."%</td></tr>";
+				$mydefense .= "<tr><td>Ausweichen</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->parry->attributes()->rating."'>".
+										$mychar->characterInfo->characterTab->defenses->parry->attributes()->percent."%</td></tr>";
+				$mydefense .= "<tr><td>Blockieren</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->block->attributes()->rating."'>".
+										$mychar->characterInfo->characterTab->defenses->block->attributes()->percent."%</td></tr>";
+				$mydefense .= "<tr><td>Abh&auml;rtung</td><td align='right'><abbr title='".$mychar->characterInfo->characterTab->defenses->resilience->attributes()->hitPercent."%'>".
+										$mychar->characterInfo->characterTab->defenses->resilience->attributes()->value."</td></tr>";
+				$mydefense .= "</table>";
 			}
 
 			$qslots = array(0, 1, 2, 5, 6, 7, 9, 14); $slots = array();
@@ -181,7 +256,11 @@ if ($_SESSION[loggedin] == 1) {
 
 			$cont = templGetFile("charview.html");
 			$cont = templReplText($cont, "TITLE", $mytitle);
-			$cont = templReplText($cont, "STATS", $mystats);
+			$cont = templReplText($cont, "BASESTATS", $mystats);
+			$cont = templReplText($cont, "MELEESTATS", $mymelee);
+			$cont = templReplText($cont, "RANGEDSTATS", $myranged);
+			$cont = templReplText($cont, "SPELLSTATS", $myspell);
+			$cont = templReplText($cont, "DEFENSESTATS", $mydefense);
 			$cont = templReplText($cont, "RESISTANCES", $myres);
 			$cont = templReplText($cont, "TALENTSPECTS", $mytalents);
 			$cont = templReplText($cont, "SKILLS", $myskills);

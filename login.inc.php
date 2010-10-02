@@ -276,14 +276,16 @@ switch ($_POST[job]) {
 				foreach ($nav[user] as $mylink) {
 					$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 				}
-				if ($_SESSION[isadmin]) {
+				if ($_SESSION[isadmin] AND (! empty($nav[admin]))) {
 #					$GLOBALS[html] .= "<div style='float:left;clear:both;'><hr />Administration</div>";
+					$GLOBALS[html] .= "<hr />Administration<hr />";
 					foreach ($nav[admin] as $mylink) {
 						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 					}
 				}
-				if ($_SESSION[isdev]) {
+				if ($_SESSION[isdev] AND (! empty($nav[dev]))) {
 #					$GLOBALS[html] .= "<div style='float:left;clear:both;'><hr />Entwicklung</div>";
+					$GLOBALS[html] .= "<hr />Entwicklung<hr />";
 					foreach ($nav[dev] as $mylink) {
 						$GLOBALS[html] .= mynav ($mylink[module], $mylink[name], $mylink[comment]);
 					}
