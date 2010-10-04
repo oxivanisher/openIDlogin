@@ -19,12 +19,12 @@ if ($_SESSION[loggedin] == 1) {
 		$admin = false;
 
 	#show user table
-	$GLOBALS[html] .= "<table>";
+	$GLOBALS[html] .= "<table><thead>";
 	$GLOBALS[html] .= "<tr><th>Name</th>";
 	if ($admin) $GLOBALS[html] .= "<th>&nbsp;</th>";
 	$GLOBALS[html] .= "<th>Last online</th><th>Jabber</th>";
 	$GLOBALS[html] .= "<th>Games</th>";
-	$GLOBALS[html] .= "</tr>";
+	$GLOBALS[html] .= "</tr></thead><tbody>";
 	$count = 0; $bcount = 0;
 	$ocnt = 0; $acnt = 0; $dcnt = 0; $wcnt = 0; $mcnt = 0; $m3cnt = 0;
 
@@ -98,7 +98,7 @@ if ($_SESSION[loggedin] == 1) {
 
 		}
 	}
-	$GLOBALS[html] .= "</table><br />";
+	$GLOBALS[html] .= "</tbody></table><br />";
 	if ($admin) {
 		$GLOBALS[html] .= "Rechte wechseln zu ".$pDropdown." <input type='submit' name='wechseln' value='wechseln' /><br /><br />";
 		$GLOBALS[html] .= "</form>";

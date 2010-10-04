@@ -324,10 +324,7 @@ switch ($_POST[job]) {
 				}
 #				$GLOBALS[html] .= "</ul>";
 			} 
-			$GLOBALS[html] .= "<br />";	
-	
 		}
-		$GLOBALS[html] .= "<br />";	
 		break;
 
 	#ajax request means, a request from the javascript gui for a module
@@ -442,10 +439,11 @@ if ($GLOBALS[redirect]) {
 } elseif ($GLOBALS[standalonedesign]) {
 	echo "<body style='".$GLOBALS[cfg][standalonebodystlye]."'>\n";
 } else {	
-	echo "<script type='text/javascript' src='tablesort.js'></script>";
 	echo "<script type='text/javascript' src='login.js'></script>";
 	echo "<script type='text/javascript' src='prototype.js'></script>";
 	echo '<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>';
+/*echo "<script type='text/javascript' src='jquery.js'></script>";
+	echo "<script type='text/javascript' src='tablesort.js'></script>";
 
 	?><script language="javascript">
 	$(document).ready(function()
@@ -454,7 +452,7 @@ if ($GLOBALS[redirect]) {
 			} 
 	);
 	</script><?php
-
+*/
 	echo "<body onload='javascript:initCharacter();ssoInit();'  style='background-color:transparent;'>";
 	echo "<div id='ssologin'></div>";
 

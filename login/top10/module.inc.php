@@ -5,6 +5,6 @@
 	$MODULE[dev]			= 0;
 	$MODULE[role]     = 5;
 	$MODULE[name]			= "Top 10";
-	$MODULE[comment]	= "Auf dieser Seite Sieht ihr die Top 10 Charakter in den Bereichen<br />PVP, Beruffe, Achievments und Item Level Durchschnitt.";
+	$MODULE[comment]	= "Auf dieser Seite Sieht ihr die Top 10 Charakter in den Bereichen<br />PVP, Berufe, Achievments und Item Level Durchschnitt.";
 
 ?>

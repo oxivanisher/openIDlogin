@@ -1320,7 +1320,8 @@ function fetchArmoryItem ($itemid) {
 }
 
 function genArmoryCharHtml ($name, $classid, $raceid, $genderid, $factionid) {
-	return "<a href='?module=armory&mydo=showchardetail&mycharname=".$name."'><span class='".genArmoryClassClass($classid)."' title='".showArmoryName("race", $raceid).
+	#FIXME! hardcoded armory module name
+	return "<a href='?module=wowarmory&mydo=showchardetail&mycharname=".$name."'><span class='".genArmoryClassClass($classid)."' title='".showArmoryName("race", $raceid).
 					", ".showArmoryName("gender", $genderid).", ".showArmoryName("faction", $factionid).
 					"'>".$name." ".
 					"</span></a>";
@@ -1343,8 +1344,9 @@ function genArmoryItemHtml ($myitem, $charlvl = 0, $pcs = "") {
 	if (! empty($pcs))
 		$pcs = "&pcs=".$pcs;
 
+	#FIXME! hardcoded armory module name
 	$item = fetchArmoryItem($id);
-#	$ret = "<img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
+#	$ret = "<img src='/img/wowarmory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'>".$item[name]."<br />lvl: ".$item[level].", ".$item[type];
 	$ret = "<a href='#' rel='domain=de&item=".$id."&lvl=".$charlvl."&ench=".$ench."&rand=".$rand."&gems=".$gems.$pcs.
 					"'><img src='/img/armory/".$item[icon].".png' align='left' style='padding:3px;width:26px;height:26px;'></a>";
 

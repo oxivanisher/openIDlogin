@@ -110,7 +110,7 @@ if ($_SESSION[loggedin] == 1) {
 			$mytalents  = "";
 			if (count($mychar->characterInfo->characterTab->talentSpecs->talentSpec))
 				foreach ($mychar->characterInfo->characterTab->talentSpecs->talentSpec as $mytalent) {
-					$mytalents .= "<img src='/img/'".$_POST[module]."/".$mytalent->attributes()->icon.
+					$mytalents .= "<img src='/img/wowarmory/".$mytalent->attributes()->icon.
 												".png' style='padding:3px;width:26px;height:26px;' ";
 					$mytalents .= "title='";
 					$mytalents .= $mytalent->attributes()->treeOne."/";
