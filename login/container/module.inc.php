@@ -1,10 +1,10 @@
 <?php
 
-  $MODULE[show]     = 0;
-	$MODULE[admin]		= 1;
+  $MODULE[show]     = 1;
+	$MODULE[admin]		= 0;
 	$MODULE[dev]			= 1;
-	$MODULE[role]     = 2;
-	$MODULE[name]			= "Module Skeleton";
-	$MODULE[comment]	= "Comment for the module.";
+	$MODULE[role]     = 8;
+	$MODULE[name]			= "Container Administration";
+	$MODULE[comment]	= "Create and edit containers.";
 
 ?>

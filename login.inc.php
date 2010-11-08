@@ -254,7 +254,7 @@ switch ($_POST[job]) {
 #									"<div style='float:left;' class='".$cssclass."'><h3><a href='?module=".
 #									$module."'>".$name."</a></h3>".$comment."<br /><br /></div>\n";
 					return "<h3><a href='?module=".$module."'><img src='".$GLOBALS[cfg][moduledir]."/".$module.
-								 "/icon.png' style='float:left;padding:5px;spaceing:3px;'/>".$name."</a></h3>".$comment."<br /><br />";
+								 "/icon.png' style='clear:both;float:left;padding:5px;spaceing:3px;'/>".$name."</a></h3>".$comment."<br /><br />";
 					 
 				}
 

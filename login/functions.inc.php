@@ -64,8 +64,8 @@ function isValidURL($url) {
 	return preg_match('|^http(s)?://[a-z0-9-]+(.[a-z0-9-]+)*(:[0-9]+)?(/.*)?$|i', $url);
 }
 
+#called after openid verification, searches the users in all registered databases ($GLOBALS[cfg][sites])
 function checkSites () {
-
 	foreach ($GLOBALS[cfg][sites] as $mysite) {
 		$GLOBALS[html] .= "<b>checking ".$mysite[name]." for ".$_SESSION[openid_identifier]."</b>:<br />"; 
 
@@ -389,7 +389,7 @@ function createSession () {
 }
 
 function getOnlineUsers () {
-	#last online implementation
+	#last online implementation (also called by ajax dynamic update for messaging overview)
 	#unset users array (because this function could be called multiple times)
 	unset ($GLOBALS[aryNames], $GLOBALS[aryOpenID], $GLOBALS[aryStatus], $GLOBALS[aryTimes], $GLOBALS[aryNewMessage]);
 	$GLOBALS[ajaxuserreturnname] = array();
@@ -655,6 +655,8 @@ function getIP() {
 	return $ip;
 }
 
+################## Chat / Messaging Functions ##################
+
 function getAllChatChannels ($owner = NULL) {
 	$tret = array();
 	$count = 0;
@@ -807,6 +809,19 @@ function genAllowedCheckbox ($template = NULL) {
 		return $tret."</table>\n";
 }
 
+function makeClickableURL($url){
+	$in=array(
+		'`((?:https?|ftp)://\S+[[:alnum:]]/?)`si',
+		'`((?<!//)(www\.\S+[[:alnum:]]/?))`si'
+	);
+	$out=array(
+		'<a href="$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a> ',
+		'<a href="http://$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a>'
+	);
+	return preg_replace($in,$out,$url);
+}
+
+################## System Message Functions ##################
 
 function sysmsg($msg, $lvl = 2, $user = "", $subject = "") {
 	switch ($lvl) {
@@ -865,17 +880,7 @@ function informUsers ($msg, $role) {
 	}
 }
 
-function makeClickableURL($url){
-	$in=array(
-		'`((?:https?|ftp)://\S+[[:alnum:]]/?)`si',
-		'`((?<!//)(www\.\S+[[:alnum:]]/?))`si'
-	);
-	$out=array(
-		'<a href="$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a> ',
-		'<a href="http://$1" rel="nofollow" target="new" class="ssoMessageLink">$1</a>'
-	);
-	return preg_replace($in,$out,$url);
-}
+################## OpenID Profile Functions ##################
 
 function applyProfile ($myuser, $myprofile) {
 		#apply profile function
@@ -1023,7 +1028,10 @@ function checkProfile ($myOpenID = '') {
 		return 0;
 }
 
+################## WOW Armory Functions ##################
+
 function fetchArmoryXML ($type, $target) {
+#	if (true) {
 	if ($GLOBALS[armorydowntimestamp] > (time() - $GLOBALS[armorydownwait])) {
 		$GLOBALS[armorydown] = 1;
 		return '<'.'?'.'xml version="1.0" encoding="ISO-8859-1"?'.'>'.
@@ -1042,6 +1050,7 @@ function fetchArmoryXML ($type, $target) {
 		curl_setopt ($curl, CURLOPT_URL, $URL);
 		curl_setopt($curl, CURLOPT_USERAGENT, $useragent);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($curl, CURLOPT_HTTPHEADER, array("Accept-Language: de-de, de;")); 
 		$load = curl_exec($curl);
 		curl_close($curl);
@@ -1121,64 +1130,58 @@ function fetchArmoryCharacter ($charname) {
 	#name, timestamp, content, level, genderid, classid, raceid, ilevelavg
 	$mychar = "";
 	unset($char);
-	$sql = mysql_query("SELECT timestamp,ilevelavg,name,level,genderid,classid,raceid,factionid,pvpkills,skills,achievments FROM ".
+	$sql = mysql_query("SELECT id,timestamp,ilevelavg,name,level,genderid,classid,raceid,factionid,pvpkills,skills,achievments FROM ".
 					$GLOBALS[cfg][armory][charcachetable]." WHERE name LIKE '".$charname."' ORDER BY timestamp ASC;");
 					#FIXME geht die suche noch?
 	$mychar[level] = null;
 	while ($row = mysql_fetch_array($sql)) {
-			$mychar[timestamp]	= $row[timestamp];
-			$mychar[ilevelavg]	= $row[ilevelavg];
-			$mychar[name]				= $row[name];
-			$mychar[level]			= $row[level];
-			$mychar[genderid]		= $row[genderid];
-			$mychar[classid]		= $row[classid];
-			$mychar[raceid]			= $row[raceid];
-			$mychar[factionid]	= $row[factionid];
-			$mychar[pvpkills]		= $row[pvpkills];
-			$mychar[skills]			= unserialize($row[skills]);
+		if (strtolower($charname) == strtolower($row[name])) {
+			$mychar[id]						= $row[id];
+			$mychar[timestamp]		= $row[timestamp];
+			$mychar[ilevelavg]		= $row[ilevelavg];
+			$mychar[name]					= $row[name];
+			$mychar[level]				= $row[level];
+			$mychar[genderid]			= $row[genderid];
+			$mychar[classid]			= $row[classid];
+			$mychar[raceid]				= $row[raceid];
+			$mychar[factionid]		= $row[factionid];
+			$mychar[pvpkills]			= $row[pvpkills];
+			$mychar[skills]				= unserialize($row[skills]);
 			$mychar[achievments]	= unserialize($row[achievments]);
+			break;
+		}
 	}
 	#check if char is in db and accurate, if not, fetch online
-	if (! $mychar[level]) {
-		sysmsg ("Fetching nonexisting Char from Armory: ".$charname, 3);
+	if ((($mychar[timestamp] + $GLOBALS[armorychartimeout])  < time()) 
+	AND ($GLOBALS[armorycharupdatecount] < $GLOBALS[armorycharmaxupdate])) {
 		$mychar[content] = fetchArmoryXML ("n", $charname);
-		$mychar[timestamp] = time();
-		$char = new SimpleXMLElement($mychar[content]);
-		$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
-					"name='".$char->characterInfo->character['name']."', ".
-					"timestamp='1', ".
-					"content='".mysql_real_escape_string($mychar[content])."', ".
-					"level='".$char->characterInfo->character['level']."', ".
-					"genderid='".$char->characterInfo->character['genderId']."', ".
-					"classid='".$char->characterInfo->character['classId']."', ".
-					"raceid='".$char->characterInfo->character['raceId']."', ".
-					"factionid='".$char->characterInfo->character['factionId']."', ".
-					"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."';";
-		$mychar[ilevelavg] = $myilvl;
-		$mychar[name]				= (string) $char->characterInfo->character['name'];
-		$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
-		$mychar[level]			= (string) $char->characterInfo->character['level'];
-		$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
-		$mychar[classid]		= (string) $char->characterInfo->character['classId'];
-		$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
-		$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
-		$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
-		if (! empty($char->characterInfo->character['name']))
-			$sqlr = mysql_query($sql);
-	} else {
-		if ((($mychar[timestamp] + $GLOBALS[armorychartimeout])  < time()) 
-		AND ($GLOBALS[armorycharupdatecount] < $GLOBALS[armorycharmaxupdate])) {
-			$mychar[content] = fetchArmoryXML ("n", $charname);
-			if (! $GLOBALS[armorydown]) {
-				if (strpos($mychar[content], '<character ')) {
-					$GLOBALS[armorycharupdatecount]++;
+		if (! $GLOBALS[armorydown]) {
+			if (strpos($mychar[content], '<character ')) {
+				$GLOBALS[armorycharupdatecount]++;
+				$mychar[timestamp] = time();
+				$char = new SimpleXMLElement($mychar[content]);
+				$myilvl = genArmoryIlvl($char);
+				$myskills = genArmorySkills($char);
+				$myachievments = genArmoryAchievments($char);
+
+				if (is_int($mychar[id])) {
 					sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
-					$mychar[timestamp] = time();
-					$char = new SimpleXMLElement($mychar[content]);
-					$myilvl = genArmoryIlvl($char);
-					$myskills = genArmorySkills($char);
-					$myachievments = genArmoryAchievments($char);
-					$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+						$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+									"timestamp='".$mychar[timestamp]."', ".
+									"content='".mysql_real_escape_string($mychar[content])."', ".
+									"level='".$char->characterInfo->character['level']."', ".
+									"genderid='".$char->characterInfo->character['genderId']."', ".
+									"classid='".$char->characterInfo->character['classId']."', ".
+									"raceid='".$char->characterInfo->character['raceId']."', ".
+									"factionid='".$char->characterInfo->character['factionId']."', ".
+									"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
+									"skills='".serialize($myskills)."', ".
+									"achievments='".serialize($myachievments)."', ".
+									"ilevelavg='".$myilvl."' WHERE id='".$mychar[id]."';";
+				} else {
+					sysmsg ("Fetching nonexisting Char from Armory: ".$charname, 3);
+					$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+								"name='".$char->characterInfo->character['name']."', ".
 								"timestamp='".$mychar[timestamp]."', ".
 								"content='".mysql_real_escape_string($mychar[content])."', ".
 								"level='".$char->characterInfo->character['level']."', ".
@@ -1189,30 +1192,28 @@ function fetchArmoryCharacter ($charname) {
 								"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
 								"skills='".serialize($myskills)."', ".
 								"achievments='".serialize($myachievments)."', ".
-								"ilevelavg='".$myilvl."' WHERE name='".$char->characterInfo->character['name']."';";
-					$sqlr = mysql_query($sql);
-					$mychar[ilevelavg] = $myilvl;
-					$mychar[name]				= (string) $char->characterInfo->character['name'];
-					$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
-					$mychar[level]			= (string) $char->characterInfo->character['level'];
-					$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
-					$mychar[classid]		= (string) $char->characterInfo->character['classId'];
-					$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
-					$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
-					$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
-					$mychar[skills]			= $myskills;
-					$mychar[achievments]	= $myachievments;
-				} else {
-					$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET timestamp='".time().
-									"' WHERE name='".$charname."';";
-					$sqlr = mysql_query($sql);
+								"ilevelavg='".$myilvl."';";
 				}
+				if (! empty($char->characterInfo->character['name']))
+					$sqlr = mysql_query($sql);
+
+				$mychar[ilevelavg] = $myilvl;
+				$mychar[name]				= (string) $char->characterInfo->character['name'];
+				$mychar[timestamp]	= (string) $char->characterInfo->character['timestamp'];
+				$mychar[level]			= (string) $char->characterInfo->character['level'];
+				$mychar[genderid]		= (string) $char->characterInfo->character['genderId'];
+				$mychar[classid]		= (string) $char->characterInfo->character['classId'];
+				$mychar[raceid]			= (string) $char->characterInfo->character['raceId'];
+				$mychar[factionid]	= (string) $char->characterInfo->character['factionId'];
+				$mychar[pvpkills]		= (string) $char->characterInfo->characterTab->pvp->lifetimehonorablekills['value'];
+				$mychar[skills]			= $myskills;
+				$mychar[achievments]	= $myachievments;
 			} else {
 				sysmsg ("Fetching data from Armory failed. Armory probably down. XML Length: ".strlen($mychar[content]), 3);
 			}
-		} else {
-			sysmsg ("Fetching data from Database for Char: ".$charname, 3);
 		}
+	} else {
+		sysmsg ("Fetching data from Database for Char: ".$charname, 3);
 	}
 
 	if (empty($mychar[level])) {
@@ -1353,6 +1354,8 @@ function genArmoryItemHtml ($myitem, $charlvl = 0, $pcs = "") {
 	return $ret;
 }
 
+################## Template Enginge Functions ##################
+
 function templGetFile ($filename) {
 	return file_get_contents($GLOBALS[cfg][moduledir]."/".$_POST[module]."/html/".$filename);
 }
@@ -1373,6 +1376,8 @@ function templGenDropdown ($name, $from, $to, $selected) {
 	$dd .= "</select>\n";
 	return $dd;
 }
+
+################## Mail Functions ##################
 
 function sendMail ($target, $subject, $message) {
 	if (substr($target, 0, 4) == "http") {
@@ -1402,6 +1407,9 @@ function sendMail ($target, $subject, $message) {
 
 	} else return false;
 }
+
+
+################## Multigaming Functions ##################
 
 function getMultigamingGames () {
 	$sql = mysql_query("SELECT * FROM ".$GLOBALS[cfg][mg][gamestable]." WHERE 1;");

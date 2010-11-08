@@ -15,9 +15,14 @@
 
 				#does the sender have a entry in the xmpp database?
 				if (empty($GLOBALS[users][byxmpp][strtolower($jid[0])])) {
-					msg ("Recieved MSG from unauthorized user: ".$jid[0]);
-					$this->sendMessage($fromJid, "You are not allowed to use this bot! Please setup your XMPP Traversal on the homepage.");
-					sysmsg ("Recieved MSG from unauthorized user: ".$jid[0], 1, "Unknown", $jid[1]);
+					if ($GLOBALS[cfg][daemon][xmpp][user]."@".$GLOBALS[cfg][daemon][xmpp][domain] == $jid[0]) {
+						sysmsg ("Exiting Daemon for flood protection!", 1, $GLOBALS[users][bylowxmpp][strtolower($jid[0])], $jid[0]);
+						exit;
+					} else {
+						msg ("Recieved MSG from unauthorized user: ".$jid[0]);
+						$this->sendMessage($fromJid, "You are not allowed to use this bot! Please setup your XMPP Traversal on the homepage.");
+						sysmsg ("Recieved MSG from unauthorized user: ".$jid[0], 1, "Unknown", $jid[1]);
+					}
 				} else {
 					msg ("Recieved MSG from authorized user: ".$jid[0]." -> ".$GLOBALS[users][byxmpp][strtolower($jid[0])]);
 
