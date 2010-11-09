@@ -1163,21 +1163,20 @@ function fetchArmoryCharacter ($charname) {
 				$myilvl = genArmoryIlvl($char);
 				$myskills = genArmorySkills($char);
 				$myachievments = genArmoryAchievments($char);
-
-				if (is_int($mychar[id])) {
+				if ($mychar[id] AND $char->characterInfo->character['level']) {
 					sysmsg ("Fetching data from Armory due old Database entry for Char: ".$charname, 3);
-						$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
-									"timestamp='".$mychar[timestamp]."', ".
-									"content='".mysql_real_escape_string($mychar[content])."', ".
-									"level='".$char->characterInfo->character['level']."', ".
-									"genderid='".$char->characterInfo->character['genderId']."', ".
-									"classid='".$char->characterInfo->character['classId']."', ".
-									"raceid='".$char->characterInfo->character['raceId']."', ".
-									"factionid='".$char->characterInfo->character['factionId']."', ".
-									"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
-									"skills='".serialize($myskills)."', ".
-									"achievments='".serialize($myachievments)."', ".
-									"ilevelavg='".$myilvl."' WHERE id='".$mychar[id]."';";
+					$sql = "UPDATE ".$GLOBALS[cfg][armory][charcachetable]." SET ".
+								"timestamp='".$mychar[timestamp]."', ".
+								"content='".mysql_real_escape_string($mychar[content])."', ".
+								"level='".$char->characterInfo->character['level']."', ".
+								"genderid='".$char->characterInfo->character['genderId']."', ".
+								"classid='".$char->characterInfo->character['classId']."', ".
+								"raceid='".$char->characterInfo->character['raceId']."', ".
+								"factionid='".$char->characterInfo->character['factionId']."', ".
+								"pvpkills='".$char->characterInfo->characterTab->pvp->lifetimehonorablekills['value']."', ".
+								"skills='".serialize($myskills)."', ".
+								"achievments='".serialize($myachievments)."', ".
+								"ilevelavg='".$myilvl."' WHERE id='".$mychar[id]."';";
 				} else {
 					sysmsg ("Fetching nonexisting Char from Armory: ".$charname, 3);
 					$sql = "INSERT INTO ".$GLOBALS[cfg][armory][charcachetable]." SET ".
