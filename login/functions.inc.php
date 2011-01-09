@@ -1227,17 +1227,17 @@ function genArmoryIlvlHtml ($ilvl, $text) {
 	$color = "";
 	if ($ilvl < 50)
 		$color = "#888888";
-	elseif ($ilvl < 100)
+	elseif ($ilvl < 280)
 		$color = "#998888";
-	elseif ($ilvl < 200)
+	elseif ($ilvl < 329)
 		$color = "#aa6666";
-	elseif ($ilvl < 240)
+	elseif ($ilvl < 340)
 		$color = "#cc4444";
-	elseif ($ilvl < 250)
+	elseif ($ilvl < 350)
 		$color = "#dd2222";
-	elseif ($ilvl < 260)
+	elseif ($ilvl < 360)
 		$color = "#ee1111";
-	elseif ($ilvl < 270)
+	elseif ($ilvl < 370)
 		$color = "#ff0000";
 	else
 		$color = "#48233e";
@@ -1313,9 +1313,12 @@ function fetchArmoryItem ($itemid) {
 			$myitem[quality]		= (string) $item->itemInfo->item['quality'];
 			$myitem[type]				= (string) $item->itemInfo->item['type'];
 			$myitem[icon]				= (string) $item->itemInfo->item['icon'];
+			echo $sql;
 			$sqlr = mysql_query($sql);
 		}
 	}
+	if (! count($myitem[icon]))
+		$myitem[icon] = "404";
 	return $myitem;
 }
 
